@@ -338,7 +338,6 @@
                                                     <div class="input-with-append">
                                                         <input type="text" class="form-control-custom" name="office_name"
                                                             value="{{ old('office_name') }}" required>
-                                                        <button class="input-append-btn" type="button">...</button>
                                                     </div>
                                                 </div>
 
@@ -411,10 +410,6 @@
                                                                 @endforeach
                                                             </select>
                                                         </div>
-                                                        <button class="input-append-btn" type="button"
-                                                            style="position: static; border-radius: 4px; border: 1px solid #f3f4f6; margin-left: 5px;">...</button>
-                                                        <select class="select-custom"
-                                                            style="width: 40px; margin-left: 5px;"></select>
                                                     </div>
                                                 </div>
 
@@ -503,7 +498,6 @@
                                                         <input type="text" class="form-control-custom"
                                                             name="vat_country_specific_name"
                                                             value="{{ old('vat_country_specific_name') }}">
-                                                        <button class="input-append-btn" type="button">...</button>
                                                     </div>
                                                 </div>
 

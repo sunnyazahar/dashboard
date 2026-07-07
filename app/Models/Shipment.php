@@ -126,6 +126,11 @@ class Shipment extends Model
         return $this->hasMany(ShipmentHandCarryLeg::class)->orderBy('sort_order');
     }
 
+    public function onBoardLegs(): HasMany
+    {
+        return $this->hasMany(ShipmentOnBoardLeg::class)->orderBy('sort_order');
+    }
+
     public function accountManager(): BelongsTo
     {
         return $this->belongsTo(Contact::class, 'account_manager_id');
@@ -194,6 +199,7 @@ class Shipment extends Model
             'Truck' => $this->truckLegs->last()?->departure_date,
             'Courier' => $this->courierLegs->last()?->departure_date,
             'Hand Carry' => $this->handCarryLegs->last()?->departure_date,
+            'On-board delivery' => $this->onBoardLegs->last()?->departure_date,
             default => null,
         };
     }
@@ -207,6 +213,7 @@ class Shipment extends Model
             'Courier' => $this->courierLegs->last()?->arrival_date,
             'Release' => $this->releaseLegs->last()?->delivery_date,
             'Hand Carry' => $this->handCarryLegs->last()?->arrival_date,
+            'On-board delivery' => $this->onBoardLegs->last()?->delivery_date,
             default => null,
         };
     }

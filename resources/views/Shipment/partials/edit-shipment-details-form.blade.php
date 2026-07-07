@@ -4,7 +4,7 @@
     $totalWeight = $shipment->crrs->sum(fn ($crr) => $crr->packages->sum('weight'));
     $totalCbm = $shipment->crrs->sum(fn ($crr) => $crr->packages->sum('cbm'));
     $totalValue = $shipment->crrs->sum('customs_value');
-    $serviceOptions = ['Courier', 'Airfreight', 'Sea freight', 'Truck','Release','Hand Carry'];
+    $serviceOptions = ['Courier', 'Airfreight', 'Sea freight', 'Truck', 'Release', 'Hand Carry', 'On-board delivery'];
 @endphp
 
 @if (session('success'))
@@ -376,6 +376,17 @@
             </div>
             <div class="d-flex justify-content-end pt-2">
                 <a href="#" id="add-hand-carry-leg-btn" class="text-primary" style="font-size: 11px; font-weight: 600; text-decoration: none;">Add hand carry</a>
+            </div>
+        </div>
+        <div id="service-details-on-board" class="p-3" style="display: none;">
+            <div id="on-board-legs-container">
+                @forelse ($shipment->onBoardLegs as $leg)
+                    @include('Shipment.partials.on-board-leg-row', ['leg' => $leg, 'index' => $loop->index])
+                @empty
+                @endforelse
+            </div>
+            <div class="d-flex justify-content-end pt-2">
+                <a href="#" id="add-on-board-leg-btn" class="text-primary" style="font-size: 11px; font-weight: 600; text-decoration: none;">Add delivery</a>
             </div>
         </div>
     </div>

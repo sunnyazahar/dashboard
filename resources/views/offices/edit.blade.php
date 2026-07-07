@@ -719,11 +719,10 @@
                                                     <div class="input-with-append">
                                                         <input type="text" name="office_name" class="form-control-custom"
                                                             value="{{ old('office_name', $office->office_name) }}" required>
-                                                        <button type="button" class="input-append-btn">...</button>
                                                     </div>
                                                 </div>
 
-                                                <div class="form-group-custom">
+                                                <div class="form-group-custom d-none">
                                                     <label class="form-label-custom">Company id</label>
                                                     <input type="text" class="form-control-custom" value="{{ $office->id }}"
                                                         readonly style="background: #f9fafb;">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 use App\Models\OtherCompany;
 use App\Models\Country;
@@ -19,13 +20,16 @@ class OtherCompanyController extends Controller
     {
         $countries = Country::all();
         $currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'AED', 'SGD']; // Sample currencies
-        return view('Other Companies.create', compact('countries', 'currencies'));
+        $companyTypes = $this->companyTypeOptions();
+
+        return view('Other Companies.create', compact('countries', 'currencies', 'companyTypes'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'company_name' => 'required|string|max:255',
+            'company_type' => ['nullable', 'string', Rule::in($this->companyTypeOptions())],
             'email' => 'nullable|email|max:255',
             'phone_number' => 'nullable|string|max:255',
             'country_id' => 'nullable|exists:countries,id',
@@ -41,13 +45,16 @@ class OtherCompanyController extends Controller
     {
         $countries = Country::all();
         $currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'AED', 'SGD', 'INR', 'AUD', 'CAD'];
-        return view('Other Companies.edit', compact('otherCompany', 'countries', 'currencies'));
+        $companyTypes = $this->companyTypeOptions();
+
+        return view('Other Companies.edit', compact('otherCompany', 'countries', 'currencies', 'companyTypes'));
     }
 
     public function update(Request $request, OtherCompany $otherCompany)
     {
         $request->validate([
             'company_name'      => 'required|string|max:255',
+            'company_type'      => ['nullable', 'string', Rule::in($this->companyTypeOptions())],
             'email'             => 'nullable|email|max:255',
             'phone_number'      => 'nullable|string|max:255',
             'country_id'        => 'nullable|exists:countries,id',
@@ -129,5 +136,17 @@ class OtherCompanyController extends Controller
         $contact = \App\Models\Contact::findOrFail($contactId);
         $contact->delete();
         return redirect()->route('other-companies.edit', $otherCompanyId)->with('success', 'Contact deleted successfully.');
+    }
+
+    private function companyTypeOptions(): array
+    {
+        return [
+            'Ship agent',
+            'External agent',
+            'Vessel owner',
+            'Delivery address',
+            'Customer group',
+            'Customer procurement group',
+        ];
     }
 }

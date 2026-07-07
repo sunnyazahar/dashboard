@@ -16,6 +16,7 @@ use App\Models\ShipmentPreAlertReminderSend;
 use App\Models\ShipmentFlight;
 use App\Models\ShipmentIrregularity;
 use App\Models\ShipmentHandCarryLeg;
+use App\Models\ShipmentOnBoardLeg;
 use App\Models\ShipmentReleaseLeg;
 use App\Models\ShipmentSeaLeg;
 use App\Models\ShipmentCourierLeg;
@@ -178,6 +179,7 @@ class ShipmentController extends Controller
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
         ])
             ->withMax('preAlertReminderSends as last_reminder_sent_at', 'created_at')
             ->whereNotIn('status', ['Completed', 'Draft'])
@@ -427,6 +429,8 @@ class ShipmentController extends Controller
 
             $this->syncHandCarryLegs($shipment, $request->input('hand_carry_legs', []), $validated['service'] ?? null);
 
+            $this->syncOnBoardLegs($shipment, $validated['on_board_legs'] ?? [], $validated['service'] ?? null);
+
             DB::commit();
 
             return redirect()
@@ -458,6 +462,7 @@ class ShipmentController extends Controller
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
             'manifests',
             'preAlerts',
         ])->findOrFail($id);
@@ -661,6 +666,7 @@ class ShipmentController extends Controller
                 $this->syncCourierLegs($shipment, $validated['courier_legs'] ?? [], $service);
                 $this->syncReleaseLegs($shipment, $validated['release_legs'] ?? [], $service);
                 $this->syncHandCarryLegs($shipment, $request->input('hand_carry_legs', []), $service);
+                $this->syncOnBoardLegs($shipment, $validated['on_board_legs'] ?? [], $service);
             });
         } catch (\Throwable $e) {
             Log::error('Pre-alert autosave failed: ' . $e->getMessage());
@@ -1015,6 +1021,7 @@ class ShipmentController extends Controller
                 $this->syncCourierLegs($shipment, $validated['courier_legs'] ?? [], $service);
                 $this->syncReleaseLegs($shipment, $validated['release_legs'] ?? [], $service);
                 $this->syncHandCarryLegs($shipment, $request->input('hand_carry_legs', []), $service);
+                $this->syncOnBoardLegs($shipment, $validated['on_board_legs'] ?? [], $service);
             });
         } catch (\Throwable $e) {
             Log::error('Pre-alert autosave failed: ' . $e->getMessage());
@@ -1039,6 +1046,7 @@ class ShipmentController extends Controller
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
         ]);
 
         if ($shipment->crrs->isEmpty()) {
@@ -1306,6 +1314,8 @@ class ShipmentController extends Controller
 
             $this->syncHandCarryLegs($shipment, $request->input('hand_carry_legs', []), $validated['service'] ?? null);
 
+            $this->syncOnBoardLegs($shipment, $validated['on_board_legs'] ?? [], $validated['service'] ?? null);
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -1456,6 +1466,10 @@ class ShipmentController extends Controller
             'hand_carry_legs.*.contact_name' => 'nullable|string|max:255',
             'hand_carry_legs.*.contact_phone' => 'nullable|string|max:255',
             'hand_carry_legs.*.onboard_hand_carry' => 'nullable|boolean',
+            'on_board_legs' => 'nullable|array',
+            'on_board_legs.*.departure_date' => 'nullable|string',
+            'on_board_legs.*.delivery_date' => 'nullable|string',
+            'on_board_legs.*.delivery_time' => 'nullable|string|max:5',
         ]);
     }
 
@@ -1544,6 +1558,10 @@ class ShipmentController extends Controller
             'hand_carry_legs.*.contact_name' => 'nullable|string|max:255',
             'hand_carry_legs.*.contact_phone' => 'nullable|string|max:255',
             'hand_carry_legs.*.onboard_hand_carry' => 'nullable|boolean',
+            'on_board_legs' => 'nullable|array',
+            'on_board_legs.*.departure_date' => 'nullable|string',
+            'on_board_legs.*.delivery_date' => 'nullable|string',
+            'on_board_legs.*.delivery_time' => 'nullable|string|max:5',
         ]);
     }
 
@@ -1919,6 +1937,40 @@ class ShipmentController extends Controller
     private function releaseLegHasData(array $leg): bool
     {
         foreach (['freight_company', 'delivery_date', 'delivery_time'] as $field) {
+            if (!empty($leg[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function syncOnBoardLegs(Shipment $shipment, array $onBoardLegs, ?string $service): void
+    {
+        $shipment->onBoardLegs()->delete();
+
+        if ($service !== 'On-board delivery') {
+            return;
+        }
+
+        foreach ($onBoardLegs as $index => $leg) {
+            if (!$this->onBoardLegHasData($leg)) {
+                continue;
+            }
+
+            ShipmentOnBoardLeg::create([
+                'shipment_id' => $shipment->id,
+                'departure_date' => $this->parseDate($leg['departure_date'] ?? null),
+                'delivery_date' => $this->parseDate($leg['delivery_date'] ?? null),
+                'delivery_time' => $this->parseArrivalTime($leg['delivery_time'] ?? null),
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
+    private function onBoardLegHasData(array $leg): bool
+    {
+        foreach (['departure_date', 'delivery_date', 'delivery_time'] as $field) {
             if (!empty($leg[$field])) {
                 return true;
             }

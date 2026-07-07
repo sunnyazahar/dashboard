@@ -468,11 +468,11 @@
                                                             <span class="input-icon-btn"><i class="ti-more-alt"></i></span>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group">
+                                                    <div class="form-group d-none">
                                                         <label>Customer number from FM</label>
                                                         <input type="text" name="customer_number_fm" class="form-control">
                                                     </div>
-                                                    <div class="form-group">
+                                                    <div class="form-group d-none">
                                                         <label>Customer group</label>
                                                         <select name="customer_group" class="form-control select2-field">
                                                             <option></option>
@@ -826,7 +826,6 @@
             $("#customerForm").validate({
                 rules: {
                     customer_name: "required",
-                    customer_group: "required",
                     email: {
                         required: true,
                         email: true
@@ -851,7 +850,6 @@
                 },
                 messages: {
                     customer_name: "Please enter customer name",
-                    customer_group: "Please select customer group",
                     email: "Please enter a valid email address",
                     street_address: "Please enter street address",
                     city: "Please enter city",

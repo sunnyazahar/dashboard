@@ -15,17 +15,24 @@
         /* Select2 Custom Styling - High Specificity */
         body .select2-container--default .select2-selection--single {
             background-color: #fff !important;
+            background: #fff !important;
             border: 1px solid #d1d5db !important;
             height: 32px !important;
             border-radius: 3px !important;
+            box-sizing: border-box !important;
+        }
+        body .select2-container--default.select2-container--focus .select2-selection--single,
+        body .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: #1b5e6f !important;
         }
 
         body .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 32px !important;
+            line-height: 30px !important;
             color: #333 !important;
             font-size: 12px !important;
             padding-left: 10px !important;
-            background-color: #fff !important;
+            background-color: transparent !important;
+            background: transparent !important;
         }
 
         body .select2-container--default .select2-selection--single .select2-selection__placeholder {
@@ -34,10 +41,25 @@
 
         body .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 30px !important;
+            top: 1px !important;
+            right: 6px !important;
+        }
+        body .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #6b7280 transparent transparent transparent !important;
+        }
+        body .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent #6b7280 transparent !important;
         }
 
         .select2-dropdown {
             background-color: #fff !important; /* Keep dropdown list white for readability */
+            border: 1px solid #d1d5db !important;
+        }
+        .img-flag {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+            vertical-align: middle;
         }
         /* Edit Header Summary Styling */
         .edit-header-summary {
@@ -373,18 +395,25 @@
                                                                 <input type="text" class="form-input-custom" name="company_name" value="{{ old('company_name', $otherCompany->company_name) }}">
                                                             </div>
 
-                                                            <div class="form-group-custom">
+                                                            <div class="form-group-custom d-none">
                                                                 <label class="form-label-custom">Company id</label>
                                                                 <input type="text" class="form-input-custom form-input-readonly" value="{{ $otherCompany->id }}" readonly>
                                                             </div>
 
                                                             <div class="form-group-custom">
                                                                 <label class="form-label-custom">Company type</label>
-                                                                <div class="input-group-custom">
-                                                                    <input type="text" class="form-input-custom has-append" name="company_type" value="{{ old('company_type', $otherCompany->company_type) }}">
-                                                                    <button type="button" class="btn-input-append"><i class="ti-more-alt"></i></button>
-                                                                    <button type="button" class="btn-input-append"><i class="ti-angle-down"></i></button>
-                                                                </div>
+                                                                <select name="company_type" class="form-input-custom select2-company-type">
+                                                                    <option value=""></option>
+                                                                    @php
+                                                                        $selectedCompanyType = old('company_type', $otherCompany->company_type);
+                                                                    @endphp
+                                                                    @if($selectedCompanyType && !in_array($selectedCompanyType, $companyTypes, true))
+                                                                        <option value="{{ $selectedCompanyType }}" selected>{{ $selectedCompanyType }}</option>
+                                                                    @endif
+                                                                    @foreach($companyTypes as $type)
+                                                                        <option value="{{ $type }}" {{ $selectedCompanyType == $type ? 'selected' : '' }}>{{ $type }}</option>
+                                                                    @endforeach
+                                                                </select>
                                                             </div>
 
                                                             <div class="input-row">
@@ -445,10 +474,10 @@
 
                                                             <div class="form-group-custom">
                                                                 <label class="form-label-custom">Country</label>
-                                                                <select name="country_id" class="form-input-custom select2">
+                                                                <select name="country_id" class="form-input-custom select2-country">
                                                                     <option value="">Select Country</option>
                                                                     @foreach($countries as $c)
-                                                                        <option value="{{ $c->id }}" {{ old('country_id', $otherCompany->country_id) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                                                                        <option value="{{ $c->id }}" data-flag-url="{{ $c->flag_url }}" {{ old('country_id', $otherCompany->country_id) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                                                                     @endforeach
                                                                 </select>
                                                             </div>
@@ -482,10 +511,10 @@
 
                                                             <div class="form-group-custom">
                                                                 <label class="form-label-custom">Country</label>
-                                                                <select name="office_country_id" class="form-input-custom select2">
+                                                                <select name="office_country_id" class="form-input-custom select2-country">
                                                                     <option value="">Select Country</option>
                                                                     @foreach($countries as $c)
-                                                                        <option value="{{ $c->id }}" {{ old('office_country_id', $otherCompany->office_country_id) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                                                                        <option value="{{ $c->id }}" data-flag-url="{{ $c->flag_url }}" {{ old('office_country_id', $otherCompany->office_country_id) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                                                                     @endforeach
                                                                 </select>
                                                             </div>
@@ -507,8 +536,8 @@
 
                                                             <div class="form-group-custom">
                                                                 <label class="form-label-custom">Currency</label>
-                                                                <select name="currency" class="form-input-custom">
-                                                                    <option value="">Select Currency</option>
+                                                                <select name="currency" class="form-input-custom select2-currency">
+                                                                    <option value=""></option>
                                                                     @foreach($currencies as $curr)
                                                                         <option value="{{ $curr }}" {{ old('currency', $otherCompany->currency) == $curr ? 'selected' : '' }}>{{ $curr }}</option>
                                                                     @endforeach
@@ -638,8 +667,39 @@
 
     <script>
         $(document).ready(function() {
+            $('select.select2-company-type').select2({
+                placeholder: 'Select company type',
+                allowClear: true,
+                width: '100%'
+            });
+
+            function formatCountryFlag(state) {
+                if (!state.id) {
+                    return state.text;
+                }
+                var flagUrl = $(state.element).data('flag-url');
+                if (!flagUrl) {
+                    return state.text;
+                }
+                return $('<span><img src="' + flagUrl + '" class="img-flag" /> ' + state.text + '</span>');
+            }
+
+            $('select.select2-country').select2({
+                placeholder: 'Select Country',
+                allowClear: true,
+                width: '100%',
+                templateResult: formatCountryFlag,
+                templateSelection: formatCountryFlag
+            });
+
+            $('select.select2-currency').select2({
+                placeholder: 'Select Currency',
+                allowClear: true,
+                width: '100%'
+            });
+
              // Initialize Select2 for standard filters
-            $('.select2').select2({
+            $('select.select2').select2({
                 placeholder: "Click here",
                 allowClear: true
             });

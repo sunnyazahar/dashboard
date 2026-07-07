@@ -369,23 +369,50 @@
                 }
 
                 /* Select2 Override to match current theme */
-                .select2-container--default .select2-selection--single,
+                .select2-container--default .select2-selection--single {
+                    background-color: #fff !important;
+                    background: #fff !important;
+                    border: 1px solid #d1d5db !important;
+                    border-top: 1px solid #d1d5db !important;
+                    border-bottom: 1px solid #d1d5db !important;
+                    border-left: 1px solid #d1d5db !important;
+                    border-right: 1px solid #d1d5db !important;
+                    height: 35px !important;
+                    border-radius: 4px !important;
+                    box-sizing: border-box !important;
+                }
+                .select2-container--default.select2-container--focus .select2-selection--single,
+                .select2-container--default.select2-container--open .select2-selection--single {
+                    border-color: #1b5e6f !important;
+                }
+                .select2-container--default .select2-selection--single .select2-selection__rendered {
+                    background-color: transparent !important;
+                    background: transparent !important;
+                    line-height: 33px !important;
+                    padding-left: 12px !important;
+                    font-size: 13px !important;
+                    color: #111827 !important;
+                }
+                .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                    color: #9ca3af !important;
+                }
+                .select2-container--default .select2-selection--single .select2-selection__arrow {
+                    height: 33px !important;
+                    top: 1px !important;
+                    right: 8px !important;
+                }
+                .select2-container--default .select2-selection--single .select2-selection__arrow b {
+                    border-color: #6b7280 transparent transparent transparent !important;
+                }
+                .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+                    border-color: transparent transparent #6b7280 transparent !important;
+                }
                 .select2-container--default .select2-selection--multiple {
                     background-color: #fff !important;
                     border: 1px solid #d1d5db !important;
                     border-radius: 4px !important;
                     min-height: 35px !important;
                     padding: 0 4px !important;
-                }
-                .select2-container--default .select2-selection--single .select2-selection__rendered {
-                    line-height: 33px !important;
-                    font-size: 13px !important;
-                    color: #111827 !important;
-                    padding-left: 8px !important;
-                    background-color: #fff !important; /* Force white background on rendered text */
-                }
-                .select2-container--default .select2-selection--single .select2-selection__arrow {
-                    height: 33px !important;
                 }
                 .select2-container--default .select2-selection--multiple .select2-selection__choice {
                     background-color: #f3f4f6 !important; /* Light gray for choices */
@@ -408,16 +435,22 @@
                     border-color: #1b5e6f !important;
                 }
                 .select2-dropdown {
-                    border-color: #d1d5db !important;
+                    background-color: #fff !important;
+                    border: 1px solid #d1d5db !important;
                     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
                     z-index: 9999 !important;
                 }
                 .select2-results__option {
                     font-size: 13px !important;
                     padding: 8px 12px !important;
+                    color: #374151 !important;
                 }
-                .select2-results__option--highlighted[aria-selected] {
-                    background-color: #1b5e6f !important;
+                .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                    background-color: #f3f4f6 !important;
+                    color: #374151 !important;
+                }
+                .select2-container--default.error .select2-selection--single {
+                    border-color: #d9534f !important;
                 }
 
                 /* Custom Datepicker Styling */
@@ -569,12 +602,12 @@
                                                                                 </div>
                                                                             </div>
 
-                                                                            <div class="form-group-custom">
+                                                                            <div class="form-group-custom d-none">
                                                                                 <label class="form-label-custom">Company id</label>
                                                                                 <input type="text" name="company_id" class="form-input-custom form-input-readonly" value="{{ $hub->company_id }}" readonly>
                                                                             </div>
 
-                                                                            <div class="form-group-custom">
+                                                                            <div class="form-group-custom d-none">
                                                                                 <label class="form-label-custom">Customer number from FM</label>
                                                                                 <input type="text" name="customer_number_fm" class="form-input-custom" value="{{ $hub->customer_number_fm }}">
                                                                             </div>
@@ -647,10 +680,12 @@
 
                                                                             <div class="form-group-custom">
                                                                                 <label class="form-label-custom">Country</label>
-                                                                                <select name="country" class="form-select-custom">
+                                                                                <select name="country" class="form-select-custom select2-flag">
                                                                                     <option value="">Select Country</option>
                                                                                     @foreach($countries as $country)
-                                                                                        <option value="{{ $country->name }}" {{ $hub->country == $country->name ? 'selected' : '' }}>
+                                                                                        <option value="{{ $country->name }}"
+                                                                                            data-flag="{{ $country->flag_url }}"
+                                                                                            {{ $hub->country == $country->name ? 'selected' : '' }}>
                                                                                             {{ $country->name }}
                                                                                         </option>
                                                                                     @endforeach
@@ -686,10 +721,12 @@
 
                                                                             <div class="form-group-custom">
                                                                                 <label class="form-label-custom">Country</label>
-                                                                                <select name="office_country" class="form-select-custom">
+                                                                                <select name="office_country" class="form-select-custom select2-flag">
                                                                                     <option value="">Select Country</option>
                                                                                     @foreach($countries as $country)
-                                                                                        <option value="{{ $country->name }}" {{ $hub->office_country == $country->name ? 'selected' : '' }}>
+                                                                                        <option value="{{ $country->name }}"
+                                                                                            data-flag="{{ $country->flag_url }}"
+                                                                                            {{ $hub->office_country == $country->name ? 'selected' : '' }}>
                                                                                             {{ $country->name }}
                                                                                         </option>
                                                                                     @endforeach
@@ -768,10 +805,12 @@
 
                                                                              <div class="form-group-custom">
                                                                                  <label class="form-label-custom">Country</label>
-                                                                                 <select name="billing_country" class="form-select-custom select2-country">
+                                                                                 <select name="billing_country" class="form-select-custom select2-flag">
                                                                                      <option value="">Select Country</option>
                                                                                      @foreach($countries as $country)
-                                                                                         <option value="{{ $country->name }}" data-flag="{{ $country->flag_emoji }}" {{ $hub->billing_country == $country->name ? 'selected' : '' }}>
+                                                                                         <option value="{{ $country->name }}"
+                                                                                             data-flag="{{ $country->flag_url }}"
+                                                                                             {{ $hub->billing_country == $country->name ? 'selected' : '' }}>
                                                                                              {{ $country->name }}
                                                                                          </option>
                                                                                      @endforeach
@@ -1300,16 +1339,32 @@
             });
 
             // Select2 Country Flag Template
-            function formatCountry(state) {
+            function formatFlag(state) {
                 if (!state.id) {
                     return state.text;
                 }
-                var flag = $(state.element).data('flag');
-                var $state = $(
-                    '<span>' + (flag ? flag + ' ' : '') + state.text + '</span>'
-                );
-                return $state;
-            };
+                var flagUrl = $(state.element).data('flag');
+                if (!flagUrl) {
+                    return state.text;
+                }
+                return $('<span><img src="' + flagUrl + '" class="img-flag" style="width: 20px; height: 15px; margin-right: 8px; vertical-align: middle;" /> ' + state.text + '</span>');
+            }
+
+            $('.select2-flag').select2({
+                placeholder: 'Select Country',
+                allowClear: true,
+                width: '100%',
+                templateResult: formatFlag,
+                templateSelection: formatFlag
+            });
+
+            $('.select2-flag').on('change', function() {
+                if ($(this).hasClass('error')) {
+                    $(this).next('.select2-container').addClass('error');
+                } else {
+                    $(this).next('.select2-container').removeClass('error');
+                }
+            });
 
             // Dynamic Service Email Field Logic
             function updateServiceEmailFields(selectId, containerId, type, initialData = {}) {
@@ -1367,14 +1422,6 @@
                 placeholder: 'Add emails',
                 tags: true,
                 tokenSeparators: [',', ';', ' '],
-                width: '100%'
-            });
-
-            $('.select2-country').select2({
-                placeholder: 'Select Country',
-                allowClear: true,
-                templateResult: formatCountry,
-                templateSelection: formatCountry,
                 width: '100%'
             });
 
@@ -1519,7 +1566,9 @@
                 errorElement: 'div',
                 errorClass: 'error-message',
                 errorPlacement: function(error, element) {
-                    if (element.parent('.input-group-custom').length) {
+                    if (element.hasClass('select2-flag')) {
+                        error.insertAfter(element.next('.select2-container'));
+                    } else if (element.parent('.input-group-custom').length) {
                         error.insertAfter(element.parent());
                     } else {
                         error.insertAfter(element);
@@ -1527,9 +1576,15 @@
                 },
                 highlight: function(element, errorClass, validClass) {
                     $(element).addClass("error");
+                    if ($(element).hasClass('select2-flag')) {
+                        $(element).next('.select2-container').addClass('error');
+                    }
                 },
                 unhighlight: function(element, errorClass, validClass) {
                     $(element).removeClass("error");
+                    if ($(element).hasClass('select2-flag')) {
+                        $(element).next('.select2-container').removeClass('error');
+                    }
                 }
             });
         });

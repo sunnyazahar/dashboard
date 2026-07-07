@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('styles')
+    <link rel="stylesheet" type="text/css" href="{{ asset('files/bower_components/select2/dist/css/select2.min.css') }}">
     <style>
         .main-body .page-wrapper {
             padding: 0;
@@ -127,6 +128,61 @@
         .form-select-custom:focus {
             border-color: #01a9ac;
             box-shadow: 0 0 0 2px rgba(1, 169, 172, 0.1);
+        }
+        .select2-container--default .select2-selection--single {
+            background-color: #fff !important;
+            background: #fff !important;
+            border: 1px solid #d1d5db !important;
+            border-top: 1px solid #d1d5db !important;
+            border-bottom: 1px solid #d1d5db !important;
+            border-left: 1px solid #d1d5db !important;
+            border-right: 1px solid #d1d5db !important;
+            height: 32px !important;
+            border-radius: 4px !important;
+            box-sizing: border-box !important;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: #01a9ac !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            background-color: transparent !important;
+            background: transparent !important;
+            line-height: 30px !important;
+            padding-left: 12px !important;
+            font-size: 13px !important;
+            color: #374151 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #9ca3af !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 30px !important;
+            top: 1px !important;
+            right: 8px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #6b7280 transparent transparent transparent !important;
+        }
+        .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent #6b7280 transparent !important;
+        }
+        .select2-dropdown {
+            background-color: #fff !important;
+            border: 1px solid #d1d5db !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+        }
+        .select2-results__option {
+            font-size: 13px !important;
+            padding: 8px 12px !important;
+            color: #374151 !important;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #f3f4f6 !important;
+            color: #374151 !important;
+        }
+        .select2-container--default.error .select2-selection--single {
+            border-color: #d9534f !important;
         }
         .btn-input-append {
             position: absolute;
@@ -465,7 +521,7 @@
                                                                                 </div>
                                                                             </div>
 
-                                                                            <div class="form-group-custom">
+                                                                            <div class="form-group-custom d-none">
                                                                                 <label class="form-label-custom">Company id</label>
                                                                                 <input type="text" name="company_id" class="form-input-custom form-input-readonly" value="" >
                                                                             </div>
@@ -493,10 +549,10 @@
 
                                                                             <div class="form-group-custom">
                                                                                 <label class="form-label-custom">Email</label>
-                                                                                <input type="text" name="email" class="form-input-custom" value="shipspares@acsfrt.com.sg; benjamin@acsfrt.com.sg...">
+                                                                                <input type="text" name="email" class="form-input-custom" value="">
                                                                             </div>
 
-                                                                            <div class="form-group-custom" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 5px;">
+                                                                            <div class="form-group-custom d-none" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 5px;">
                                                                                 <input type="checkbox" name="is_gts_company" id="is_gts_company" value="1">
                                                                                 <label class="form-label-custom" for="is_gts_company">This hub is part of GTS company</label>
                                                                             </div>
@@ -543,10 +599,12 @@
 
                                                                             <div class="form-group-custom">
                                                                                 <label class="form-label-custom">Country</label>
-                                                                                <select name="country" class="form-select-custom">
+                                                                                <select name="country" class="form-select-custom select2-flag">
                                                                                     <option value="">Select Country</option>
                                                                                     @foreach($countries as $country)
-                                                                                        <option value="{{ $country->name }}" {{ old('country', '') == $country->name ? 'selected' : '' }}>
+                                                                                        <option value="{{ $country->name }}"
+                                                                                            data-flag="{{ $country->flag_url }}"
+                                                                                            {{ old('country') == $country->name ? 'selected' : '' }}>
                                                                                             {{ $country->name }}
                                                                                         </option>
                                                                                     @endforeach
@@ -570,10 +628,12 @@
 
                                                                             <div class="form-group-custom">
                                                                                 <label class="form-label-custom">Office country</label>
-                                                                                <select name="office_country" class="form-select-custom">
+                                                                                <select name="office_country" class="form-select-custom select2-flag">
                                                                                     <option value="">Select Country</option>
                                                                                     @foreach($countries as $country)
-                                                                                        <option value="{{ $country->name }}" {{ old('office_country') == $country->name ? 'selected' : '' }}>
+                                                                                        <option value="{{ $country->name }}"
+                                                                                            data-flag="{{ $country->flag_url }}"
+                                                                                            {{ old('office_country') == $country->name ? 'selected' : '' }}>
                                                                                             {{ $country->name }}
                                                                                         </option>
                                                                                     @endforeach
@@ -651,8 +711,36 @@
     <script src="{{ asset('files/assets/js/vartical-layout.min.js') }}"></script>
     <!-- Custom js -->
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
     <script>
         $(document).ready(function() {
+            function formatFlag(state) {
+                if (!state.id) {
+                    return state.text;
+                }
+                var flagUrl = $(state.element).data('flag');
+                if (!flagUrl) {
+                    return state.text;
+                }
+                return $('<span><img src="' + flagUrl + '" class="img-flag" style="width: 20px; height: 15px; margin-right: 8px; vertical-align: middle;" /> ' + state.text + '</span>');
+            }
+
+            $('.select2-flag').select2({
+                placeholder: 'Select Country',
+                allowClear: true,
+                width: '100%',
+                templateResult: formatFlag,
+                templateSelection: formatFlag
+            });
+
+            $('.select2-flag').on('change', function() {
+                if ($(this).hasClass('error')) {
+                    $(this).next('.select2-container').addClass('error');
+                } else {
+                    $(this).next('.select2-container').removeClass('error');
+                }
+            });
+
             // Tab switching logic
             $('.tab-item').on('click', function() {
                 var tabId = $(this).data('tab');
@@ -695,7 +783,9 @@
                 errorElement: 'div',
                 errorClass: 'error-message',
                 errorPlacement: function(error, element) {
-                    if (element.parent('.input-group-custom').length) {
+                    if (element.hasClass('select2-flag')) {
+                        error.insertAfter(element.next('.select2-container'));
+                    } else if (element.parent('.input-group-custom').length) {
                         error.insertAfter(element.parent());
                     } else {
                         error.insertAfter(element);
@@ -703,9 +793,15 @@
                 },
                 highlight: function(element, errorClass, validClass) {
                     $(element).addClass("error");
+                    if ($(element).hasClass('select2-flag')) {
+                        $(element).next('.select2-container').addClass('error');
+                    }
                 },
                 unhighlight: function(element, errorClass, validClass) {
                     $(element).removeClass("error");
+                    if ($(element).hasClass('select2-flag')) {
+                        $(element).next('.select2-container').removeClass('error');
+                    }
                 }
             });
         });

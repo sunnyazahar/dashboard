@@ -398,6 +398,29 @@
             text-decoration: underline !important;
         }
 
+        .on-board-leg-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .on-board-leg-row .on-board-leg-field {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+        .on-board-leg-row .on-board-leg-field-time {
+            flex: 0 0 90px;
+            max-width: 90px;
+        }
+        .on-board-leg-row .on-board-leg-remove-btn {
+            flex: 0 0 20px;
+            margin-bottom: 6px;
+            line-height: 1;
+        }
+        #add-on-board-leg-btn:hover {
+            text-decoration: underline !important;
+        }
+
         .hand-carry-leg-row {
             display: flex;
             align-items: flex-end;
@@ -3477,6 +3500,7 @@
             $('#service-details-courier').hide();
             $('#service-details-release').hide();
             $('#service-details-hand-carry').hide();
+            $('#service-details-on-board').hide();
 
             if (service === 'Airfreight') {
                 $('#service-details-airfreight').show();
@@ -3490,6 +3514,8 @@
                 $('#service-details-release').show();
             } else if (service === 'Hand Carry') {
                 $('#service-details-hand-carry').show();
+            } else if (service === 'On-board delivery') {
+                $('#service-details-on-board').show();
             } else {
                 $('#service-details-placeholder').show();
             }
@@ -3810,12 +3836,59 @@
             reindexLegRowNames('#hand-carry-legs-container', '.hand-carry-leg-row', 'hand_carry_legs');
         });
 
+        function buildOnBoardLegRowHtml() {
+            var rowIndex = $('#on-board-legs-container .on-board-leg-row').length;
+            return `
+                <div class="on-board-leg-row">
+                    <div class="on-board-leg-field">
+                        <div class="form-group-custom mb-0">
+                            <label>Departure date</label>
+                            <div class="input-with-icon">
+                                <input type="text" name="on_board_legs[${rowIndex}][departure_date]" class="form-control-sm-custom datepicker" placeholder="DD.MM.YYYY">
+                                <i class="ti-calendar"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="on-board-leg-field">
+                        <div class="form-group-custom mb-0">
+                            <label>Delivery date</label>
+                            <div class="input-with-icon">
+                                <input type="text" name="on_board_legs[${rowIndex}][delivery_date]" class="form-control-sm-custom datepicker" placeholder="DD.MM.YYYY">
+                                <i class="ti-calendar"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="on-board-leg-field on-board-leg-field-time">
+                        <div class="form-group-custom mb-0">
+                            <label>Delivery time</label>
+                            <input type="text" name="on_board_legs[${rowIndex}][delivery_time]" class="form-control-sm-custom on-board-leg-time-input" placeholder="hh:mm">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-link text-muted p-0 on-board-leg-remove-btn remove-on-board-leg" title="Remove">
+                        <i class="ti-close" style="font-size: 14px;"></i>
+                    </button>
+                </div>`;
+        }
+
+        $('#add-on-board-leg-btn').on('click', function(e) {
+            e.preventDefault();
+            var $row = $(buildOnBoardLegRowHtml());
+            $('#on-board-legs-container').append($row);
+            initFlightDatepickers($row);
+        });
+
+        $(document).on('click', '.remove-on-board-leg', function() {
+            $(this).closest('.on-board-leg-row').remove();
+            reindexLegRowNames('#on-board-legs-container', '.on-board-leg-row', 'on_board_legs');
+        });
+
         initFlightDatepickers($('#airfreight-flights-container'));
         initFlightDatepickers($('#sea-freight-legs-container'));
         initFlightDatepickers($('#truck-legs-container'));
         initFlightDatepickers($('#courier-legs-container'));
         initFlightDatepickers($('#release-legs-container'));
         initFlightDatepickers($('#hand-carry-legs-container'));
+        initFlightDatepickers($('#on-board-legs-container'));
 
         function refreshStockItemsTable() {
             var count = $('#stock-items-table tbody tr.selected-stock-row').length;
@@ -4412,7 +4485,7 @@
 
             $form.on('input change', ':input', syncSaveButtonState);
             $(document).on('select2:select select2:unselect select2:clear', '#shipment-edit-form .select2', syncSaveButtonState);
-            $(document).on('click', '#modal-add-selected, .remove-stock-item, #btn-add-custom-field, .btn-remove-field, #add-irregularity-btn, .remove-irregularity, [id$="-leg-btn"], .remove-hand-carry-leg, .remove-sea-freight-leg, .remove-truck-leg, .remove-courier-leg, .remove-release-leg', function() {
+            $(document).on('click', '#modal-add-selected, .remove-stock-item, #btn-add-custom-field, .btn-remove-field, #add-irregularity-btn, .remove-irregularity, [id$="-leg-btn"], .remove-hand-carry-leg, .remove-sea-freight-leg, .remove-truck-leg, .remove-courier-leg, .remove-release-leg, .remove-on-board-leg', function() {
                 setTimeout(syncSaveButtonState, 0);
             });
 
