@@ -29,7 +29,7 @@ class HubController extends Controller
             'code' => 'nullable|string|max:255',
             'code_description' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:255',
-            'email' => 'nullable|string|max:255',
+            'email' => ['nullable', 'string', 'max:255', $this->multipleEmailsValidator()],
             'is_gts_company' => 'nullable|boolean',
             'remarks' => 'nullable|string',
             'special_considerations' => 'nullable|string',
@@ -49,7 +49,7 @@ class HubController extends Controller
             'un_locode' => 'nullable|string|max:255',
             'hide_in_portal' => 'nullable|boolean',
             'portal_remarks' => 'nullable|string',
-            'portal_email' => 'nullable|string|max:255',
+            'portal_email' => ['nullable', 'string', 'max:255', $this->multipleEmailsValidator()],
         ]);
 
         $validated['is_gts_company'] = $request->has('is_gts_company');
@@ -79,7 +79,7 @@ class HubController extends Controller
             'code' => 'nullable|string|max:255',
             'code_description' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:255',
-            'email' => 'nullable|string|max:255',
+            'email' => ['nullable', 'string', 'max:255', $this->multipleEmailsValidator()],
             'is_gts_company' => 'nullable|boolean',
             'remarks' => 'nullable|string',
             'special_considerations' => 'nullable|string',
@@ -99,7 +99,7 @@ class HubController extends Controller
             'un_locode' => 'nullable|string|max:255',
             'hide_in_portal' => 'nullable|boolean',
             'portal_remarks' => 'nullable|string',
-            'portal_email' => 'nullable|string|max:255',
+            'portal_email' => ['nullable', 'string', 'max:255', $this->multipleEmailsValidator()],
 
             // New Fields Validation
             'invoicing_name' => 'nullable|string|max:255',
@@ -346,5 +346,23 @@ class HubController extends Controller
         ]);
 
         return redirect()->route('hub.show', $hubId)->with('success', 'Hub User updated successfully.');
+    }
+
+    private function multipleEmailsValidator(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value === null || $value === '') {
+                return;
+            }
+
+            $emails = preg_split('/\s*[,;]\s*/', (string) $value, -1, PREG_SPLIT_NO_EMPTY);
+
+            foreach ($emails as $email) {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $fail('Each email address must be valid.');
+                    return;
+                }
+            }
+        };
     }
 }
