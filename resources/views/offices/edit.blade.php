@@ -734,7 +734,7 @@
                                                         value="{{ old('office_short_name', $office->office_short_name) }}">
                                                 </div>
 
-                                                <div class="form-group-custom">
+                                                <div class="form-group-custom d-none">
                                                     <label class="form-label-custom">Customer number from FM</label>
                                                     <input type="text" name="customer_fm_number" class="form-control-custom"
                                                         value="{{ old('customer_fm_number') }}">
