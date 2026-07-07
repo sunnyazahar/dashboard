@@ -489,7 +489,9 @@
                                                     </div>
                                                     <div class="form-group">
                                                         <label>E-mail</label>
-                                                        <input type="text" name="email" class="form-control" value="">
+                                                        <input type="text" name="email" class="form-control"
+                                                            value=""
+                                                            placeholder="email@example.com; email2@example.com">
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Internal shipment</label>
@@ -823,12 +825,30 @@
             });
 
             // Initialize form validation
+            $.validator.addMethod('multiEmail', function (value, element) {
+                if (this.optional(element)) {
+                    return true;
+                }
+
+                var emails = value.split(/[;,]+/).map(function (part) {
+                    return $.trim(part);
+                }).filter(Boolean);
+
+                if (!emails.length) {
+                    return false;
+                }
+
+                return emails.every(function (email) {
+                    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+                });
+            }, 'Please enter valid email address(es), separated by comma or semicolon');
+
             $("#customerForm").validate({
                 rules: {
                     customer_name: "required",
                     email: {
                         required: true,
-                        email: true
+                        multiEmail: true
                     },
                     street_address: "required",
                     city: "required",
@@ -850,7 +870,7 @@
                 },
                 messages: {
                     customer_name: "Please enter customer name",
-                    email: "Please enter a valid email address",
+                    email: "Please enter valid email address(es), separated by comma or semicolon",
                     street_address: "Please enter street address",
                     city: "Please enter city",
                     country: "Please select country",

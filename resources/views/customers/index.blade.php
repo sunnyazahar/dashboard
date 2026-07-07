@@ -221,7 +221,6 @@
                                                 <thead>
                                                     <tr>
                                                         <th style="width: 25%;">Customer name</th>
-                                                        <th style="width: 10%;">FM number</th>
                                                         <th style="width: 15%;">Main contact</th>
                                                         <th style="width: 15%;">Responsible office</th>
                                                         <th style="width: 20%;">Account manager</th>
@@ -238,7 +237,6 @@
                                                                     {{ $customer->customer_name }}
                                                                 </a>
                                                             </td>
-                                                            <td>{{ $customer->customer_number ?? '—' }}</td>
                                                             <td>{{ $customer->responsible->accountManager->office->phone_number ?? '—' }}</td>
                                                             <td>{{ $customer->responsible->accountManager->office->office_short_name ?? '—' }}</td>
                                                             <td>{{ $customer->responsible->accountManager->name ?? '—' }}</td>

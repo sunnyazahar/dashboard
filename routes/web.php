@@ -381,8 +381,22 @@ Route::get('/api/account-managers', function (\Illuminate\Http\Request $request)
         'manager' => 'Manager users',
     ];
 
+    $allowedCategories = collect(explode(',', (string) $request->query('categories', '')))
+        ->map(fn ($category) => trim($category))
+        ->filter()
+        ->intersect(array_keys($categoryLabels))
+        ->values()
+        ->all();
+
+    if ($allowedCategories !== []) {
+        $categoryLabels = array_intersect_key($categoryLabels, array_flip($allowedCategories));
+    }
+
     $contacts = \App\Models\Contact::with('office')
         ->whereNotNull('office_id')
+        ->when($allowedCategories !== [], function ($query) use ($allowedCategories) {
+            $query->whereIn('category', $allowedCategories);
+        })
         ->when($q, function ($qbuilder) use ($q) {
             $qbuilder->where(function ($query) use ($q) {
                 $query->where('name', 'like', "%{$q}%")

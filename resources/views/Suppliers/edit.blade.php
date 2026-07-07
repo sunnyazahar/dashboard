@@ -495,7 +495,8 @@
 
                                                             <div class="form-group-custom">
                                                                 <label class="form-label-custom">Email</label>
-                                                                <input type="email" name="email" class="form-input-custom" value="{{ $supplier->email }}">
+                                                                <input type="text" name="email" class="form-input-custom" value="{{ $supplier->email }}"
+                                                                    placeholder="email@example.com; email2@example.com">
                                                             </div>
 
                                                             <div class="form-group-custom">

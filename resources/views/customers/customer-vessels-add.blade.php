@@ -667,12 +667,11 @@
                                                         </div>
                                                         <div class="form-group">
                                                             <label>Account manager</label>
-                                                            <select name="account_manager" class="form-control select2">
+                                                            <select id="account-manager-select" name="account_manager" class="form-control select2-account-manager">
                                                                 <option value=""></option>
-                                                                @foreach($accountManagers as $manager)
-                                                                    <option value="{{ $manager->name }}">{{ $manager->name }}
-                                                                    </option>
-                                                                @endforeach
+                                                                @if(old('account_manager'))
+                                                                    <option value="{{ old('account_manager') }}" selected>{{ old('account_manager') }}</option>
+                                                                @endif
                                                             </select>
                                                         </div>
 
@@ -811,8 +810,66 @@
 
     <script>
         $(document).ready(function () {
+            function formatAccountManager(item) {
+                if (!item.id) {
+                    return item.text;
+                }
+
+                var subtitleParts = [];
+                if (item.type_label) {
+                    subtitleParts.push(item.type_label);
+                }
+                if (item.subtitle) {
+                    subtitleParts.push(item.subtitle);
+                }
+
+                var subtitle = subtitleParts.join(' · ');
+                return $(
+                    '<div style="line-height:1.1;"><div style="font-weight:600;">' + item.text + '</div>' +
+                    (subtitle ? '<div style="font-size:11px;color:#6b7280;">' + subtitle + '</div>' : '') +
+                    '</div>'
+                );
+            }
+
+            function formatAccountManagerSelection(item) {
+                return item.text || item.id;
+            }
+
+            $('#account-manager-select').select2({
+                placeholder: 'Select account manager',
+                allowClear: true,
+                width: '100%',
+                minimumInputLength: 0,
+                ajax: {
+                    url: @json(url('/api/account-managers')),
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            categories: 'operations,account,manager'
+                        };
+                    },
+                    processResults: function (data) {
+                        data.forEach(function (group) {
+                            if (!group.children) {
+                                return;
+                            }
+
+                            group.children.forEach(function (item) {
+                                item.id = item.text;
+                            });
+                        });
+
+                        return { results: data };
+                    }
+                },
+                templateResult: formatAccountManager,
+                templateSelection: formatAccountManagerSelection
+            });
+
             // Initialize Select2 for standard filters
-            $('.select2').select2({
+            $('select.select2').select2({
                 placeholder: "Click here",
                 allowClear: true
             });
@@ -954,7 +1011,9 @@
                     account_manager: "Please enter account manager"
                 },
                 errorPlacement: function (error, element) {
-                    if (element.hasClass('select2')) {
+                    if (element.hasClass('select2-account-manager')) {
+                        error.insertAfter(element.next('.select2-container'));
+                    } else if (element.hasClass('select2')) {
                         error.insertAfter(element.next('.select2-container'));
                     } else {
                         error.insertAfter(element);
@@ -962,20 +1021,20 @@
                 },
                 highlight: function (element) {
                     $(element).addClass('error');
-                    if ($(element).hasClass('select2')) {
+                    if ($(element).hasClass('select2') || $(element).hasClass('select2-account-manager')) {
                         $(element).next('.select2-container').find('.select2-selection').css('border-color', '#e74c3c');
                     }
                 },
                 unhighlight: function (element) {
                     $(element).removeClass('error');
-                    if ($(element).hasClass('select2')) {
+                    if ($(element).hasClass('select2') || $(element).hasClass('select2-account-manager')) {
                         $(element).next('.select2-container').find('.select2-selection').css('border-color', '#ced4da');
                     }
                 }
             });
 
             // Trigger validation on Select2 change
-            $('.select2').on('change', function () {
+            $('select.select2, select.select2-account-manager').on('change', function () {
                 $(this).valid();
             });
         });

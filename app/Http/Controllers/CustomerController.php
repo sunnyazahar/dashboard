@@ -42,7 +42,7 @@ class CustomerController extends Controller
         // Server-side validation
         $validatedData = $request->validate([
             'customer_name' => 'required|string|max:150',
-            'email' => 'nullable|email|max:150',
+            'email' => ['required', 'string', 'max:500', $this->multipleEmailsValidator()],
             'customer_group' => 'required',
             'street_address' => 'required|string',
             'city' => 'required|string',
@@ -205,7 +205,7 @@ class CustomerController extends Controller
         // Server-side validation (matching create rules)
         $validatedData = $request->validate([
             'customer_name' => 'required|string|max:150',
-            'email' => 'nullable|email|max:150',
+            'email' => ['required', 'string', 'max:500', $this->multipleEmailsValidator()],
             'customer_group' => 'required',
             'street_address' => 'required|string',
             'city' => 'required|string',
@@ -429,8 +429,8 @@ class CustomerController extends Controller
     {
         $customer = Customer::findOrFail($id);
         $customerContacts = $customer->contacts;
-        $accountManagers = Contact::where('category', 'account')->get();
-        return view('customers.customer-vessels-add', compact('id', 'customerContacts', 'accountManagers'));
+
+        return view('customers.customer-vessels-add', compact('id', 'customerContacts'));
     }
 
     /**
@@ -574,9 +574,8 @@ class CustomerController extends Controller
     {
         $vessel = CustomerVessel::with('customer.contacts')->findOrFail($id);
         $customerContacts = $vessel->customer->contacts;
-        $accountManagers = Contact::where('category', 'account')->get();
-        
-        return view('customers.customer-vessels', compact('vessel', 'customerContacts', 'accountManagers'));
+
+        return view('customers.customer-vessels', compact('vessel', 'customerContacts'));
     }
 
     /**
@@ -633,5 +632,23 @@ class CustomerController extends Controller
         ]);
 
         return redirect()->route('customers.edit', $vessel->customer_id)->with('success', 'Vessel updated successfully.');
+    }
+
+    private function multipleEmailsValidator(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value === null || $value === '') {
+                return;
+            }
+
+            $emails = preg_split('/\s*[,;]\s*/', (string) $value, -1, PREG_SPLIT_NO_EMPTY);
+
+            foreach ($emails as $email) {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $fail('Each email address must be valid.');
+                    return;
+                }
+            }
+        };
     }
 }

@@ -28,7 +28,7 @@ class AgentController extends Controller
             'code' => 'nullable|string|max:255',
             'code_description' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
-            'email' => 'nullable|string|max:255',
+            'email' => ['nullable', 'string', 'max:255', $this->multipleEmailsValidator()],
             'remarks' => 'nullable|string',
             'special_considerations' => 'nullable|string',
             'show_pre_alert' => 'nullable|boolean',
@@ -72,7 +72,7 @@ class AgentController extends Controller
             'code'                => 'nullable|string|max:255',
             'code_description'    => 'nullable|string|max:255',
             'phone'               => 'nullable|string|max:255',
-            'email'               => 'nullable|string|max:255',
+            'email'               => ['nullable', 'string', 'max:255', $this->multipleEmailsValidator()],
             'remarks'             => 'nullable|string',
             'special_considerations' => 'nullable|string',
             'show_pre_alert'      => 'nullable|boolean',
@@ -309,5 +309,23 @@ class AgentController extends Controller
         $user->delete();
 
         return redirect()->route('agents.edit', $agent_id)->with('success', 'User deleted successfully.');
+    }
+
+    private function multipleEmailsValidator(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value === null || $value === '') {
+                return;
+            }
+
+            $emails = preg_split('/\s*[,;]\s*/', (string) $value, -1, PREG_SPLIT_NO_EMPTY);
+
+            foreach ($emails as $email) {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $fail('Each email address must be valid.');
+                    return;
+                }
+            }
+        };
     }
 }

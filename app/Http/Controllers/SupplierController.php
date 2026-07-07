@@ -26,7 +26,7 @@ class SupplierController extends Controller
     {
         $request->validate([
             'supplier_name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'email' => ['nullable', 'string', 'max:255', $this->multipleEmailsValidator()],
             'phone_number' => 'nullable|string|max:255',
         ]);
 
@@ -49,7 +49,7 @@ class SupplierController extends Controller
         
         $request->validate([
             'supplier_name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'email' => ['nullable', 'string', 'max:255', $this->multipleEmailsValidator()],
             'phone_number' => 'nullable|string|max:255',
         ]);
 
@@ -127,5 +127,23 @@ class SupplierController extends Controller
         ]);
 
         return redirect()->route('suppliers.edit', $supplierId)->with('success', 'Contact updated successfully.');
+    }
+
+    private function multipleEmailsValidator(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if ($value === null || $value === '') {
+                return;
+            }
+
+            $emails = preg_split('/\s*[,;]\s*/', (string) $value, -1, PREG_SPLIT_NO_EMPTY);
+
+            foreach ($emails as $email) {
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $fail('Each email address must be valid.');
+                    return;
+                }
+            }
+        };
     }
 }

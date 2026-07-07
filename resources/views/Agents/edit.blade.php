@@ -474,7 +474,8 @@
                                                     <div class="form-group-custom">
                                                         <label class="form-label-custom">Email</label>
                                                         <input type="text" name="email" class="form-input-custom"
-                                                            value="{{ old('email', $agent->email) }}">
+                                                            value="{{ old('email', $agent->email) }}"
+                                                            placeholder="email@example.com; email2@example.com">
                                                     </div>
 
                                                     <div class="form-group-custom">

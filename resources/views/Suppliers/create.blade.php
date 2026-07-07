@@ -378,7 +378,8 @@
 
                                                         <div class="form-group-custom">
                                                             <label class="form-label-custom">Email</label>
-                                                            <input type="email" name="email" class="form-input-custom">
+                                                            <input type="text" name="email" class="form-input-custom"
+                                                                placeholder="email@example.com; email2@example.com">
                                                         </div>
 
                                                         <div class="form-group-custom">
@@ -590,6 +591,24 @@
             });
 
             // jQuery Validation
+            $.validator.addMethod('multiEmail', function (value, element) {
+                if (this.optional(element)) {
+                    return true;
+                }
+
+                var emails = value.split(/[;,]+/).map(function (part) {
+                    return $.trim(part);
+                }).filter(Boolean);
+
+                if (!emails.length) {
+                    return false;
+                }
+
+                return emails.every(function (email) {
+                    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+                });
+            }, 'Please enter valid email address(es), separated by comma or semicolon');
+
             $("#supplierForm").validate({
                 rules: {
                     supplier_name: {
@@ -597,7 +616,7 @@
                         minlength: 2
                     },
                     email: {
-                        email: true
+                        multiEmail: true
                     }
                 },
                 messages: {
@@ -605,7 +624,7 @@
                         required: "Please enter the supplier name"
                     },
                     email: {
-                        email: "Please enter a valid email address"
+                        multiEmail: "Please enter valid email address(es), separated by comma or semicolon"
                     }
                 },
                 errorElement: "span",
