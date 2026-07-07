@@ -1,0 +1,329 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
+
+class Shipment extends Model
+{
+    protected $fillable = [
+        'shipment_number',
+        'departure',
+        'departure_port_code',
+        'service',
+        'preferred_shipment_date',
+        'deadline_arrival',
+        'vessel_eta',
+        'vessel_etd',
+        'pre_alert_reminder',
+        'customer_reference',
+        'not_applicable_for_consolidation',
+        'consignee',
+        'consignee_address',
+        'consignee_city',
+        'consignee_district',
+        'consignee_zip',
+        'consignee_country',
+        'consignee_port_code',
+        'location',
+        'consignee_att',
+        'consignee_email',
+        'account_manager_id',
+        'special_considerations_destination',
+        'skip_instruction_dest',
+        'comments_departure_hub',
+        'skip_instruction_hub',
+        'comments_consignee',
+        'skip_prealert',
+        'project_logistics',
+        'port_agency',
+        'status',
+        'flags',
+        'created_by',
+    ];
+
+    protected $casts = [
+        'preferred_shipment_date' => 'date',
+        'deadline_arrival' => 'date',
+        'vessel_eta' => 'date',
+        'vessel_etd' => 'date',
+        'pre_alert_reminder' => 'date',
+        'flags' => 'array',
+        'not_applicable_for_consolidation' => 'boolean',
+        'skip_instruction_dest' => 'boolean',
+        'skip_instruction_hub' => 'boolean',
+        'skip_prealert' => 'boolean',
+        'project_logistics' => 'boolean',
+        'port_agency' => 'boolean',
+    ];
+
+    public function crrs(): BelongsToMany
+    {
+        return $this->belongsToMany(Crr::class, 'shipment_crr');
+    }
+
+    public function irregularities(): HasMany
+    {
+        return $this->hasMany(ShipmentIrregularity::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ShipmentDocument::class);
+    }
+
+    public function manifests(): HasMany
+    {
+        return $this->hasMany(ShipmentManifest::class)->orderBy('version');
+    }
+
+    public function preAlerts(): HasMany
+    {
+        return $this->hasMany(ShipmentPreAlert::class)->orderBy('version');
+    }
+
+    public function preAlertReminderSends(): HasMany
+    {
+        return $this->hasMany(ShipmentPreAlertReminderSend::class);
+    }
+
+    public function stockSnapshots(): HasMany
+    {
+        return $this->hasMany(ShipmentStockSnapshot::class)->orderBy('sort_order');
+    }
+
+    public function flights(): HasMany
+    {
+        return $this->hasMany(ShipmentFlight::class)->orderBy('sort_order');
+    }
+
+    public function seaLegs(): HasMany
+    {
+        return $this->hasMany(ShipmentSeaLeg::class)->orderBy('sort_order');
+    }
+
+    public function truckLegs(): HasMany
+    {
+        return $this->hasMany(ShipmentTruckLeg::class)->orderBy('sort_order');
+    }
+
+    public function courierLegs(): HasMany
+    {
+        return $this->hasMany(ShipmentCourierLeg::class)->orderBy('sort_order');
+    }
+
+    public function releaseLegs(): HasMany
+    {
+        return $this->hasMany(ShipmentReleaseLeg::class)->orderBy('sort_order');
+    }
+
+    public function handCarryLegs(): HasMany
+    {
+        return $this->hasMany(ShipmentHandCarryLeg::class)->orderBy('sort_order');
+    }
+
+    public function accountManager(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'account_manager_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function getCustomerDisplayAttribute(): string
+    {
+        $names = $this->crrs
+            ->map(fn (Crr $crr) => $crr->customerVessel?->customer?->customer_name)
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $names->isNotEmpty() ? $names->implode(', ') : '—';
+    }
+
+    public function getVesselDisplayAttribute(): string
+    {
+        $names = $this->crrs
+            ->pluck('vessel_name')
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $names->isNotEmpty() ? $names->implode(', ') : '—';
+    }
+
+    public function getPoNumbersDisplayAttribute(): string
+    {
+        $numbers = $this->crrs
+            ->flatMap(function (Crr $crr) {
+                if (!is_array($crr->po_numbers)) {
+                    return $crr->po_numbers ? [$crr->po_numbers] : [];
+                }
+
+                return $crr->po_numbers;
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        return $numbers->implode(', ');
+    }
+
+    public function getDestinationDisplayAttribute(): string
+    {
+        if ($this->consignee_port_code) {
+            return $this->consignee_port_code;
+        }
+
+        $parts = array_filter([$this->consignee_city, $this->consignee_country]);
+
+        return $parts ? implode(', ', $parts) : '—';
+    }
+
+    public function getServiceEtdAttribute(): ?\Illuminate\Support\Carbon
+    {
+        return match ($this->service) {
+            'Airfreight' => $this->flights->last()?->departure_date,
+            'Sea freight' => $this->seaLegs->last()?->etd,
+            'Truck' => $this->truckLegs->last()?->departure_date,
+            'Courier' => $this->courierLegs->last()?->departure_date,
+            'Hand Carry' => $this->handCarryLegs->last()?->departure_date,
+            default => null,
+        };
+    }
+
+    public function getServiceEtaAttribute(): ?\Illuminate\Support\Carbon
+    {
+        return match ($this->service) {
+            'Airfreight' => $this->flights->last()?->arrival_date,
+            'Sea freight' => $this->seaLegs->last()?->eta,
+            'Truck' => $this->truckLegs->last()?->arrival_date,
+            'Courier' => $this->courierLegs->last()?->arrival_date,
+            'Release' => $this->releaseLegs->last()?->delivery_date,
+            'Hand Carry' => $this->handCarryLegs->last()?->arrival_date,
+            default => null,
+        };
+    }
+
+    public function hasOpenIrregularities(): bool
+    {
+        return $this->irregularities->contains(fn ($item) => $item->status !== 'Closed');
+    }
+
+    public function hasEtlStock(): bool
+    {
+        return $this->crrs->contains(
+            fn (Crr $crr) => strtoupper((string) $crr->internal_shipment) === 'ETL'
+        );
+    }
+
+    public function getTotalWeightDisplayAttribute(): string
+    {
+        $weight = $this->crrs->sum(
+            fn (Crr $crr) => (float) $crr->packages->sum('weight')
+        );
+
+        return $weight > 0 ? (string) round($weight, 2) : '—';
+    }
+
+    public function statusBadgeClass(): string
+    {
+        return match ($this->status) {
+            'In process' => 'label label-warning',
+            'In transit' => 'label label-info',
+            'Delivered' => 'label label-success',
+            'Completed' => 'label label-success',
+            'Pending' => 'label label-danger',
+            'Draft' => 'label label-primary',
+            default => 'label label-primary',
+        };
+    }
+
+    public static function availableFlags(): array
+    {
+        return [
+            'Follow up',
+            'Pick up',
+            'Un mark pick up',
+        ];
+    }
+
+    public static function defaultFlags(): array
+    {
+        return ['Follow up'];
+    }
+
+    public static function batchResolvePartyNames(Collection $shipments): array
+    {
+        $compositeKeys = $shipments
+            ->flatMap(fn (self $shipment) => [$shipment->departure, $shipment->consignee])
+            ->filter(fn ($value) => is_string($value) && str_contains($value, ':'))
+            ->unique()
+            ->values();
+
+        if ($compositeKeys->isEmpty()) {
+            return [];
+        }
+
+        $idsByType = [];
+        foreach ($compositeKeys as $key) {
+            [$type, $id] = explode(':', $key, 2);
+            $idsByType[$type][] = (int) $id;
+        }
+
+        $lookup = [];
+
+        if (!empty($idsByType['hub'])) {
+            Hub::whereIn('id', $idsByType['hub'])->get()->each(function (Hub $hub) use (&$lookup) {
+                $lookup['hub:' . $hub->id] = $hub->hub_name;
+            });
+        }
+
+        if (!empty($idsByType['agent'])) {
+            Agent::whereIn('id', $idsByType['agent'])->get()->each(function (Agent $agent) use (&$lookup) {
+                $lookup['agent:' . $agent->id] = $agent->agent_name;
+            });
+        }
+
+        if (!empty($idsByType['customer'])) {
+            Customer::whereIn('id', $idsByType['customer'])->get()->each(function (Customer $customer) use (&$lookup) {
+                $lookup['customer:' . $customer->id] = $customer->customer_name;
+            });
+        }
+
+        if (!empty($idsByType['office'])) {
+            Office::whereIn('id', $idsByType['office'])->get()->each(function (Office $office) use (&$lookup) {
+                $lookup['office:' . $office->id] = $office->office_name;
+            });
+        }
+
+        if (!empty($idsByType['supplier'])) {
+            Supplier::whereIn('id', $idsByType['supplier'])->get()->each(function (Supplier $supplier) use (&$lookup) {
+                $lookup['supplier:' . $supplier->id] = $supplier->supplier_name;
+            });
+        }
+
+        if (!empty($idsByType['other_company'])) {
+            OtherCompany::whereIn('id', $idsByType['other_company'])->get()->each(function (OtherCompany $company) use (&$lookup) {
+                $lookup['other_company:' . $company->id] = $company->company_name;
+            });
+        }
+
+        return $lookup;
+    }
+
+    public function partyDisplay(?string $composite, array $partyNames): string
+    {
+        if (!$composite) {
+            return '—';
+        }
+
+        return $partyNames[$composite] ?? $composite;
+    }
+}

@@ -1,0 +1,350 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Hub;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class HubController extends Controller
+{
+    public function index()
+    {
+        $hubs = Hub::all();
+        return view('hub.index', compact('hubs'));
+    }
+
+    public function create()
+    {
+        $countries = DB::table('countries')->where('is_active', 1)->orderBy('name')->get();
+        return view('hub.create', compact('countries'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'hub_name' => 'required|string|max:255',
+            'company_id' => 'nullable|string|max:255',
+            'customer_number_fm' => 'nullable|string|max:255',
+            'code' => 'nullable|string|max:255',
+            'code_description' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:255',
+            'email' => 'nullable|string|max:255',
+            'is_gts_company' => 'nullable|boolean',
+            'remarks' => 'nullable|string',
+            'special_considerations' => 'nullable|string',
+            'show_pre_alert' => 'nullable|boolean',
+            'hub_address' => 'nullable|string',
+            'city' => 'nullable|string|max:255',
+            'district_state' => 'nullable|string|max:255',
+            'zip_code' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'port_code' => 'nullable|string|max:255',
+            'office_address' => 'nullable|string',
+            'office_city' => 'nullable|string|max:255',
+            'office_district_state' => 'nullable|string|max:255',
+            'office_zip_code' => 'nullable|string|max:255',
+            'office_country' => 'nullable|string|max:255',
+            'eori_number' => 'nullable|string|max:255',
+            'un_locode' => 'nullable|string|max:255',
+            'hide_in_portal' => 'nullable|boolean',
+            'portal_remarks' => 'nullable|string',
+            'portal_email' => 'nullable|string|max:255',
+        ]);
+
+        $validated['is_gts_company'] = $request->has('is_gts_company');
+        $validated['show_pre_alert'] = $request->has('show_pre_alert');
+        $validated['hide_in_portal'] = $request->has('hide_in_portal');
+
+        Hub::create($validated);
+
+        return redirect()->route('hub.index')->with('success', 'Hub created successfully.');
+    }
+
+    public function show($id)
+    {
+        $hub = Hub::with(['documents', 'pricingDocuments'])->findOrFail($id);
+        $countries = DB::table('countries')->where('is_active', 1)->orderBy('name')->get();
+        return view('hub.show', compact('hub', 'countries'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $hub = Hub::findOrFail($id);
+        
+        $validated = $request->validate([
+            'hub_name' => 'required|string|max:255',
+            'company_id' => 'nullable|string|max:255',
+            'customer_number_fm' => 'nullable|string|max:255',
+            'code' => 'nullable|string|max:255',
+            'code_description' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:255',
+            'email' => 'nullable|string|max:255',
+            'is_gts_company' => 'nullable|boolean',
+            'remarks' => 'nullable|string',
+            'special_considerations' => 'nullable|string',
+            'show_pre_alert' => 'nullable|boolean',
+            'hub_address' => 'nullable|string',
+            'city' => 'nullable|string|max:255',
+            'district_state' => 'nullable|string|max:255',
+            'zip_code' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'port_code' => 'nullable|string|max:255',
+            'office_address' => 'nullable|string',
+            'office_city' => 'nullable|string|max:255',
+            'office_district_state' => 'nullable|string|max:255',
+            'office_zip_code' => 'nullable|string|max:255',
+            'office_country' => 'nullable|string|max:255',
+            'eori_number' => 'nullable|string|max:255',
+            'un_locode' => 'nullable|string|max:255',
+            'hide_in_portal' => 'nullable|boolean',
+            'portal_remarks' => 'nullable|string',
+            'portal_email' => 'nullable|string|max:255',
+
+            // New Fields Validation
+            'invoicing_name' => 'nullable|string|max:255',
+            'invoicing_address' => 'nullable|string',
+            'invoicing_city' => 'nullable|string|max:255',
+            'invoicing_district' => 'nullable|string|max:255',
+            'invoicing_zip' => 'nullable|string|max:255',
+            'billing_country' => 'nullable|string|max:255',
+            'emails_for_invoicing' => 'nullable|string',
+            'emails_for_invoicing_cc' => 'nullable|string',
+            'vat_number' => 'nullable|string|max:255',
+            'invoicing_frequency' => 'nullable|string|max:255',
+            'billing_currency_outgoing' => 'nullable|string|max:255',
+            'payment_terms_outgoing' => 'nullable|string|max:255',
+            'billing_currency_incoming' => 'nullable|string|max:255',
+            'payment_terms_incoming' => 'nullable|string|max:255',
+            'agreement_type' => 'nullable|string|max:255',
+            'rebate_percentage' => 'nullable|numeric|min:0|max:100',
+            'export_services' => 'nullable|array',
+            'import_services' => 'nullable|array',
+            'export_emails' => 'nullable|array',
+            'import_emails' => 'nullable|array',
+            'stock_item_changed_emails' => 'nullable|string',
+            'quote_requests_emails' => 'nullable|string',
+            'coc_signed' => 'nullable|boolean',
+            'sop_implemented' => 'nullable|boolean',
+            'coc_signed_date' => 'nullable|date_format:d.m.Y',
+            'responsible_manager' => 'nullable|string|max:255',
+            'scan_gun_login' => 'nullable|string|max:255',
+            'scan_gun_password' => 'nullable|string|max:255',
+            'agreement_start_date' => 'nullable|date_format:d.m.Y',
+            'agreement_expiry_date' => 'nullable|date_format:d.m.Y',
+            'minimal_cbm' => 'nullable|numeric|min:0',
+            'minimal_weight' => 'nullable|numeric|min:0',
+            'free_storage_days' => 'nullable|integer|min:0',
+            'cbm_charge_usd' => 'nullable|numeric|min:0',
+            'agreement_implemented' => 'nullable|boolean',
+            'scangun_photo_taking' => 'nullable|boolean',
+            'scangun_detailed_shipment_out' => 'nullable|boolean',
+        ]);
+
+        // Handle checkbox values
+        $validated['is_gts_company'] = $request->has('is_gts_company');
+        $validated['show_pre_alert'] = $request->has('show_pre_alert');
+        $validated['hide_in_portal'] = $request->has('hide_in_portal');
+        $validated['coc_signed'] = $request->has('coc_signed');
+        $validated['sop_implemented'] = $request->has('sop_implemented');
+        $validated['agreement_implemented'] = $request->has('agreement_implemented');
+        $validated['scangun_photo_taking'] = $request->has('scangun_photo_taking');
+        $validated['scangun_detailed_shipment_out'] = $request->has('scangun_detailed_shipment_out');
+
+        // Only update password if 'set_new_password' is checked
+        if (!$request->has('set_new_password')) {
+            unset($validated['scan_gun_password']);
+        }
+
+        // Format Date fields for MySQL (YYYY-MM-DD)
+        if ($request->filled('coc_signed_date')) {
+            try { $validated['coc_signed_date'] = \Carbon\Carbon::createFromFormat('d.m.Y', $request->coc_signed_date)->format('Y-m-d'); } catch (\Exception $e) { $validated['coc_signed_date'] = null; }
+        } else { $validated['coc_signed_date'] = null; }
+
+        if ($request->filled('agreement_start_date')) {
+            try { $validated['agreement_start_date'] = \Carbon\Carbon::createFromFormat('d.m.Y', $request->agreement_start_date)->format('Y-m-d'); } catch (\Exception $e) { $validated['agreement_start_date'] = null; }
+        } else { $validated['agreement_start_date'] = null; }
+
+        if ($request->filled('agreement_expiry_date')) {
+            try { $validated['agreement_expiry_date'] = \Carbon\Carbon::createFromFormat('d.m.Y', $request->agreement_expiry_date)->format('Y-m-d'); } catch (\Exception $e) { $validated['agreement_expiry_date'] = null; }
+        } else { $validated['agreement_expiry_date'] = null; }
+
+        $hub->update($validated);
+
+        return redirect()->route('hub.show', $id)->with('success', 'Hub updated successfully.');
+    }
+
+    public function uploadDocument(Request $request, $id)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:pdf,doc,docx,jpg,png,xlsx,xls|max:5120',
+            'document_type' => 'required|string|in:sop,pricing',
+        ]);
+
+        $hub = Hub::findOrFail($id);
+        $file = $request->file('file');
+        $type = $request->document_type;
+        
+        $originalName = $file->getClientOriginalName();
+        $fileName = time() . '_' . $originalName;
+        $filePath = $file->storeAs('hubs/' . $id . '/' . $type, $fileName, 'public');
+
+        if ($type === 'pricing') {
+            $document = $hub->pricingDocuments()->create([
+                'file_name' => $originalName,
+                'file_path' => $filePath,
+                'file_type' => $file->getClientOriginalExtension(),
+            ]);
+        } else {
+            $document = $hub->documents()->create([
+                'file_name' => $originalName,
+                'file_path' => $filePath,
+                'file_type' => $file->getClientOriginalExtension(),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'document' => [
+                'id' => $document->id,
+                'name' => $document->file_name,
+                'uploaded_at' => $document->created_at->format('d.m.Y H:i'),
+            ]
+        ]);
+    }
+
+    public function deleteDocument(Request $request, $docId)
+    {
+        $type = $request->input('type', 'sop');
+        
+        if ($type === 'pricing') {
+            $document = HubPricingDocument::findOrFail($docId);
+        } else {
+            $document = HubDocument::findOrFail($docId);
+        }
+        
+        // Delete physical file
+        if (\Storage::disk('public')->exists($document->file_path)) {
+            \Storage::disk('public')->delete($document->file_path);
+        }
+
+        $document->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function createContact($hubId)
+    {
+        $hub = Hub::findOrFail($hubId);
+        return view('hub.contacts.create', compact('hub'));
+    }
+
+    public function storeContact(Request $request, $hubId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone_number' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'is_main_contact' => 'nullable|boolean',
+        ]);
+
+        $hub = Hub::findOrFail($hubId);
+        
+        $hub->contacts()->create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'description' => $request->description,
+            'is_main_contact' => $request->has('is_main_contact'),
+        ]);
+
+        return redirect()->route('hub.show', $hubId)->with('success', 'Contact added successfully.');
+    }
+
+    public function editContact($hubId, $contactId)
+    {
+        $hub = Hub::findOrFail($hubId);
+        $contact = \App\Models\Contact::findOrFail($contactId);
+        return view('hub.contacts.edit', compact('hub', 'contact'));
+    }
+
+    public function updateContact(Request $request, $hubId, $contactId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone_number' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'is_main_contact' => 'nullable|boolean',
+        ]);
+
+        $contact = \App\Models\Contact::findOrFail($contactId);
+        
+        $contact->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'description' => $request->description,
+            'is_main_contact' => $request->has('is_main_contact'),
+        ]);
+
+        return redirect()->route('hub.show', $hubId)->with('success', 'Contact updated successfully.');
+    }
+
+    // Hub User Methods
+    public function createUser($hubId)
+    {
+        $hub = Hub::findOrFail($hubId);
+        return view('hub.users.create', compact('hub'));
+    }
+
+    public function storeUser(Request $request, $hubId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone_number' => 'nullable|string|max:255',
+            'show_in_scan_gun' => 'nullable|boolean',
+        ]);
+
+        $hub = Hub::findOrFail($hubId);
+        
+        $hub->hubUsers()->create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'show_in_scan_gun' => $request->has('show_in_scan_gun'),
+        ]);
+
+        return redirect()->route('hub.show', $hubId)->with('success', 'Hub User added successfully.');
+    }
+
+    public function editUser($hubId, $userId)
+    {
+        $hub = Hub::findOrFail($hubId);
+        $user = \App\Models\HubUser::findOrFail($userId);
+        return view('hub.users.edit', compact('hub', 'user'));
+    }
+
+    public function updateUser(Request $request, $hubId, $userId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone_number' => 'nullable|string|max:255',
+            'show_in_scan_gun' => 'nullable|boolean',
+        ]);
+
+        $user = \App\Models\HubUser::findOrFail($userId);
+        
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'show_in_scan_gun' => $request->has('show_in_scan_gun'),
+        ]);
+
+        return redirect()->route('hub.show', $hubId)->with('success', 'Hub User updated successfully.');
+    }
+}

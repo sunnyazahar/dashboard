@@ -1,0 +1,890 @@
+@extends('layouts.app')
+
+@section('styles')
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('files/bower_components/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('files/assets/pages/data-table/css/buttons.dataTables.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('files/bower_components/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}">
+    <!-- Bootstrap Multiselect css -->
+    <link rel="stylesheet" href="{{ asset('files/bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css') }}" />
+    <!-- Select 2 css -->
+    <link rel="stylesheet" href="{{ asset('files/bower_components/select2/dist/css/select2.min.css') }}" />
+    <style>
+        .office-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+        .office-table thead th {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 100 !important;
+            background-color: #fdfdfd !important;
+            color: #374151;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 10px 8px;
+            border-bottom: 2px solid #dee2e6 !important;
+            border-top: 1px solid #e5e7eb !important;
+            white-space: nowrap;
+            text-transform: none;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); 
+        }
+        .office-table tbody td {
+            padding: 6px 8px;
+            font-size: 11px;
+            color: #1f2937;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .office-table th, .office-table td {
+            white-space: nowrap; 
+        }
+        .btn-teal {
+            background-color: #008080;
+            border-color: #008080;
+            color: white;
+        }
+        .btn-teal:hover {
+            background-color: #006666;
+            border-color: #006666;
+        }
+        .btn-outline-teal {
+            color: #008080;
+            border-color: #008080;
+            background-color: transparent;
+        }
+        .btn-outline-teal:hover {
+            background-color: #008080;
+            color: white;
+        }
+        .custom-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -5px;
+            margin-left: -5px;
+        }
+        .filter-row {
+            margin-bottom: 8px;
+        }
+        .custom-col {
+            padding-right: 5px;
+            padding-left: 5px;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            height: 32px;
+            background: #fff;
+            overflow: hidden;
+            width: 100%;
+        }
+        .filter-group .filter-label {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 0;
+            padding: 0 10px;
+            white-space: nowrap;
+            font-weight: 500;
+            border-right: 1px solid #e2e8f0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            min-width: fit-content;
+        }
+        .filter-group .filter-input {
+            border: none !important;
+            box-shadow: none !important;
+            height: 100% !important;
+            font-size: 11px;
+            padding: 0 10px !important;
+            background: transparent !important;
+            width: 100%;
+            color: #1e293b;
+        }
+        .filter-group .select2-container--default .select2-selection--single,
+        .filter-group .select2-container--default .select2-selection--multiple {
+            border: none !important;
+            background: transparent !important;
+            height: 30px !important;
+        }
+        .filter-group .select2-container--default .select2-selection--single .select2-selection__rendered {
+            padding-left: 10px !important;
+            font-size: 11px !important;
+            color: #1e293b !important;
+            line-height: 30px !important;
+        }
+        .filter-group .select2-container--default .select2-selection--multiple .select2-selection__rendered,
+        .filter-group .select2-container--default .select2-search--inline .select2-search__field {
+            font-size: 11px !important;
+            padding-left: 5px !important;
+        }
+        .filter-group .select2-container--default .select2-search--inline .select2-search__field::placeholder {
+            font-size: 11px !important;
+            color: #94a3b8 !important;
+        }
+        .clear-filters {
+            font-size: 11px;
+            color: #008080;
+            text-decoration: none;
+            cursor: pointer;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-weight: 500;
+        }
+
+        .select2-selection__clear,
+        .select2-selection__choice__remove {
+            display: none !important;
+        }
+        .label {
+            border-radius: 2px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 10px;
+            text-transform: uppercase;
+            display: inline-block;
+            min-width: 70px;
+            text-align: center;
+        }
+        .label-stock {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            border: 1px solid #c3e6cb;
+        }
+        .label-pending {
+            background-color: #ffeeba !important;
+            color: #856404 !important;
+            border: 1px solid #ffeeba;
+        }
+        .shipment-badge {
+            background-color: #ffeeba;
+            color: #333;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .icon-doc-blue {
+            color: #4682b4;
+            margin-left: 5px;
+        }
+        .icon-warning-red {
+            color: #ff5252;
+            margin-right: 5px;
+        }
+        /* Bootstrap Multiselect Custom Styling */
+        .multiselect-native-select .btn-group {
+            width: 100%;
+        }
+        .multiselect-native-select .multiselect {
+            width: 100%;
+            text-align: left;
+            height: 30px;
+            padding: 4px 10px;
+            font-size: 11px;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            color: #495057;
+        }
+        .multiselect-native-select .multiselect-container {
+            width: 235px;
+            font-size: 11px;
+        }
+        .multiselect-native-select .multiselect-container li a label {
+            padding: 6px 10px 6px 6px;
+            display: block;
+            margin: 0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .multiselect-native-select .multiselect-selected .form-check-label {
+            color: #008080;
+            font-weight: bold;
+        }
+        .multiselect-item.multiselect-all label {
+            font-weight: bold;
+            color: #333;
+        }
+        input.form-control.multiselect-search {
+            font-size: 11px;
+        }
+        .multiselect-container .input-group {
+            margin: 2px;
+        }
+        .input-group-addon {
+            background-color: #01a9ac;
+            color: #fff;
+            max-height: 31px;
+        }
+        .multiselect-container>li {
+            padding: 0px 5px;
+        }
+        .multiselect-item .input-group {
+            width: 114%;
+        }
+        /* Select2 Custom Styling */
+        .select2-container--default .select2-selection--single {
+            background-color: #fff !important;
+            border: 1px solid #ced4da !important;
+            height: 30px !important;
+            display: flex !important;
+            align-items: center !important;
+            outline: none !important;
+        }
+        .select2-container--default .select2-selection--multiple {
+            background-color: #fff !important;
+            border: 1px solid #ced4da !important;
+            min-height: 30px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            background-color: transparent !important;
+            color: #495057 !important;
+            line-height: normal !important;
+            padding-left: 10px !important;
+            padding-right: 25px !important;
+            width: 100% !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 28px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: #666 transparent transparent transparent !important;
+            margin-top: 0 !important;
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #f3f4f6 !important;
+            border: 1px solid #ced4da !important;
+            color: #495057 !important;
+            font-size: 10px !important;
+            margin-top: 4px !important;
+            padding: 1px 5px !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice span {
+            color: #495057 !important;
+        }
+        /* Filter Toggle Button Styling */
+        .btn-filter-toggle {
+            height: 30px;
+            padding: 4px 10px;
+            font-size: 14px;
+            color: #008080;
+            border-color: #008080;
+            background-color: transparent;
+        }
+        .btn-filter-toggle:hover, .btn-filter-toggle:focus, .btn-filter-toggle:active {
+            background-color: #008080 !important;
+            color: white !important;
+            border-color: #008080 !important;
+        }
+        
+        /* Reduce gap/margin between sidebar and content */
+        .pcoded-inner-content {
+            padding: 5px !important;
+        }
+        .main-body .page-wrapper {
+            padding: 5px !important;
+        }
+        /* Table visibility fixes */
+        .dt-responsive {
+            width: 100%;
+        }
+        .table-scroll-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 150px);
+            width: 100%;
+            position: relative;
+        }
+        .office-table {
+            min-width: 1500px; 
+            border-collapse: separate; /* Required for sticky borders */
+            border-spacing: 0;
+        }
+        /* Hide sorting icons for checkbox column */
+        /* Hide sorting icons for checkbox column */
+        .office-table thead th:first-child:after,
+        .office-table thead th:first-child:before {
+            display: none !important;
+        }
+        .office-table thead th:first-child {
+            padding-right: 10px !important; /* Reset padding usually reserved for arrows */
+        }
+
+        /* Pagination Styling */
+        .pagination-sticky-footer {
+            position: sticky;
+            bottom: 0;
+            padding: 10px 20px;
+            background: #ffffff;
+            border-top: 1px solid #e9ecef;
+            z-index: 10;
+            margin-top: 0 !important;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.03);
+        }
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 0 !important;
+            padding: 0;
+            display: flex;
+            justify-content: flex-end;
+        }
+        tfoot tr th{
+            font-weight: 600;
+        }
+
+        .landed-badge {
+            background: #dcf0fa;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            padding: 1px 6px;
+            border-radius: 2px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 5px;
+            display: inline-block;
+        }
+    </style>
+@endsection
+
+@section('content')
+<!-- Pre-loader start -->
+    <div class="theme-loader">
+        <div class="ball-scale">
+            <div class='contain'>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Pre-loader end -->
+    <div id="pcoded" class="pcoded">
+        <div class="pcoded-overlay-box"></div>
+        <div class="pcoded-container navbar-wrapper">
+
+          @include('layouts.top-menu')
+                @include('layouts.left-menu')
+                     <!-- Page-body start -->
+                      <br>
+                      <div class="pcoded-content" >
+                        <div class="pcoded-inner-content">
+                        <!-- Main-body start -->
+                            <div class="main-body">
+                                <div class="page-wrapper">
+                                    <!-- Page-header start -->
+                                    <div class="page-header">
+                                        
+                                    </div>
+                                    <!-- Flash Messages -->
+                                    @if(session('success'))
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert" style="font-size: 12px; margin-bottom: 10px;">
+                                            <i class="fa fa-check-circle mr-1"></i> {{ session('success') }}
+                                            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                                        </div>
+                                    @endif
+                                    @if(session('error'))
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="font-size: 12px; margin-bottom: 10px;">
+                                            <i class="fa fa-exclamation-circle mr-1"></i> {{ session('error') }}
+                                            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+                                        </div>
+                                    @endif
+
+                                    <!-- Page-header end -->
+
+                                    <!-- Page-body start -->
+                                    <div class="page-body">
+                                        <!-- Base Style - Compact start -->
+                                        <div class="card">
+                                            <div class="card-block">
+                                                <div class="d-flex justify-content-between align-items-start pt-2">
+                                                    <div style="width: 100%;">
+                                                        <!-- Row 1 -->
+                                                        <div class="row custom-row filter-row">
+                                                            <div class="custom-col" style="flex: 0 0 50px;">
+                                                                <select id="filter-multiselect" multiple="multiple">
+                                                                    <option value="Customer">Customer</option>
+                                                                    <option value="Vessel">Vessel</option>
+                                                                    <option value="Hub/Agent">Hub/Agent</option>
+                                                                    <option value="Status">Status</option>
+                                                                    <option value="PO number">PO number</option>
+                                                                    <option value="Supplier">Supplier</option>
+                                                                    <option value="Stock number">Stock number</option>
+                                                                    <option value="Service reference">Service reference</option>
+                                                                    <option value="Shipment no">Shipment no</option>
+                                                                    <option value="Transit id">Transit id</option>
+                                                                    <option value="Account manager">Account manager</option>
+                                                                    <option value="Office">Office</option>
+                                                                </select>
+                                                            </div>
+                                                            <div id="col-Hub-Agent" class="custom-col" style="flex: 0 0 200px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Hub/Agent</span>
+                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                        <optgroup label="Hubs">
+                                                                            @foreach($hubs as $hub)
+                                                                                <option value="{{ $hub->code }}">{{ $hub->code }}</option>
+                                                                            @endforeach
+                                                                        </optgroup>
+                                                                        <optgroup label="Agents">
+                                                                            @foreach($agents as $agent)
+                                                                                <option value="{{ $agent->code }}">{{ $agent->code }}</option>
+                                                                            @endforeach
+                                                                        </optgroup>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Customer" class="custom-col" style="flex: 0 0 250px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Customer</span>
+                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                        <option value="Anglo Eastern Ship...">Anglo Eastern Ship...</option>
+                                                                        <option value="M.T.M. Ship Manage...">M.T.M. Ship Manage...</option>
+                                                                        <option value="Solvang ASA">Solvang ASA</option>
+                                                                        <option value="Stolt Tankers b.v.">Stolt Tankers b.v.</option>
+                                                                        <option value="Wallem GmbH & Co. Kg">Wallem GmbH & Co. Kg</option>
+                                                                        <option value="Thome Ship Manage...">Thome Ship Manage...</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Vessel" class="custom-col" style="flex: 0 0 200px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Vessel</span>
+                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                        <option value="Helsinki">Helsinki</option>
+                                                                        <option value="Aqua Ray">Aqua Ray</option>
+                                                                        <option value="Clipper Hermod">Clipper Hermod</option>
+                                                                        <option value="Stolt Loyalty">Stolt Loyalty</option>
+                                                                        <option value="Sfl Panther">Sfl Panther</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Status" class="custom-col" style="flex: 0 0 200px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Status</span>
+                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                        @foreach(\App\Models\Crr::getStatusLabels() as $value => $label)
+                                                                            <option value="{{ $label }}">{{ $label }}</option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Stock-number" class="custom-col" style="flex: 0 0 200px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Stock no.</span>
+                                                                    <input type="text" class="form-control filter-input" placeholder="type here">
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Service-reference" class="custom-col" style="flex: 0 0 200px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Service ref.</span>
+                                                                    <input type="text" class="form-control filter-input" placeholder="type here">
+                                                                </div>
+                                                            </div>
+                                                            <div class="custom-col d-flex justify-content-end" style="flex: 0 0 auto; margin-left: auto;">
+                                                                <button id="btn-export-pdf" class="btn btn-outline-teal btn-sm" style="height: 32px; padding: 0 15px;"><i class="ti-download"></i> Export</button>
+                                                                <a href="{{ route('create-crr') }}"><button class="btn btn-outline-teal btn-sm ml-2" style="height: 32px; padding: 0 15px;">Create CRR</button></a>
+                                                            </div>
+                                                            
+                                                        </div>
+
+                                                        <!-- Row 2 -->
+                                                        <div class="row custom-row filter-row">
+                                                            <div id="col-PO-number" class="custom-col" style="flex: 0 0 200px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">PO no.</span>
+                                                                    <input type="text" class="form-control filter-input" placeholder="type here">
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Supplier" class="custom-col" style="flex: 0 0 250px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Supplier</span>
+                                                                    <input type="text" class="form-control filter-input" placeholder="type here">
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Shipment-no" class="custom-col" style="flex: 0 0 250px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Shipment no.</span>
+                                                                    <input type="text" class="form-control filter-input" placeholder="type here">
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Transit-id" class="custom-col" style="flex: 0 0 250px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Transit id</span>
+                                                                    <input type="text" class="form-control filter-input" placeholder="type here">
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Account-manager" class="custom-col" style="flex: 0 0 200px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Account manager</span>
+                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div id="col-Office" class="custom-col" style="flex: 0 0 200px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Office</span>
+                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="custom-col">
+                                                                <a class="clear-filters"><i class="ti-close"></i> Clear filters</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <table id="offices-table"
+                                                        class="office-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th><input type="checkbox"></th>
+                                                                <th>Hub</th>
+                                                                <th>Stock no</th>
+                                                                <th>Customer</th>
+                                                                <th>Vessel</th>
+                                                                <th>Delivery</th>
+                                                                <th>PO numbers</th>
+                                                                <th>Supplier</th>
+                                                                <th>Items</th>
+                                                                <th>Weight</th>
+                                                                <th>Value</th>
+                                                                <th>Cur.</th>
+                                                                <th>Transit id</th>
+                                                                <th>Shipment</th>
+                                                                <th>Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @forelse($crrs as $crr)
+                                                            @php
+                                                                $status = $crr->status ?? 'Pending';
+                                                                $badgeClass = ($status === 'Stock') ? 'label label-stock' : 'label label-pending';
+                                                                $poNumbers = is_array($crr->po_numbers) ? implode(', ', $crr->po_numbers) : ($crr->po_numbers ?? '');
+                                                                $totalItems = $crr->packages->count();
+                                                                $totalWeight = $crr->packages->sum('weight');
+                                                                $hasDgr = $crr->packages->where('is_dgr', true)->isNotEmpty();
+                                                                $hasDocs = $crr->documents->isNotEmpty();
+                                                                $isNotStackable = $crr->packages->where('is_not_stackable', true)->isNotEmpty();
+                                                                $hasMedicine = $crr->packages->where('is_medicine', true)->isNotEmpty();
+                                                                $hasDeliveryIrreg = is_array($crr->delivery_irregularities) && in_array('Yes', $crr->delivery_irregularities);
+                                                            @endphp
+                                                            <tr>
+                                                                 <td class="text-center"><input type="checkbox" class="row-checkbox" value="{{ $crr->id }}"></td>
+                                                                <td>{{ $crr->hub_code ?? '—' }}</td>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center justify-content-between">
+                                                                        <a href="{{ route('stocks.edit', $crr->id) }}" style="color: #008080; font-weight: 500;">{{ $crr->stock_number }}</a>
+                                                                        <div class="d-flex align-items-center" style="gap: 8px;">
+                                                                            @if($crr->is_landed_goods)
+                                                                                <span class="landed-badge" title="Landed Goods">Landed</span>
+                                                                            @endif
+                                                                            @if($hasDgr)
+                                                                                <i class="icofont icofont-warning text-danger" title="Dangerous Goods" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                            @if($hasDocs)
+                                                                                <i class="icofont icofont-file-alt text-muted" title="Documents Attached" style="font-size: 15px; color: #64748b !important;"></i>
+                                                                            @endif
+                                                                            @if($hasMedicine)
+                                                                                <i class="icofont icofont-first-aid text-success" title="Medicine" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                            @if($hasDeliveryIrreg) 
+                                                                                <i class="icofont icofont-info-circle text-pending" title="Delivery irregularities - missing info" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                            @if($isNotStackable)
+                                                                                <i class="icofont icofont-info-square text-warning" title="Non-Stackable Content" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>{{ $crr->customerVessel && $crr->customerVessel->customer ? $crr->customerVessel->customer->customer_name : '—' }}</td>
+                                                                <td>{{ $crr->vessel_name ?? '—' }}</td>
+                                                                <td>{{ $crr->expected_delivery_date ?? '—' }}</td>
+                                                                <td style="max-width: 150px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;display: block;">{{ $poNumbers ?: '—' }}</td>
+                                                                <td>{{ $crr->supplier ?? '—' }}</td>
+                                                                <td class="text-center">{{ $totalItems }}</td>
+                                                                <td class="text-right">{{ $totalWeight > 0 ? number_format($totalWeight, 2) : '—' }}</td>
+                                                                <td class="text-right">{{ $crr->customs_value ? number_format($crr->customs_value, 2) : '—' }}</td>
+                                                                <td>{{ $crr->currency ?? '—' }}</td>
+                                                                <td>{{ $crr->transit_id ?? '—' }}</td>
+                                                                <td>{{ $crr->internal_shipment ?? '—' }}</td>
+                                                                <td>
+                                                                    @php
+                                                                        $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
+                                                                        $badgeClass = 'label';
+                                                                        switch($crr->status) {
+                                                                            case \App\Models\Crr::STATUS_NEW: $badgeClass .= ' label-pending'; break;
+                                                                            case \App\Models\Crr::STATUS_PENDING: $badgeClass .= ' label-pending'; break;
+                                                                            case \App\Models\Crr::STATUS_ACTIVE: $badgeClass .= ' label-stock'; break;
+                                                                            case \App\Models\Crr::STATUS_IN_PROGRESS: $badgeClass .= ' label-stock'; break;
+                                                                            case \App\Models\Crr::STATUS_COMPLETED: $badgeClass .= ' label-stock'; break;
+                                                                            case \App\Models\Crr::STATUS_CANCELLED: $badgeClass .= ' label-danger'; break;
+                                                                            case \App\Models\Crr::STATUS_ARCHIVED: $badgeClass .= ' label-inverse'; break;
+                                                                        }
+                                                                    @endphp
+                                                                    <span class="{{ $badgeClass }}">{{ $statusLabel }}</span>
+                                                                </td>
+                                                            </tr>
+                                                            @empty
+                                                            <tr>
+                                                                <td colspan="15" class="text-center py-4 text-muted" style="font-size: 12px;">
+                                                                    No stock entries found. <a href="{{ route('create-crr') }}" style="color: #008080;">Create a CRR</a> to get started.
+                                                                </td>
+                                                            </tr>
+                                                            @endforelse
+                                                        </tbody>
+                                                        <tfoot>
+                                                             <tr>
+                                                                <th> </th>
+                                                                <th>Hub</th>
+                                                                <th>Stock no</th>
+                                                                <th>Customer</th>
+                                                                <th>Vessel</th>
+                                                                <th>Delivery</th>
+                                                                <th>PO numbers</th>
+                                                                <th>Supplier</th>
+                                                                <th>Items</th>
+                                                                <th>Weight</th>
+                                                                <th>Value</th>
+                                                                <th>Cur.</th>
+                                                                <th>Transit id</th>
+                                                                <th>Shipment</th>
+                                                                <th>Status</th>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                            </div>
+                                        </div>
+                                        <!-- Base Style - Compact end -->
+                                    </div>
+                                    <!-- Page-body end -->
+                                </div>
+                            </div>
+                            <div id="styleSelector">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+     <!-- Required Jquery -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery/dist/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery-ui/jquery-ui.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/popper.js/dist/umd/popper.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <!-- jquery slimscroll js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery-slimscroll/jquery.slimscroll.js') }}"></script>
+    <!-- modernizr js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/modernizr/modernizr.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/modernizr/feature-detects/css-scrollbars.js') }}"></script>
+
+    <!-- data-table js -->
+    <script src="{{ asset('files/bower_components/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/jszip.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/pdfmake.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/vfs_fonts.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script>
+    <!-- Bootstrap Multiselect js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js') }}"></script>
+    <!-- i18next.min.js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/i18next/i18next.min.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/i18next-xhr-backend/i18nextXHRBackend.min.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/i18next-browser-languagedetector/i18nextBrowserLanguageDetector.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery-i18next/jquery-i18next.min.js') }}"></script>
+    <!-- Custom js -->
+    {{-- <script src="{{ asset('files/assets/pages/data-table/js/data-table-custom.js') }}"></script> --}}
+    <script src="{{ asset('files/assets/js/pcoded.min.js') }}"></script>
+    <script src="{{ asset('files/assets/js/vartical-layout.min.js') }}"></script>
+    <script src="{{ asset('files/assets/js/jquery.mCustomScrollbar.concat.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
+    <!-- Select 2 js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2 for standard filters
+            $('.select2').select2({
+                placeholder: "Click here",
+                allowClear: false,
+                width: '100%'
+            });
+
+            // Initialize Bootstrap Multiselect for special filter toggle
+            $('#filter-multiselect').multiselect({
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                buttonWidth: '100%',
+                nonSelectedText: '',
+                allSelectedText: '',
+                nSelectedText: '',
+                numberDisplayed: 0,
+                buttonClass: 'btn btn-outline-teal btn-filter-toggle',
+                templates: {
+                    button: '<button type="button" class="multiselect dropdown-toggle" data-toggle="dropdown"><i class="ti-filter"></i></button>'
+                },
+                onChange: function(option, checked) {
+                    toggleFilterVisibility();
+                },
+                onSelectAll: function() {
+                    toggleFilterVisibility();
+                },
+                onDeselectAll: function() {
+                    toggleFilterVisibility();
+                }
+            });
+
+            function toggleFilterVisibility() {
+                var selectedOptions = $('#filter-multiselect option:selected');
+                var selectedValues = [];
+                selectedOptions.each(function() {
+                    selectedValues.push($(this).val());
+                });
+
+                var allFilters = [
+                    {val: 'Customer', id: 'col-Customer'},
+                    {val: 'Vessel', id: 'col-Vessel'},
+                    {val: 'Hub/Agent', id: 'col-Hub-Agent'},
+                    {val: 'Status', id: 'col-Status'},
+                    {val: 'PO number', id: 'col-PO-number'},
+                    {val: 'Supplier', id: 'col-Supplier'},
+                    {val: 'Stock number', id: 'col-Stock-number'},
+                    {val: 'Service reference', id: 'col-Service-reference'},
+                    {val: 'Shipment no', id: 'col-Shipment-no'},
+                    {val: 'Transit id', id: 'col-Transit-id'},
+                    {val: 'Account manager', id: 'col-Account-manager'},
+                    {val: 'Office', id: 'col-Office'}
+                ];
+
+                allFilters.forEach(function(filter) {
+                    if (selectedValues.includes(filter.val)) {
+                        $('#' + filter.id).show();
+                    } else {
+                        $('#' + filter.id).hide();
+                    }
+                });
+            }
+            
+            toggleFilterVisibility();
+
+            var table = $('#offices-table').DataTable({
+                "dom": '<"table-scroll-wrapper"rt><"pagination-sticky-footer"p>',
+                "lengthChange": false,
+                "pageLength": 200,
+                "responsive": false,
+                "searching": true,
+                "ordering": true,
+                "autoWidth": false,
+                "columnDefs": [
+                    { "orderable": false, "targets": [0] },
+                    { "searchable": false, "targets": [0] }
+                ]
+            });
+
+            var filterMap = {
+                '#col-Customer select': 3,
+                '#col-Vessel select': 4,
+                '#col-Hub-Agent select': 1,
+                '#col-Status select': 14,
+                '#col-PO-number input': 6,
+                '#col-Supplier input': 7,
+                '#col-Stock-number input': 2,
+                '#col-Service-reference input': 5,
+                '#col-Shipment-no input': 13,
+                '#col-Transit-id input': 11,
+                '#col-Account-manager select': -1,
+                '#col-Office select': 1
+            };
+
+            $.each(filterMap, function(selector, colIndex) {
+                if (colIndex === -1) return;
+                
+                $(selector).on('change keyup', function() {
+                    var val = $(this).val();
+                    if (Array.isArray(val)) {
+                        var searchVal = val.length > 0 ? '^(' + val.join('|') + ')$' : '';
+                        table.column(colIndex).search(searchVal, true, false).draw();
+                    } else {
+                        table.column(colIndex).search(val).draw();
+                    }
+                });
+            });
+
+            $('.clear-filters').on('click', function() {
+                $('.select2').val(null).trigger('change');
+                $('.filter-input:not(select)').val('');
+                table.columns().search('').draw();
+            });
+
+            $('#offices-table thead input[type="checkbox"]').on('change', function() {
+                var isChecked = $(this).prop('checked');
+                $('#offices-table tbody input[type="checkbox"]').prop('checked', isChecked);
+            });
+
+            $('#btn-export-pdf').on('click', function() {
+                var selectedIds = [];
+                $('.row-checkbox:checked').each(function() {
+                    selectedIds.push($(this).val());
+                });
+
+                if (selectedIds.length === 0) {
+                    alert('Please select at least one item to export.');
+                    return;
+                }
+
+                window.open('{{ route("stocks.print") }}?ids=' + selectedIds.join(','), '_blank');
+            });
+        });
+    </script>
+@endsection

@@ -1,0 +1,509 @@
+@extends('layouts.app')
+
+@section('styles')
+    <!-- Data Table Css -->
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('files/bower_components/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('files/assets/pages/data-table/css/buttons.dataTables.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('files/bower_components/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}">
+    <!-- Bootstrap Multiselect css -->
+    <link rel="stylesheet" href="{{ asset('files/bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css') }}" />
+    <!-- Select 2 css -->
+    <link rel="stylesheet" href="{{ asset('files/bower_components/select2/dist/css/select2.min.css') }}" />
+    <style>
+        /* Form Layout Styling */
+        .form-pillar-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 40px;
+            padding: 20px;
+            background: #fff;
+        }
+        .form-pillar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .form-section-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1b5e6f;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .form-group-custom {
+            margin-bottom: 15px;
+        }
+        .form-label-custom {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .form-input-custom {
+            height: 32px;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            width: 100%;
+            padding: 5px 10px;
+            font-size: 12px;
+            color: #333;
+        }
+        .form-textarea-custom {
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 12px;
+            color: #333;
+            resize: none;
+        }
+        .input-row {
+            display: flex;
+            gap: 15px;
+        }
+        .input-row > div {
+            flex: 1;
+        }
+        .input-group-custom {
+            display: flex;
+        }
+        .btn-input-append {
+            height: 32px;
+            background: #e9ecef;
+            border: 1px solid #d1d5db;
+            border-left: none;
+            padding: 0 10px;
+            border-radius: 0 3px 3px 0;
+            cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+        .form-input-custom.has-append {
+            border-radius: 3px 0 0 3px;
+        }
+
+        /* Footer Styling */
+        .form-footer {
+            padding: 20px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .btn-save-custom {
+            background: #1b5e6f;
+            color: #fff;
+            border: none;
+            padding: 8px 25px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-cancel-custom {
+            color: #01a9ac;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .btn-save-custom:hover {
+            background: #144653;
+        }
+
+        /* Layout Adjustments */
+        .pcoded-inner-content {
+            padding: 10px !important;
+        }
+        .main-body .page-wrapper {
+            padding: 10px !important;
+        }
+
+        /* Select2 Background Removal - High Specificity */
+        body .select2-container--default .select2-selection--single {
+            background-color: #fff !important;
+            border: 1px solid #d1d5db !important;
+            height: 32px !important;
+            border-radius: 3px !important;
+        }
+
+        body .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 32px !important;
+            color: #333 !important;
+            font-size: 12px !important;
+            padding-left: 10px !important;
+            background-color: #fff !important;
+        }
+
+        body .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #999 !important;
+        }
+
+        body .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 30px !important;
+        }
+    </style>
+@endsection
+
+@section('content')
+<!-- Pre-loader start -->
+    <div class="theme-loader">
+        <div class="ball-scale">
+            <div class='contain'>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Pre-loader end -->
+    <div id="pcoded" class="pcoded">
+        <div class="pcoded-overlay-box"></div>
+        <div class="pcoded-container navbar-wrapper">
+
+          @include('layouts.top-menu')
+                @include('layouts.left-menu')
+                     <!-- Page-body start -->
+                      <br>
+                      <div class="pcoded-content">
+                        <div class="pcoded-inner-content">
+                        <!-- Main-body start -->
+                            <div class="main-body">
+                                <div class="page-wrapper">
+                                    <!-- Page-header start -->
+                                    <div class="page-header">
+                                        
+                                    </div>
+                                    <!-- Page-header end -->
+
+                                    <!-- Page-body start -->
+                                    <div class="page-body">
+                                        <div class="card">
+                                            <form action="{{ route('other-companies.store') }}" method="POST">
+                                                @csrf
+                                                <div class="form-pillar-container">
+                                                    <!-- Column 1: Company information -->
+                                                    <div class="form-pillar">
+                                                        <div class="form-section-header">Company information</div>
+                                                        
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Company name</label>
+                                                            <input type="text" name="company_name" class="form-input-custom" value="{{ old('company_name') }}" required>
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Company type</label>
+                                                            <div class="input-group-custom">
+                                                                <input type="text" name="company_type" class="form-input-custom has-append" value="{{ old('company_type') }}">
+                                                                <button type="button" class="btn-input-append"><i class="ti-more-alt"></i></button>
+                                                                <button type="button" class="btn-input-append"><i class="ti-angle-down"></i></button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="input-row">
+                                                            <div class="form-group-custom">
+                                                                <label class="form-label-custom">Code</label>
+                                                                <input type="text" name="code" class="form-input-custom" value="{{ old('code') }}">
+                                                            </div>
+                                                            <div class="form-group-custom">
+                                                                <label class="form-label-custom">Code description</label>
+                                                                <input type="text" name="code_description" class="form-input-custom" value="{{ old('code_description') }}">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Phone number (with country code)</label>
+                                                            <input type="text" name="phone_number" class="form-input-custom" value="{{ old('phone_number') }}">
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Email</label>
+                                                            <input type="email" name="email" class="form-input-custom" value="{{ old('email') }}">
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Remarks</label>
+                                                            <textarea name="remarks" class="form-textarea-custom" rows="3">{{ old('remarks') }}</textarea>
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Special considerations for destination</label>
+                                                            <textarea name="special_considerations" class="form-textarea-custom" rows="3">{{ old('special_considerations') }}</textarea>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Column 2: Company address -->
+                                                    <div class="form-pillar">
+                                                        <div class="form-section-header">Company address</div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Street address</label>
+                                                            <textarea name="street_address" class="form-textarea-custom" rows="3">{{ old('street_address') }}</textarea>
+                                                        </div>
+
+                                                        <div class="input-row">
+                                                            <div class="form-group-custom">
+                                                                <label class="form-label-custom">City</label>
+                                                                <input type="text" name="city" class="form-input-custom" value="{{ old('city') }}">
+                                                            </div>
+                                                            <div class="form-group-custom">
+                                                                <label class="form-label-custom">District/state</label>
+                                                                <input type="text" name="district_state" class="form-input-custom" value="{{ old('district_state') }}">
+                                                            </div>
+                                                            <div class="form-group-custom">
+                                                                <label class="form-label-custom">Zip code</label>
+                                                                <input type="text" name="zip_code" class="form-input-custom" value="{{ old('zip_code') }}">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Country</label>
+                                                            <select name="country_id" class="form-input-custom select2">
+                                                                <option value="">Select Country</option>
+                                                                @foreach($countries as $country)
+                                                                    <option value="{{ $country->id }}" data-flag-url="{{ $country->flag_url }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Port code</label>
+                                                            <input type="text" name="port_code" class="form-input-custom" value="{{ old('port_code') }}">
+                                                        </div>
+
+                                                        <div class="form-section-header" style="margin-top: 20px;">Office address (Optional)</div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Street address / post box</label>
+                                                            <textarea name="office_street_address" class="form-textarea-custom" rows="3">{{ old('office_street_address') }}</textarea>
+                                                        </div>
+
+                                                        <div class="input-row">
+                                                            <div class="form-group-custom">
+                                                                <label class="form-label-custom">City</label>
+                                                                <input type="text" name="office_city" class="form-input-custom" value="{{ old('office_city') }}">
+                                                            </div>
+                                                            <div class="form-group-custom">
+                                                                <label class="form-label-custom">District/state</label>
+                                                                <input type="text" name="office_district_state" class="form-input-custom" value="{{ old('office_district_state') }}">
+                                                            </div>
+                                                            <div class="form-group-custom">
+                                                                <label class="form-label-custom">Zip code</label>
+                                                                <input type="text" name="office_zip_code" class="form-input-custom" value="{{ old('office_zip_code') }}">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Country</label>
+                                                            <select name="office_country_id" class="form-input-custom select2">
+                                                                <option value="">Select Country</option>
+                                                                @foreach($countries as $country)
+                                                                    <option value="{{ $country->id }}" data-flag-url="{{ $country->flag_url }}" {{ old('office_country_id') == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Column 3: Company details -->
+                                                    <div class="form-pillar">
+                                                        <div class="form-section-header">Company details</div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">VAT number</label>
+                                                            <input type="text" name="vat_number" class="form-input-custom" value="{{ old('vat_number') }}">
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">EORI number</label>
+                                                            <input type="text" name="eori_number" class="form-input-custom" value="{{ old('eori_number') }}">
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">Currency</label>
+                                                            <select name="currency" class="form-input-custom">
+                                                                <option value="">Select Currency</option>
+                                                                @foreach($currencies as $curr)
+                                                                    <option value="{{ $curr }}" {{ old('currency') == $curr ? 'selected' : '' }}>{{ $curr }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+
+                                                        <div class="form-group-custom">
+                                                            <label class="form-label-custom">UN/LOCODE</label>
+                                                            <input type="text" name="un_locode" class="form-input-custom" style="width: 50%;" value="{{ old('un_locode') }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Footer Buttons -->
+                                                <div class="form-footer">
+                                                    <button type="submit" class="btn-save-custom">Save</button>
+                                                    <a href="{{ route('other-companies.index') }}" class="btn-cancel-custom">Cancel</a>
+                                                    <div class="footer-metadata" style="margin-left: auto; text-align: right; font-size: 11px; color: #999; line-height: 1.4;">
+                                                        Created by Mitchell Levoleger on 22.01.2024 10:45<br>
+                                                        Last changed by Mitchell Levoleger on 23.01.2024 14:30
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="styleSelector">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+     <!-- Required Jquery -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery/dist/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery-ui/jquery-ui.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/popper.js/dist/umd/popper.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <!-- jquery slimscroll js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery-slimscroll/jquery.slimscroll.js') }}"></script>
+    <!-- modernizr js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/modernizr/modernizr.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/modernizr/feature-detects/css-scrollbars.js') }}"></script>
+
+    <!-- data-table js -->
+    <script src="{{ asset('files/bower_components/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/jszip.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/pdfmake.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/vfs_fonts.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script>
+    <!-- i18next.min.js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/i18next/i18next.min.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/i18next-xhr-backend/i18nextXHRBackend.min.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/i18next-browser-languagedetector/i18nextBrowserLanguageDetector.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery-i18next/jquery-i18next.min.js') }}"></script>
+    <!-- Custom js -->
+    {{-- <script src="{{ asset('files/assets/pages/data-table/js/data-table-custom.js') }}"></script> --}}
+    <!-- Bootstrap Multiselect js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js') }}"></script>
+    <script src="{{ asset('files/assets/js/pcoded.min.js') }}"></script>
+    <script src="{{ asset('files/assets/js/vartical-layout.min.js') }}"></script>
+    <script src="{{ asset('files/assets/js/jquery.mCustomScrollbar.concat.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
+    <!-- Select 2 js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+
+    <script>
+        $(document).ready(function() {
+             // Initialize Select2 for standard filters
+            $('.select2').select2({
+                placeholder: "Click here",
+                allowClear: true
+            });
+
+            // Initialize Bootstrap Multiselect for special filter toggle
+            $('#filter-multiselect').multiselect({
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                buttonWidth: '100%',
+                maxHeight: 200,
+                nonSelectedText: '',
+                allSelectedText: '',
+                nSelectedText: '',
+                numberDisplayed: 0,
+                buttonClass: 'btn btn-outline-teal btn-filter-toggle',
+                templates: {
+                    button: '<button type="button" class="multiselect dropdown-toggle" data-toggle="dropdown"><i class="ti-filter"></i></button>'
+                },
+                onChange: function(option, checked) {
+                    toggleFilterVisibility();
+                },
+                onSelectAll: function() {
+                    toggleFilterVisibility();
+                },
+                onDeselectAll: function() {
+                    toggleFilterVisibility();
+                }
+            });
+
+            function toggleFilterVisibility() {
+                var selectedOptions = $('#filter-multiselect option:selected');
+                var selectedValues = [];
+                selectedOptions.each(function() {
+                    selectedValues.push($(this).val());
+                });
+
+                var allFilters = [
+                    {val: 'Office Name', id: 'col-Office-Name'},
+                    {val: 'Short Name', id: 'col-Short-Name'},
+                    {val: 'City', id: 'col-City'},
+                    {val: 'Country', id: 'col-Country'},
+                    {val: 'Phone', id: 'col-Phone'},
+                    {val: 'Email', id: 'col-Email'}
+                ];
+
+                allFilters.forEach(function(filter) {
+                    if (selectedValues.includes(filter.val)) {
+                        $('#' + filter.id).show();
+                    } else {
+                        $('#' + filter.id).hide();
+                    }
+                });
+            }
+            
+            // Initial call to set visibility state
+            toggleFilterVisibility();
+
+            $('#other-companies-table').DataTable({
+                "lengthChange": false,
+                "pageLength": 25,
+                "responsive": false,
+                "searching": false,
+                "ordering": true,
+                "autoWidth": false,
+                "language": {
+                    "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                    "paginate": {
+                        "previous": "<",
+                        "next": ">"
+                    }
+                }
+            });
+        });
+    </script>
+@endsection

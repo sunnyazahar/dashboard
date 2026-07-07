@@ -1,0 +1,544 @@
+@extends('layouts.app')
+
+@section('styles')
+    <!-- Data Table Css -->
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('files/bower_components/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('files/assets/pages/data-table/css/buttons.dataTables.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('files/bower_components/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}">
+    <!-- Bootstrap Multiselect css -->
+    <link rel="stylesheet"
+        href="{{ asset('files/bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css') }}" />
+    <!-- Select 2 css -->
+    <link rel="stylesheet" href="{{ asset('files/bower_components/select2/dist/css/select2.min.css') }}" />
+    <style>
+        /* Filter Bar Styling */
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 15px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            flex-wrap: nowrap;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label-custom {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .filter-input-custom {
+            height: 28px;
+            border: 1px solid #e0e0e0;
+            border-radius: 2px;
+            width: 100%;
+            padding: 2px 8px;
+            font-size: 11px;
+            color: #333;
+        }
+
+        .filter-input-custom::placeholder {
+            color: #ccc;
+            font-style: italic;
+        }
+
+        .input-group-custom {
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-input-append {
+            height: 28px;
+            background: #f3f4f6;
+            border: 1px solid #e0e0e0;
+            border-left: none;
+            padding: 0 8px;
+            border-radius: 0 2px 2px 0;
+            cursor: pointer;
+            color: #999;
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .filter-input-custom.has-append {
+            border-radius: 2px 0 0 2px;
+        }
+
+        .filter-checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 15px;
+            /* Aligned with other items */
+            white-space: nowrap;
+        }
+
+        .filter-checkbox-group label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 0;
+            cursor: pointer;
+            order: 2;
+            /* Label after checkbox */
+        }
+
+        .filter-checkbox-group input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            accent-color: #1b5e6f;
+            order: 1;
+            /* Checkbox first */
+        }
+
+        .btn-clear-filters {
+            font-size: 11px;
+            color: #01a9ac;
+            text-decoration: none;
+            white-space: nowrap;
+            margin-left: 15px;
+            /* Aligned with other items */
+        }
+
+        .btn-add-agent {
+            height: 28px;
+            padding: 0 12px;
+            background: #fff;
+            color: #1b5e6f;
+            border: 1px solid #1b5e6f;
+            border-radius: 3px;
+            font-size: 11px;
+            display: none;
+            /* Hidden as per screenshot preference for clean filter bar */
+        }
+
+        /* Table Styling */
+        .table-agents {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+
+        .table-agents th {
+            text-align: left;
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #1b5e6f;
+            border-bottom: 1px solid #eee;
+            background: #f8fafd;
+            /* Consistent light blue-grey header */
+        }
+
+        .table-agents td {
+            padding: 6px 10px;
+            font-size: 11px;
+            color: #333;
+            border-bottom: 1px solid #f9f9f9;
+            vertical-align: middle;
+            background: #fff;
+        }
+
+        .table-agents tr:hover td {
+            background-color: #f5f7f9 !important;
+        }
+
+        .table-agents tr.selected td {
+            background-color: #e2e8f0 !important;
+        }
+
+        .agent-link {
+            color: #016699;
+            text-decoration: none;
+        }
+
+        .agent-link:hover {
+            text-decoration: underline;
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 8px;
+            color: #ccc;
+            justify-content: flex-end;
+        }
+
+        .action-icons i {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .action-icons i:hover {
+            color: #666;
+        }
+
+        .company-link {
+            color: #016699;
+            text-decoration: none;
+        }
+
+        .company-link:hover {
+            text-decoration: underline;
+        }
+
+        .country-flag {
+            width: 18px;
+            margin-right: 6px;
+            vertical-align: text-top;
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 10px;
+            color: #ccc;
+            justify-content: center;
+        }
+
+        .action-icons i {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .action-icons i:hover {
+            color: #666;
+        }
+
+        /* Layout Adjustments */
+        .pcoded-inner-content {
+            padding: 5px !important;
+            background: #f6f7fb;
+            /* Page background color */
+        }
+
+        .main-body .page-wrapper {
+            padding: 5px !important;
+            background: #f6f7fb;
+        }
+
+        .table-responsive {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+@endsection
+
+@section('content')
+    <!-- Pre-loader start -->
+    <div class="theme-loader">
+        <div class="ball-scale">
+            <div class='contain'>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+                <div class="ring">
+                    <div class="frame"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Pre-loader end -->
+    <div id="pcoded" class="pcoded">
+        <div class="pcoded-overlay-box"></div>
+        <div class="pcoded-container navbar-wrapper">
+
+            @include('layouts.top-menu')
+            @include('layouts.left-menu')
+            <!-- Page-body start -->
+            <br>
+            <div class="pcoded-content">
+                <div class="pcoded-inner-content">
+                    <!-- Main-body start -->
+                    <div class="main-body">
+                        <div class="page-wrapper">
+                            <!-- Page-header start -->
+                            <div class="page-header">
+
+                            </div>
+                            <!-- Page-header end -->
+
+                            <!-- Page-body start -->
+                            <div class="page-body">
+                                <!-- Filter Bar -->
+                                <div class="filter-row">
+                                    <div class="filter-item">
+                                        <label class="filter-label-custom">Name</label>
+                                        <div class="input-group-custom">
+                                            <input type="text" class="filter-input-custom has-append"
+                                                placeholder="type here" style="width: 120px;">
+                                            <button class="btn-input-append"><i class="ti-layout-grid3"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="filter-item" style="margin-left: 15px;">
+                                        <label class="filter-label-custom">Code</label>
+                                        <input type="text" class="filter-input-custom" placeholder="type here"
+                                            style="width: 100px;">
+                                    </div>
+                                    <div class="filter-item" style="margin-left: 15px;">
+                                        <label class="filter-label-custom">Address</label>
+                                        <input type="text" class="filter-input-custom" placeholder="type here"
+                                            style="width: 180px;">
+                                    </div>
+                                    <div class="filter-item" style="margin-left: 15px;">
+                                        <label class="filter-label-custom">City</label>
+                                        <input type="text" class="filter-input-custom" placeholder="type here"
+                                            style="width: 150px;">
+                                    </div>
+                                    <div class="filter-item" style="margin-left: 15px;">
+                                        <label class="filter-label-custom">Country</label>
+                                        <select class="filter-input-custom" style="width: 150px;">
+                                            <option>Click here</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-item" style="margin-left: 15px;">
+                                        <label class="filter-label-custom">Type</label>
+                                        <select class="filter-input-custom" style="width: 120px;">
+                                            <option>Click here</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-checkbox-group">
+                                        <input type="checkbox" id="hide-inactive-check" checked>
+                                        <label for="hide-inactive-check">Hide inactive</label>
+                                    </div>
+                                    <a href="#" class="btn-clear-filters">Clear filters</a>
+                                    <a class="btn btn-primary" href="{{ route('agents.create') }}"
+                                        style="font-size: 11px; padding: 6px 15px; border-radius: 2px; background: #fff; color: #1b5e6f; border: 1px solid #1b5e6f; font-weight: 600;">
+                                        Add Agent
+                                    </a>
+                                </div>
+
+                                <!-- Data Table -->
+                                <div class="table-responsive" style="padding: 0;">
+                                    <table id="agents-table" class="table-agents">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 30%;">Agent name</th>
+                                                <th style="width: 6%;">Code</th>
+                                                <th style="width: 9%;">City</th>
+                                                <th style="width: 10%;">Country</th>
+                                                <th style="width: 10%;">Phone number</th>
+                                                <th style="width: 15%;">Email</th>
+                                                <th style="width: 12%;">Type</th>
+                                                <th style="width: 5%;">Status</th>
+                                                <th style="width: 3%;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($agents as $agent)
+                                            <tr>
+                                                <td>
+                                                    <a href="{{ route('agents.edit', ['id' => $agent->id]) }}" class="agent-link">
+                                                        {{ $agent->agent_name }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ $agent->code }}</td>
+                                                <td>{{ $agent->city }}</td>
+                                                <td>{{ $agent->country->name ?? '—' }}</td>
+                                                <td>{{ $agent->phone }}</td>
+                                                <td>
+                                                    @if($agent->email)
+                                                        <a href="mailto:{{ $agent->email }}" class="company-link">{{ $agent->email }}</a>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
+                                                <td>{{ $agent->agent_type ? ucfirst(str_replace('_', ' ', $agent->agent_type)) : '—' }}</td>
+                                                <td>
+                                                    <span style="font-size:10px; padding:2px 8px; border-radius:10px; background:#d1fae5; color:#065f46; font-weight:600;">
+                                                        Active
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="action-icons">
+                                                        <a href="{{ route('agents.edit', ['id' => $agent->id]) }}">
+                                                            <i class="ti-pencil"></i>
+                                                        </a>
+                                                        <i class="ti-trash"></i>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="9" style="text-align:center; padding:40px; color:#9ca3af;">
+                                                    No agents found.
+                                                </td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- Page-body end -->
+                        </div>
+                    </div>
+                    <div id="styleSelector">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+    <!-- Required Jquery -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery/dist/jquery.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/jquery-ui/jquery-ui.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/popper.js/dist/umd/popper.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <!-- jquery slimscroll js -->
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/jquery-slimscroll/jquery.slimscroll.js') }}"></script>
+    <!-- modernizr js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/modernizr/modernizr.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/modernizr/feature-detects/css-scrollbars.js') }}"></script>
+
+    <!-- data-table js -->
+    <script src="{{ asset('files/bower_components/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/jszip.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/pdfmake.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/vfs_fonts.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('files/assets/pages/data-table/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('files/bower_components/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script
+        src="{{ asset('files/bower_components/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script>
+    <!-- i18next.min.js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/i18next/i18next.min.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/i18next-xhr-backend/i18nextXHRBackend.min.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/i18next-browser-languagedetector/i18nextBrowserLanguageDetector.min.js') }}"></script>
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/jquery-i18next/jquery-i18next.min.js') }}"></script>
+    <!-- Custom js -->
+    {{--
+    <script src="{{ asset('files/assets/pages/data-table/js/data-table-custom.js') }}"></script> --}}
+    <!-- Bootstrap Multiselect js -->
+    <script type="text/javascript"
+        src="{{ asset('files/bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js') }}"></script>
+    <script src="{{ asset('files/assets/js/pcoded.min.js') }}"></script>
+    <script src="{{ asset('files/assets/js/vartical-layout.min.js') }}"></script>
+    <script src="{{ asset('files/assets/js/jquery.mCustomScrollbar.concat.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
+    <!-- Select 2 js -->
+    <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Initialize Select2 for standard filters
+            $('.select2').select2({
+                placeholder: "Click here",
+                allowClear: true
+            });
+
+            // Initialize Bootstrap Multiselect for special filter toggle
+            $('#filter-multiselect').multiselect({
+                includeSelectAllOption: true,
+                enableFiltering: true,
+                buttonWidth: '100%',
+                maxHeight: 200,
+                nonSelectedText: '',
+                allSelectedText: '',
+                nSelectedText: '',
+                numberDisplayed: 0,
+                buttonClass: 'btn btn-outline-teal btn-filter-toggle',
+                templates: {
+                    button: '<button type="button" class="multiselect dropdown-toggle" data-toggle="dropdown"><i class="ti-filter"></i></button>'
+                },
+                onChange: function (option, checked) {
+                    toggleFilterVisibility();
+                },
+                onSelectAll: function () {
+                    toggleFilterVisibility();
+                },
+                onDeselectAll: function () {
+                    toggleFilterVisibility();
+                }
+            });
+
+            function toggleFilterVisibility() {
+                var selectedOptions = $('#filter-multiselect option:selected');
+                var selectedValues = [];
+                selectedOptions.each(function () {
+                    selectedValues.push($(this).val());
+                });
+
+                var allFilters = [
+                    { val: 'Office Name', id: 'col-Office-Name' },
+                    { val: 'Short Name', id: 'col-Short-Name' },
+                    { val: 'City', id: 'col-City' },
+                    { val: 'Country', id: 'col-Country' },
+                    { val: 'Phone', id: 'col-Phone' },
+                    { val: 'Email', id: 'col-Email' }
+                ];
+
+                allFilters.forEach(function (filter) {
+                    if (selectedValues.includes(filter.val)) {
+                        $('#' + filter.id).show();
+                    } else {
+                        $('#' + filter.id).hide();
+                    }
+                });
+            }
+
+            // Initial call to set visibility state
+            toggleFilterVisibility();
+
+            $('#agents-table').DataTable({
+                "lengthChange": false,
+                "pageLength": 25,
+                "responsive": false,
+                "searching": false,
+                "ordering": true,
+                "autoWidth": false,
+                "language": {
+                    "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                    "paginate": {
+                        "previous": "<",
+                        "next": ">"
+                    }
+                }
+            });
+        });
+    </script>
+@endsection

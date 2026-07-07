@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Route root requests directly to app front controller.
+    RewriteRule ^$ index.php [L]
+    RewriteRule ^\.$ index.php [L]
+
+    # Serve real files/directories from public.
+    RewriteCond %{DOCUMENT_ROOT}/laravel/public/$1 -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/laravel/public/$1 -d
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # Route all other requests to root front controller.
+    RewriteCond %{REQUEST_URI} !^/laravel/public/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>

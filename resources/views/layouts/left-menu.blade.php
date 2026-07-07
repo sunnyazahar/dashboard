@@ -1,0 +1,212 @@
+<nav class="pcoded-navbar">
+    <div class="pcoded-inner-navbar main-menu">
+        <div class="pcoded-navigatio-lavel">Navigation</div>
+        <ul class="pcoded-item pcoded-left-item">
+            <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                <a href="{{route('dashboard')}}">
+                    <span class="pcoded-micon"><i class="feather icon-home"></i></span>
+                    <span class="pcoded-mtext">Dashboard</span>
+                </a>
+            </li>
+
+            <li
+                class="pcoded-hasmenu {{ request()->is('stocks*') || request()->routeIs('stock-follow-up', 'pickup-work-list', 'create-crr', 'etl-stock-items') ? 'pcoded-trigger pcoded-item-open' : '' }}">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
+                    <span class="pcoded-mtext">Stocks</span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class="{{ request()->routeIs('stocks', 'stocks.edit') ? 'active' : '' }}">
+                        <a href="{{route('stocks')}}">
+                            <span class="pcoded-mtext">Stock list</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('stock-follow-up') ? 'active' : '' }}">
+                        <a href="{{route('stock-follow-up')}}">
+                            <span class="pcoded-mtext">Stock follow-up</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('pickup-work-list') ? 'active' : '' }}">
+                        <a href="{{route('pickup-work-list')}}">
+                            <span class="pcoded-mtext">Pick up work list</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('create-crr') ? 'active' : '' }}">
+                        <a href="{{route('create-crr')}}">
+                            <span class="pcoded-mtext">Create CRR</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('etl-stock-items') ? 'active' : '' }}">
+                        <a href="{{route('etl-stock-items')}}">
+                            <span class="pcoded-mtext">ETL stock items</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="pcoded-hasmenu">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
+                    <span class="pcoded-mtext">Quotes</span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class=" ">
+                        <a href="widget-statistic.html">
+                            <span class="pcoded-mtext">Statistic</span>
+                        </a>
+                    </li>
+                    <li class=" ">
+                        <a href="widget-data.html">
+                            <span class="pcoded-mtext">Data</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="widget-chart.html">
+                            <span class="pcoded-mtext">Chart Widget</span>
+                        </a>
+                    </li>
+
+                </ul>
+            </li>
+        </ul>
+        <ul class="pcoded-item pcoded-left-item">
+            <li
+                class="pcoded-hasmenu {{ request()->routeIs('shipments', 'pre-alert-reminders', 'shipment-follow-up', 'cost-follow-up', 'create-shipment') ? 'pcoded-trigger pcoded-item-open' : '' }}">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="icofont icofont-ship" style="font-size: 24px;"></i></span>
+                    <span class="pcoded-mtext">Shipments</span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class="{{ request()->routeIs('shipments') ? 'active' : '' }}">
+                        <a href="{{route('shipments')}}">
+                            <span class="pcoded-mtext">All shipments</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('pre-alert-reminders') ? 'active' : '' }}">
+                        <a href="{{route('pre-alert-reminders')}}">
+                            <span class="pcoded-mtext">Shipment follow up</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('shipment-follow-up') ? 'active' : '' }}">
+                        <a href="{{route('shipment-follow-up')}}">
+                            <span class="pcoded-mtext">Delivery follow-up</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('cost-follow-up') ? 'active' : '' }}">
+                        <a href="{{route('cost-follow-up')}}">
+                            <span class="pcoded-mtext">Cost follow-up</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('create-shipment') ? 'active' : '' }}">
+                        <a href="{{route('create-shipment')}}">
+                            <span class="pcoded-mtext">Create shipment</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li
+                class="pcoded-hasmenu {{ request()->routeIs('billable-shipments', 'all-invoices', 'all-incoming-invoices', 'all-costs', 'accounting') ? 'pcoded-trigger pcoded-item-open' : '' }}">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="icofont icofont-calculator-alt-2"></i></span>
+                    <span class="pcoded-mtext">Billing</span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class="{{ request()->routeIs('billable-shipments') ? 'active' : '' }}">
+                        <a href="{{route('billable-shipments')}}">
+                            <span class="pcoded-mtext">Billable shipments</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('all-invoices') ? 'active' : '' }}">
+                        <a href="{{route('all-invoices')}}">
+                            <span class="pcoded-mtext">All invoices</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('all-incoming-invoices') ? 'active' : '' }}">
+                        <a href="{{route('all-incoming-invoices')}}">
+                            <span class="pcoded-mtext">All incoming invoices</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('all-costs') ? 'active' : '' }}">
+                        <a href="{{route('all-costs')}}">
+                            <span class="pcoded-mtext">All costs</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('accounting') ? 'active' : '' }}">
+                        <a href="{{route('accounting')}}">
+                            <span class="pcoded-mtext">Accounting</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="pcoded-hasmenu" style="display: none;">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-package"></i></span>
+                    <span class="pcoded-mtext">Contacts</span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class=" ">
+                        <a href="session-timeout.html">
+                            <span class="pcoded-mtext">Session Timeout</span>
+                        </a>
+                    </li>
+                    <li class=" ">
+                        <a href="session-idle-timeout.html">
+                            <span class="pcoded-mtext">Session Idle Timeout</span>
+                        </a>
+                    </li>
+                    <li class=" ">
+                        <a href="offline.html">
+                            <span class="pcoded-mtext">Offline</span>
+                        </a>
+                    </li>
+
+                </ul>
+            </li>
+            <li
+                class="pcoded-hasmenu {{ request()->routeIs('offices.*', 'hub.*', 'agents.*', 'other-companies.*', 'suppliers.*', 'customers.*', 'vessels.*', 'contacts.*') ? 'pcoded-trigger pcoded-item-open' : '' }}">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-command"></i></span>
+                    <span class="pcoded-mtext">Administration</span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class="{{ request()->routeIs('offices.*') ? 'active' : '' }}">
+                        <a href="{{ route('offices.index') }}">
+                            <span class="pcoded-mtext">Office</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('hub.*') ? 'active' : '' }}">
+                        <a href="{{ route('hub.index') }}">
+                            <span class="pcoded-mtext">Hubs</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('agents.*') ? 'active' : '' }}">
+                        <a href="{{ route('agents.index') }}">
+                            <span class="pcoded-mtext">Agents</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('other-companies.*') ? 'active' : '' }}">
+                        <a href="{{ route('other-companies.index') }}">
+                            <span class="pcoded-mtext">Other companies</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('suppliers.*') ? 'active' : '' }}">
+                        <a href="{{ route('suppliers.index') }}">
+                            <span class="pcoded-mtext">Suppliers</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('customers.*', 'contacts.*') ? 'active' : '' }}">
+                        <a href="{{ route('customers.index') }}">
+                            <span class="pcoded-mtext">customers</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('vessels.*') ? 'active' : '' }}">
+                        <a href="{{ route('vessels.index') }}">
+                            <span class="pcoded-mtext">Vessels</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+
+    </div>
+</nav>

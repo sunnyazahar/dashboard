@@ -1,0 +1,2066 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Agent;
+use App\Models\Contact;
+use App\Models\Country;
+use App\Models\Crr;
+use App\Models\Hub;
+use App\Models\Office;
+use App\Models\Shipment;
+use App\Models\ShipmentDocument;
+use App\Models\ShipmentManifest;
+use App\Models\ShipmentPreAlert;
+use App\Models\ShipmentPreAlertReminderSend;
+use App\Models\ShipmentFlight;
+use App\Models\ShipmentIrregularity;
+use App\Models\ShipmentHandCarryLeg;
+use App\Models\ShipmentReleaseLeg;
+use App\Models\ShipmentSeaLeg;
+use App\Models\ShipmentCourierLeg;
+use App\Models\ShipmentTruckLeg;
+use App\Models\User;
+use App\Services\CombinedPoPdfService;
+use App\Services\ManifestMailService;
+use App\Services\PreAlertMailService;
+use App\Services\PreAlertReminderMailService;
+use App\Services\ShipmentManifestPdfBuilder;
+use App\Services\ShipmentManifestService;
+use App\Services\ShipmentPdfFingerprintService;
+use App\Services\ShipmentPreAlertService;
+use App\Services\ShipmentStockSnapshotService;
+use App\Services\ShipmentTransitStockDuplicationService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
+class ShipmentController extends Controller
+{
+    public function index()
+    {
+        $shipments = Shipment::with([
+            'crrs.customerVessel.customer',
+            'accountManager.office',
+            'creator',
+            'irregularities',
+        ])->latest()->get();
+
+        $partyNames = Shipment::batchResolvePartyNames($shipments);
+
+        $customers = $shipments
+            ->flatMap(fn (Shipment $shipment) => $shipment->crrs->map(
+                fn (Crr $crr) => $crr->customerVessel?->customer?->customer_name
+            ))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $vessels = $shipments
+            ->flatMap(fn (Shipment $shipment) => $shipment->crrs->pluck('vessel_name'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $services = $shipments->pluck('service')->filter()->unique()->sort()->values();
+
+        $hubs = Hub::orderBy('hub_name')->get();
+        $agents = Agent::orderBy('agent_name')->get();
+
+        $departureOptions = $shipments
+            ->map(fn (Shipment $shipment) => $shipment->partyDisplay($shipment->departure, $partyNames))
+            ->filter(fn ($value) => $value !== '—')
+            ->values()
+            ->toBase()
+            ->merge($hubs->pluck('hub_name'))
+            ->merge($agents->pluck('agent_name'))
+            ->unique()
+            ->sort()
+            ->values();
+
+        $accountManagers = Contact::query()
+            ->whereIn('id', $shipments->pluck('account_manager_id')->filter()->unique())
+            ->orderBy('name')
+            ->get();
+
+        $creators = User::query()
+            ->whereIn('id', $shipments->pluck('created_by')->filter()->unique())
+            ->orderBy('name')
+            ->get();
+
+        $offices = Office::query()
+            ->whereIn('id', $accountManagers->pluck('office_id')->filter()->unique())
+            ->orderBy('office_name')
+            ->get();
+
+        return view('Shipment.shipments', compact(
+            'shipments',
+            'partyNames',
+            'customers',
+            'vessels',
+            'services',
+            'departureOptions',
+            'accountManagers',
+            'creators',
+            'offices'
+        ));
+    }
+
+    public function preAlertReminders()
+    {
+        $shipments = Shipment::with([
+            'crrs.packages',
+            'crrs.customerVessel.customer',
+            'accountManager.office',
+            'creator',
+            'irregularities',
+        ])
+            ->withCount('preAlertReminderSends as reminder_sent_count')
+            ->where('status', '!=', 'Completed')
+            ->latest()
+            ->get();
+
+        $partyNames = Shipment::batchResolvePartyNames($shipments);
+
+        $customers = $shipments
+            ->flatMap(fn (Shipment $shipment) => $shipment->crrs->map(
+                fn (Crr $crr) => $crr->customerVessel?->customer?->customer_name
+            ))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $vessels = $shipments
+            ->flatMap(fn (Shipment $shipment) => $shipment->crrs->pluck('vessel_name'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $accountManagers = Contact::query()
+            ->whereIn('id', $shipments->pluck('account_manager_id')->filter()->unique())
+            ->orderBy('name')
+            ->get();
+
+        $creators = User::query()
+            ->whereIn('id', $shipments->pluck('created_by')->filter()->unique())
+            ->orderBy('name')
+            ->get();
+
+        return view('Shipment.pre-alert-reminders', compact(
+            'shipments',
+            'partyNames',
+            'customers',
+            'vessels',
+            'accountManagers',
+            'creators',
+        ));
+    }
+
+    public function shipmentFollowUp()
+    {
+        $shipments = Shipment::with([
+            'crrs.packages',
+            'crrs.customerVessel.customer',
+            'accountManager.office',
+            'creator',
+            'irregularities',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+            'releaseLegs',
+            'handCarryLegs',
+        ])
+            ->withMax('preAlertReminderSends as last_reminder_sent_at', 'created_at')
+            ->whereNotIn('status', ['Completed', 'Draft'])
+            ->latest()
+            ->get();
+
+        $partyNames = Shipment::batchResolvePartyNames($shipments);
+
+        $customers = $shipments
+            ->flatMap(fn (Shipment $shipment) => $shipment->crrs->map(
+                fn (Crr $crr) => $crr->customerVessel?->customer?->customer_name
+            ))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $vessels = $shipments
+            ->flatMap(fn (Shipment $shipment) => $shipment->crrs->pluck('vessel_name'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $accountManagers = Contact::query()
+            ->whereIn('id', $shipments->pluck('account_manager_id')->filter()->unique())
+            ->orderBy('name')
+            ->get();
+
+        $creators = User::query()
+            ->whereIn('id', $shipments->pluck('created_by')->filter()->unique())
+            ->orderBy('name')
+            ->get();
+
+        return view('Shipment.shipment-follow-up', compact(
+            'shipments',
+            'partyNames',
+            'customers',
+            'vessels',
+            'accountManagers',
+            'creators',
+        ));
+    }
+
+    public function preAlertReminderMailPreview($id, PreAlertReminderMailService $reminderMailService)
+    {
+        $shipment = Shipment::with([
+            'crrs.packages',
+            'crrs.customerVessel.customer',
+            'accountManager.office',
+            'creator',
+        ])->findOrFail($id);
+
+        if ($shipment->status === 'Completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Completed shipments cannot receive pre-alert reminders.',
+            ], 422);
+        }
+
+        try {
+            $preview = $reminderMailService->buildPreview(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'preview' => $preview,
+            'eml_url' => route('shipments.pre-alert-reminder-mail', $shipment->id),
+            'eml_filename' => 'pre-alert-reminder-' . $shipment->shipment_number . '.eml',
+        ]);
+    }
+
+    public function preAlertReminderMail($id, PreAlertReminderMailService $reminderMailService)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        try {
+            $eml = $reminderMailService->buildEml(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            Log::error('Pre-alert reminder mail draft failed: ' . $e->getMessage());
+            abort(400, $e->getMessage());
+        }
+
+        $filename = 'pre-alert-reminder-' . $shipment->shipment_number . '.eml';
+
+        return response($eml, 200, [
+            'Content-Type' => 'message/rfc822',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
+    }
+
+    public function recordPreAlertReminderSend($id)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        if ($shipment->status === 'Completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Completed shipments cannot receive pre-alert reminders.',
+            ], 422);
+        }
+
+        ShipmentPreAlertReminderSend::create([
+            'shipment_id' => $shipment->id,
+            'user_id' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'reminder_sent_count' => $shipment->preAlertReminderSends()->count(),
+        ]);
+    }
+
+    public function markAsArrived($id, ShipmentStockSnapshotService $stockSnapshotService)
+    {
+        $shipment = Shipment::with([
+            'crrs.packages',
+            'crrs.costs',
+            'crrs.documents',
+            'crrs.customerVessel.customer',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+        ])->findOrFail($id);
+
+        if ($shipment->status === 'Completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This shipment is already completed.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($shipment, $stockSnapshotService) {
+            $stockSnapshotService->snapshotShipmentStocks($shipment);
+
+            $shipment->update(['status' => 'Completed']);
+
+            $crrIds = $shipment->crrs()->pluck('crrs.id')->all();
+            if (!empty($crrIds)) {
+                Crr::whereIn('id', $crrIds)->update([
+                    'status' => Crr::STATUS_COMPLETED,
+                ]);
+            }
+        });
+
+        $shipment = $shipment->fresh(['stockSnapshots']);
+        $stockSnapshotService->applyResolvedStockCrrs($shipment);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shipment marked as arrived and completed.',
+            'status' => $shipment->status,
+        ]);
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['Draft', 'In process', 'In transit', 'Delivered', 'Completed', 'Pending'])],
+        ]);
+
+        $shipment->update(['status' => $validated['status']]);
+
+        return response()->json([
+            'success' => true,
+            'status' => $shipment->status,
+        ]);
+    }
+
+    public function updateFlags(Request $request, $id)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        $flagsInput = $request->input('flags');
+        if ($flagsInput !== null && ! is_array($flagsInput)) {
+            $request->merge(['flags' => [$flagsInput]]);
+        }
+
+        $validated = $request->validate([
+            'flags' => 'nullable|array',
+            'flags.*' => ['string', Rule::in(Shipment::availableFlags())],
+        ]);
+
+        $flags = array_values(array_unique($validated['flags'] ?? []));
+        $shipment->update(['flags' => $flags]);
+
+        return response()->json([
+            'success' => true,
+            'flags' => $shipment->flags ?? [],
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $this->validateShipmentRequest($request);
+
+        DB::beginTransaction();
+
+        try {
+            do {
+                $shipmentNumber = 'SHIP' . str_pad((string) random_int(1, 999999), 6, '0', STR_PAD_LEFT);
+            } while (Shipment::where('shipment_number', $shipmentNumber)->exists());
+
+            $shipment = Shipment::create(array_merge(
+                [
+                    'shipment_number' => $shipmentNumber,
+                    'created_by' => auth()->id(),
+                    'flags' => Shipment::defaultFlags(),
+                ],
+                $this->buildShipmentAttributes($request, $validated)
+            ));
+
+            $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
+            if (!empty($crrIds)) {
+                $shipment->crrs()->attach($crrIds);
+            }
+
+            $this->syncCrrInternalShipments($shipment, $crrIds);
+
+            $this->syncIrregularities($shipment, $validated['irregularities'] ?? []);
+
+            $this->syncFlights($shipment, $validated['flights'] ?? [], $validated['service'] ?? null);
+
+            $this->syncSeaLegs($shipment, $validated['sea_legs'] ?? [], $validated['service'] ?? null);
+
+            $this->syncTruckLegs($shipment, $validated['truck_legs'] ?? [], $validated['service'] ?? null);
+
+            $this->syncCourierLegs($shipment, $validated['courier_legs'] ?? [], $validated['service'] ?? null);
+
+            $this->syncReleaseLegs($shipment, $validated['release_legs'] ?? [], $validated['service'] ?? null);
+
+            $this->syncHandCarryLegs($shipment, $request->input('hand_carry_legs', []), $validated['service'] ?? null);
+
+            DB::commit();
+
+            return redirect()
+                ->route('shipments.edit', $shipment->id)
+                ->with('success', 'Shipment ' . $shipment->shipment_number . ' created successfully.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Shipment store failed: ' . $e->getMessage() . ' (line ' . $e->getLine() . ')');
+
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create shipment: ' . $e->getMessage());
+        }
+    }
+
+    public function edit($id, ManifestMailService $manifestMailService, PreAlertMailService $preAlertMailService, CombinedPoPdfService $combinedPoPdfService, ShipmentManifestService $manifestService, ShipmentPreAlertService $preAlertService, ShipmentStockSnapshotService $stockSnapshotService, ShipmentTransitStockDuplicationService $transitStockDuplicationService)
+    {
+        $shipment = Shipment::with([
+            'crrs.packages',
+            'crrs.customerVessel.customer',
+            'stockSnapshots',
+            'accountManager.office',
+            'creator',
+            'irregularities',
+            'documents',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+            'releaseLegs',
+            'handCarryLegs',
+            'manifests',
+            'preAlerts',
+        ])->findOrFail($id);
+
+        $stockSnapshotService->applyResolvedStockCrrs($shipment);
+
+        $partyNames = Shipment::batchResolvePartyNames(collect([$shipment]));
+        $departureDisplay = $shipment->partyDisplay($shipment->departure, $partyNames);
+        $consigneeDisplay = $shipment->partyDisplay($shipment->consignee, $partyNames);
+
+        $countries = Country::where('is_active', true)->orderBy('name')->get();
+        $crrs = Crr::with(['packages', 'documents', 'customerVessel.customer'])
+            ->selectableForShipment()
+            ->latest()
+            ->get();
+        $hubs = Hub::orderBy('hub_name')->get();
+        $agents = Agent::with('country')->orderBy('agent_name')->get();
+
+        extract($this->irregularityFormOptions());
+
+        $combinedPoDocuments = $combinedPoPdfService->documentsForShipment($shipment);
+        $shipmentDocumentTypeOptions = ShipmentDocument::fileTypeOptionsWithCustom();
+
+        if ($shipment->manifests->isEmpty() && $shipment->crrs->isNotEmpty()) {
+            $manifestService->generate($shipment);
+            $shipment->load('manifests');
+        }
+
+        if ($shipment->preAlerts->isEmpty() && $shipment->crrs->isNotEmpty() && \App\Services\ShipmentPreAlertPdfBuilder::shipmentHasServiceDetails($shipment)) {
+            $preAlertService->generate($shipment);
+            $shipment->load('preAlerts');
+        }
+
+        $manifestMailPreview = null;
+        try {
+            $manifestMailPreview = $manifestMailService->buildPreview(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable) {
+            $manifestMailPreview = null;
+        }
+
+        $preAlertMailPreview = null;
+        try {
+            $preAlertMailPreview = $preAlertMailService->buildPreview(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable) {
+            $preAlertMailPreview = null;
+        }
+
+        $consigneeCode = $transitStockDuplicationService->resolveConsigneePartyCode($shipment->consignee) ?? '';
+        $consigneePartyCodes = [];
+        foreach ($hubs as $hub) {
+            $code = trim((string) ($hub->code ?? ''));
+            if ($code !== '') {
+                $consigneePartyCodes['hub:' . $hub->id] = $code;
+            }
+        }
+        foreach ($agents as $agent) {
+            $code = trim((string) ($agent->code ?? ''));
+            if ($code !== '') {
+                $consigneePartyCodes['agent:' . $agent->id] = $code;
+            }
+        }
+
+        return view('Shipment.edit', compact(
+            'shipment',
+            'partyNames',
+            'departureDisplay',
+            'consigneeDisplay',
+            'consigneeCode',
+            'consigneePartyCodes',
+            'countries',
+            'crrs',
+            'hubs',
+            'agents',
+            'combinedPoDocuments',
+            'shipmentDocumentTypeOptions',
+            'manifestMailPreview',
+            'preAlertMailPreview',
+            'irregularityTypeOptions',
+            'partyResponsibleOptions',
+            'consequenceOptions',
+            'statusOptions'
+        ));
+    }
+
+    public function generateManifest(Request $request, $id, ShipmentManifestService $manifestService, CombinedPoPdfService $combinedPoPdfService, ShipmentPdfFingerprintService $fingerprintService)
+    {
+        $shipment = Shipment::with(['manifests', 'documents', 'crrs'])->findOrFail($id);
+        $this->normalizeManifestGenerationRequest($request);
+
+        try {
+            $validated = $request->validate($this->manifestGenerationRules());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not validate shipment data for manifest generation.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        $fingerprintService->prepareForFingerprint($shipment);
+        $manifestFingerprintBefore = $fingerprintService->manifestFingerprint($shipment);
+
+        try {
+            DB::transaction(function () use ($shipment, $request, $validated) {
+                $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
+
+                if ($request->has('crr_ids') && $shipment->status !== 'Completed') {
+                    $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
+                    $shipment->crrs()->sync($crrIds);
+                    $this->syncCrrInternalShipments($shipment, $crrIds);
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Manifest autosave failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not save shipment changes before generating manifest.',
+            ], 500);
+        }
+
+        $shipment = $shipment->fresh(array_merge(
+            $fingerprintService->relations(),
+            ['documents', 'manifests']
+        ));
+
+        if ($shipment->crrs->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Add at least one stock item to generate a manifest.',
+            ], 422);
+        }
+
+        $fingerprintService->prepareForFingerprint($shipment);
+        $manifestCreated = false;
+
+        if ($fingerprintService->manifestFingerprint($shipment) !== $manifestFingerprintBefore) {
+            try {
+                $manifest = $manifestService->generate($shipment);
+                $manifestCreated = $manifest !== null;
+            } catch (\Throwable $e) {
+                Log::error('Manifest generation failed: ' . $e->getMessage());
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Could not generate manifest PDF. Please try again.',
+                ], 500);
+            }
+        }
+
+        $manifests = $shipment->manifests()->orderBy('version')->get();
+
+        return response()->json([
+            'success' => true,
+            'created' => $manifestCreated,
+            'manifests' => $manifests->map(fn (ShipmentManifest $manifest) => $this->manifestToArray($manifest)),
+            'document_count' => $this->shipmentDocumentCount($shipment, $combinedPoPdfService),
+        ]);
+    }
+
+    public function generatePreAlert(Request $request, $id, ShipmentPreAlertService $preAlertService, CombinedPoPdfService $combinedPoPdfService, ShipmentPdfFingerprintService $fingerprintService)
+    {
+        $shipment = Shipment::with(['preAlerts', 'documents', 'crrs', 'manifests'])->findOrFail($id);
+        $this->normalizeManifestGenerationRequest($request);
+
+        try {
+            $validated = $request->validate($this->preAlertMailRules());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not validate shipment data for pre-alert generation.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        $fingerprintService->prepareForFingerprint($shipment);
+        $preAlertFingerprintBefore = $fingerprintService->preAlertFingerprint($shipment);
+
+        try {
+            DB::transaction(function () use ($shipment, $request, $validated) {
+                $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
+
+                if ($request->has('crr_ids') && $shipment->status !== 'Completed') {
+                    $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
+                    $shipment->crrs()->sync($crrIds);
+                    $this->syncCrrInternalShipments($shipment, $crrIds);
+                }
+
+                $service = $validated['service'] ?? $shipment->service;
+                $this->syncFlights($shipment, $validated['flights'] ?? [], $service);
+                $this->syncSeaLegs($shipment, $validated['sea_legs'] ?? [], $service);
+                $this->syncTruckLegs($shipment, $validated['truck_legs'] ?? [], $service);
+                $this->syncCourierLegs($shipment, $validated['courier_legs'] ?? [], $service);
+                $this->syncReleaseLegs($shipment, $validated['release_legs'] ?? [], $service);
+                $this->syncHandCarryLegs($shipment, $request->input('hand_carry_legs', []), $service);
+            });
+        } catch (\Throwable $e) {
+            Log::error('Pre-alert autosave failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not save service details before generating pre-alert PDF.',
+            ], 500);
+        }
+
+        $shipment = $shipment->fresh(array_merge(
+            $fingerprintService->relations(),
+            ['documents', 'manifests', 'preAlerts']
+        ));
+
+        if ($shipment->crrs->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Add at least one stock item to generate a pre-alert.',
+            ], 422);
+        }
+
+        if (!\App\Services\ShipmentPreAlertPdfBuilder::shipmentHasServiceDetails($shipment)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Add service details before generating a pre-alert PDF.',
+            ], 422);
+        }
+
+        $fingerprintService->prepareForFingerprint($shipment);
+        $preAlertCreated = false;
+
+        if ($fingerprintService->preAlertFingerprint($shipment) !== $preAlertFingerprintBefore) {
+            try {
+                $preAlert = $preAlertService->generate($shipment);
+                $preAlertCreated = $preAlert !== null;
+            } catch (\Throwable $e) {
+                Log::error('Pre-alert generation failed: ' . $e->getMessage());
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Could not generate pre-alert PDF. Please try again.',
+                ], 500);
+            }
+        }
+
+        $preAlerts = $shipment->preAlerts()->orderBy('version')->get();
+
+        return response()->json([
+            'success' => true,
+            'created' => $preAlertCreated,
+            'pre_alerts' => $preAlerts->map(fn (ShipmentPreAlert $preAlert) => $this->preAlertToArray($preAlert)),
+            'document_count' => $this->shipmentDocumentCount($shipment, $combinedPoPdfService),
+        ]);
+    }
+
+    public function showManifest($shipmentId, $manifestId, ShipmentManifestService $manifestService)
+    {
+        $manifest = ShipmentManifest::with('shipment')->where('shipment_id', $shipmentId)->findOrFail($manifestId);
+
+        try {
+            $path = $manifestService->ensureFileExists($manifest);
+        } catch (\Throwable $e) {
+            Log::error('Manifest file regeneration failed: ' . $e->getMessage());
+            abort(404, 'Manifest file not found.');
+        }
+
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $manifest->file_name . '-' . $manifest->shipment->shipment_number . '.pdf"',
+        ]);
+    }
+
+    public function deleteManifest($shipmentId, $manifestId)
+    {
+        $manifest = ShipmentManifest::where('shipment_id', $shipmentId)->findOrFail($manifestId);
+
+        Storage::disk('public')->delete($manifest->file_path);
+        $manifest->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function showPreAlert($shipmentId, $preAlertId, ShipmentPreAlertService $preAlertService)
+    {
+        $preAlert = ShipmentPreAlert::with('shipment')->where('shipment_id', $shipmentId)->findOrFail($preAlertId);
+
+        try {
+            $path = $preAlertService->ensureFileExists($preAlert);
+        } catch (\Throwable $e) {
+            Log::error('Pre-alert file regeneration failed: ' . $e->getMessage());
+            abort(404, 'Pre-alert file not found.');
+        }
+
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="pre-alert-' . $preAlert->shipment->shipment_number . '-' . $preAlert->version . '.pdf"',
+        ]);
+    }
+
+    public function deletePreAlert($shipmentId, $preAlertId)
+    {
+        $preAlert = ShipmentPreAlert::where('shipment_id', $shipmentId)->findOrFail($preAlertId);
+
+        Storage::disk('public')->delete($preAlert->file_path);
+        $preAlert->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function combinedPoDocuments($id, CombinedPoPdfService $combinedPoPdfService)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        return $combinedPoPdfService->streamMergedPdf(
+            $shipment,
+            'combined-po-documents-' . $shipment->shipment_number . '.pdf'
+        );
+    }
+
+    public function combinedManifestDocuments($id, ShipmentManifestPdfBuilder $builder, ShipmentManifestService $manifestService)
+    {
+        $shipment = Shipment::with([
+            'crrs.packages',
+            'crrs.customerVessel.customer',
+            'accountManager.office',
+            'creator',
+            'manifests',
+        ])->findOrFail($id);
+
+        if ($shipment->crrs->isEmpty()) {
+            abort(404, 'No stock items linked to this shipment.');
+        }
+
+        $latestManifest = $manifestService->latestForShipment($shipment);
+        if ($latestManifest) {
+            $path = Storage::disk('public')->path($latestManifest->file_path);
+            if (is_file($path)) {
+                return response()->file($path, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . $latestManifest->file_name . '-' . $shipment->shipment_number . '.pdf"',
+                ]);
+            }
+        }
+
+        $data = $builder->build($shipment);
+
+        return Pdf::loadView('Shipment.pdf.manifest', $data)
+            ->setPaper('a4', 'portrait')
+            ->stream('manifest-' . $shipment->shipment_number . '.pdf');
+    }
+
+    public function manifestMailLauncher($id, ManifestMailService $manifestMailService, CombinedPoPdfService $combinedPoPdfService)
+    {
+        $shipment = Shipment::with('documents')->findOrFail($id);
+
+        try {
+            $manifestMailPreview = $manifestMailService->buildPreview(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            abort(400, $e->getMessage());
+        }
+
+        $attachmentSources = [
+            [
+                'url' => route('shipments.combined-manifest-documents', $shipment->id),
+                'filename' => 'manifest-' . $shipment->shipment_number . '.pdf',
+            ],
+        ];
+
+        if ($combinedPoPdfService->documentsForShipment($shipment)->isNotEmpty()) {
+            $attachmentSources[] = [
+                'url' => route('shipments.combined-po-documents', $shipment->id),
+                'filename' => 'combined-po-documents-' . $shipment->shipment_number . '.pdf',
+            ];
+        }
+
+        return view('Shipment.manifest-mail-launcher', [
+            'shipment' => $shipment,
+            'manifestMailPreview' => $manifestMailPreview,
+            'attachmentSources' => $attachmentSources,
+            'emlUrl' => route('shipments.manifest-mail', $shipment->id),
+            'emlFilename' => 'manifest-mail-' . $shipment->shipment_number . '.eml',
+        ]);
+    }
+
+    public function manifestMail(Request $request, $id, ManifestMailService $manifestMailService)
+    {
+        $shipment = Shipment::with([
+            'crrs.packages',
+            'crrs.customerVessel.customer',
+            'crrs.documents',
+            'accountManager.office',
+            'creator',
+            'documents',
+            'manifests',
+        ])->findOrFail($id);
+
+        try {
+            $eml = $manifestMailService->buildEml(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email,
+                $this->parseMailDocumentIds($request->query('document_ids'))
+            );
+        } catch (\Throwable $e) {
+            Log::error('Manifest mail draft failed: ' . $e->getMessage());
+            abort(400, $e->getMessage());
+        }
+
+        $filename = 'manifest-mail-' . $shipment->shipment_number . '.eml';
+
+        return response($eml, 200, [
+            'Content-Type' => 'message/rfc822',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
+    }
+
+    public function prepareManifestMail(Request $request, $id, ManifestMailService $manifestMailService, CombinedPoPdfService $combinedPoPdfService, ShipmentManifestService $manifestService)
+    {
+        $shipment = Shipment::with(['manifests', 'documents', 'crrs'])->findOrFail($id);
+        $this->normalizeManifestGenerationRequest($request);
+
+        try {
+            $validated = $request->validate($this->manifestGenerationRules());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not validate shipment data for manifest email.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($shipment, $request, $validated) {
+                $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
+
+                if ($request->has('crr_ids') && $shipment->status !== 'Completed') {
+                    $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
+                    $shipment->crrs()->sync($crrIds);
+                    $this->syncCrrInternalShipments($shipment, $crrIds);
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Manifest autosave before mail prepare failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not save shipment changes before preparing manifest email.',
+            ], 500);
+        }
+
+        $shipment = $shipment->fresh([
+            'crrs.packages',
+            'crrs.documents',
+            'crrs.customerVessel.customer',
+            'accountManager.office',
+            'creator',
+            'documents',
+            'manifests',
+        ]);
+
+        if ($shipment->crrs->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Add at least one stock item before sending a manifest.',
+            ], 422);
+        }
+
+        try {
+            if ($shipment->manifests->isEmpty()) {
+                $manifestService->generate($shipment);
+                $shipment->load('manifests');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Manifest generation before mail prepare failed: ' . $e->getMessage());
+        }
+
+        try {
+            $preview = $manifestMailService->buildPreview(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            Log::error('Manifest mail preview failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'preview' => $preview,
+            'attachments' => $this->manifestMailAttachmentSources($shipment, $combinedPoPdfService),
+            'eml_url' => route('shipments.manifest-mail', $shipment->id),
+            'eml_filename' => 'manifest-mail-' . $shipment->shipment_number . '.eml',
+            'open_url' => route('shipments.manifest-mail.open', $shipment->id),
+        ]);
+    }
+
+    public function manifestMailOpen(Request $request, $id)
+    {
+        $shipment = Shipment::findOrFail($id);
+        $documentIds = $this->parseMailDocumentIds($request->query('document_ids'));
+        $emlUrl = route('shipments.manifest-mail', $shipment->id);
+
+        if ($documentIds !== []) {
+            $emlUrl .= '?document_ids=' . implode(',', $documentIds);
+        }
+
+        return view('Shipment.manifest-mail-open', [
+            'emlUrl' => $emlUrl,
+            'filename' => 'manifest-mail-' . $shipment->shipment_number . '.eml',
+        ]);
+    }
+
+    public function preparePreAlertMail(Request $request, $id, PreAlertMailService $preAlertMailService)
+    {
+        $shipment = Shipment::with(['manifests', 'documents', 'crrs'])->findOrFail($id);
+        $this->normalizeManifestGenerationRequest($request);
+
+        try {
+            $validated = $request->validate($this->preAlertMailRules());
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not validate shipment data for pre-alert email.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($shipment, $request, $validated) {
+                $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
+
+                if ($request->has('crr_ids') && $shipment->status !== 'Completed') {
+                    $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
+                    $shipment->crrs()->sync($crrIds);
+                    $this->syncCrrInternalShipments($shipment, $crrIds);
+                }
+
+                $service = $validated['service'] ?? $shipment->service;
+                $this->syncFlights($shipment, $validated['flights'] ?? [], $service);
+                $this->syncSeaLegs($shipment, $validated['sea_legs'] ?? [], $service);
+                $this->syncTruckLegs($shipment, $validated['truck_legs'] ?? [], $service);
+                $this->syncCourierLegs($shipment, $validated['courier_legs'] ?? [], $service);
+                $this->syncReleaseLegs($shipment, $validated['release_legs'] ?? [], $service);
+                $this->syncHandCarryLegs($shipment, $request->input('hand_carry_legs', []), $service);
+            });
+        } catch (\Throwable $e) {
+            Log::error('Pre-alert autosave failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not save shipment changes before preparing pre-alert email.',
+            ], 500);
+        }
+
+        $shipment = $shipment->fresh([
+            'crrs.packages',
+            'crrs.customerVessel.customer',
+            'accountManager.office',
+            'creator',
+            'documents',
+            'manifests',
+            'preAlerts',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+            'releaseLegs',
+            'handCarryLegs',
+        ]);
+
+        if ($shipment->crrs->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Add at least one stock item before sending a pre-alert.',
+            ], 422);
+        }
+
+        try {
+            if (\App\Services\ShipmentPreAlertPdfBuilder::shipmentHasServiceDetails($shipment)) {
+                app(ShipmentPreAlertService::class)->generate($shipment);
+                $shipment->load('preAlerts');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Pre-alert generation before mail prepare failed: ' . $e->getMessage());
+        }
+
+        try {
+            $preview = $preAlertMailService->buildPreview(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            Log::error('Pre-alert mail preview failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'preview' => $preview,
+            'attachments' => $this->preAlertMailAttachmentSources($shipment),
+            'eml_url' => route('shipments.pre-alert-mail', $shipment->id),
+            'eml_filename' => 'pre-alert-mail-' . $shipment->shipment_number . '.eml',
+            'open_url' => route('shipments.pre-alert-mail.open', $shipment->id),
+        ]);
+    }
+
+    public function preAlertMailOpen(Request $request, $id)
+    {
+        $shipment = Shipment::findOrFail($id);
+        $documentIds = $this->parseMailDocumentIds($request->query('document_ids'));
+        $emlUrl = route('shipments.pre-alert-mail', $shipment->id);
+
+        if ($documentIds !== []) {
+            $emlUrl .= '?document_ids=' . implode(',', $documentIds);
+        }
+
+        return view('Shipment.manifest-mail-open', [
+            'emlUrl' => $emlUrl,
+            'filename' => 'pre-alert-mail-' . $shipment->shipment_number . '.eml',
+        ]);
+    }
+
+    public function preAlertMail(Request $request, $id, PreAlertMailService $preAlertMailService)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        try {
+            $eml = $preAlertMailService->buildEml(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email,
+                $this->parseMailDocumentIds($request->query('document_ids'))
+            );
+        } catch (\Throwable $e) {
+            Log::error('Pre-alert mail draft failed: ' . $e->getMessage());
+            abort(400, $e->getMessage());
+        }
+
+        $filename = 'pre-alert-mail-' . $shipment->shipment_number . '.eml';
+
+        return response($eml, 200, [
+            'Content-Type' => 'message/rfc822',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
+    }
+
+    public function uploadDocument(Request $request, $id)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        $request->validate([
+            'file' => 'required|file|mimes:pdf|max:20480',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('shipment_documents', 'public');
+
+        $document = ShipmentDocument::create([
+            'shipment_id' => $shipment->id,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => 'Unspecified',
+        ]);
+
+        return response()->json([
+            'id' => $document->id,
+            'file_name' => $document->file_name,
+            'file_url' => $document->fileUrl(),
+            'file_type' => $document->file_type,
+            'date' => $document->created_at->format('d.m.Y'),
+        ]);
+    }
+
+    public function deleteDocument($docId)
+    {
+        try {
+            $document = ShipmentDocument::findOrFail($docId);
+            Storage::disk('public')->delete($document->file_path);
+            $document->delete();
+
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            Log::error('Shipment document delete failed: ' . $e->getMessage());
+
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateDocumentType(Request $request, $docId)
+    {
+        $document = ShipmentDocument::findOrFail($docId);
+
+        $validated = $request->validate([
+            'file_type' => ['required', 'string', 'max:100'],
+        ]);
+
+        $fileType = trim($validated['file_type']);
+        if ($fileType === '') {
+            return response()->json([
+                'success' => false,
+                'error' => 'Document type is required.',
+            ], 422);
+        }
+
+        $document->update(['file_type' => $fileType]);
+
+        return response()->json([
+            'success' => true,
+            'file_type' => $document->file_type,
+        ]);
+    }
+
+    public function finalize(Request $request, $id, ShipmentStockSnapshotService $stockSnapshotService, ShipmentTransitStockDuplicationService $transitStockDuplicationService)
+    {
+        $shipment = Shipment::with([
+            'crrs.packages',
+            'crrs.costs',
+            'crrs.documents',
+            'crrs.customerVessel.customer',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+        ])->findOrFail($id);
+
+        $validated = $request->validate([
+            'shipment_number' => 'required|string|max:255',
+            'consignee_code' => 'nullable|string|max:255',
+            'action' => 'required|in:complete,transit',
+        ]);
+
+        if ($validated['shipment_number'] !== $shipment->shipment_number) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shipment number does not match.',
+            ], 422);
+        }
+
+        if ($validated['action'] === 'transit' && $shipment->status !== 'Completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shipment must be completed before moving to transit.',
+            ], 422);
+        }
+
+        if ($validated['action'] === 'complete') {
+            DB::transaction(function () use ($shipment, $stockSnapshotService) {
+                $stockSnapshotService->snapshotShipmentStocks($shipment);
+
+                $shipment->update(['status' => 'Completed']);
+
+                $crrIds = $shipment->crrs()->pluck('crrs.id')->all();
+                if (!empty($crrIds)) {
+                    Crr::whereIn('id', $crrIds)->update([
+                        'status' => Crr::STATUS_COMPLETED,
+                    ]);
+                }
+            });
+
+            $shipment = $shipment->fresh(['stockSnapshots']);
+            $stockSnapshotService->applyResolvedStockCrrs($shipment);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Shipment and selected stocks completed successfully.',
+                'status' => $shipment->status,
+                'stocks' => $shipment->crrs->map(fn (Crr $crr) => [
+                    'id' => $crr->id,
+                    'status' => Crr::getStatusLabels()[$crr->status] ?? 'Completed',
+                ])->values(),
+            ]);
+        }
+
+        DB::transaction(function () use ($shipment, $validated, $transitStockDuplicationService) {
+            $transitStockDuplicationService->duplicateStocksForTransit(
+                $shipment,
+                $validated['consignee_code'] ?? null
+            );
+
+            $shipment->update([
+                'status' => 'In transit',
+            ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shipment moved to transit successfully. Duplicate stocks created.',
+            'status' => 'In transit',
+            'consignee_code' => $validated['consignee_code'] ?? null,
+            'reload' => true,
+        ]);
+    }
+
+    public function update(Request $request, $id, ShipmentPdfFingerprintService $fingerprintService)
+    {
+        $shipment = Shipment::findOrFail($id);
+        $validated = $this->validateShipmentRequest($request);
+
+        $fingerprintService->prepareForFingerprint($shipment);
+        $manifestFingerprintBefore = $fingerprintService->manifestFingerprint($shipment);
+        $preAlertFingerprintBefore = $fingerprintService->preAlertFingerprint($shipment);
+
+        DB::beginTransaction();
+
+        try {
+            $previousCrrIds = $shipment->crrs()->pluck('crrs.id')->all();
+
+            $shipment->update($this->buildShipmentAttributes($request, $validated));
+
+            if ($shipment->status !== 'Completed') {
+                $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
+                $shipment->crrs()->sync($crrIds);
+
+                $this->syncCrrInternalShipments($shipment, $crrIds, $previousCrrIds);
+            }
+
+            $this->syncIrregularities($shipment, $validated['irregularities'] ?? []);
+
+            $this->syncFlights($shipment, $validated['flights'] ?? [], $validated['service'] ?? null);
+
+            $this->syncSeaLegs($shipment, $validated['sea_legs'] ?? [], $validated['service'] ?? null);
+
+            $this->syncTruckLegs($shipment, $validated['truck_legs'] ?? [], $validated['service'] ?? null);
+
+            $this->syncCourierLegs($shipment, $validated['courier_legs'] ?? [], $validated['service'] ?? null);
+
+            $this->syncReleaseLegs($shipment, $validated['release_legs'] ?? [], $validated['service'] ?? null);
+
+            $this->syncHandCarryLegs($shipment, $request->input('hand_carry_legs', []), $validated['service'] ?? null);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Shipment update failed: ' . $e->getMessage() . ' (line ' . $e->getLine() . ')');
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update shipment: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update shipment: ' . $e->getMessage());
+        }
+
+        $freshShipment = $shipment->fresh($fingerprintService->relations());
+        $fingerprintService->prepareForFingerprint($freshShipment);
+
+        if ($fingerprintService->manifestFingerprint($freshShipment) !== $manifestFingerprintBefore) {
+            try {
+                app(ShipmentManifestService::class)->generate($freshShipment);
+            } catch (\Throwable $e) {
+                Log::warning('Manifest generation after shipment save failed: ' . $e->getMessage());
+            }
+        }
+
+        if (
+            \App\Services\ShipmentPreAlertPdfBuilder::shipmentHasServiceDetails($freshShipment)
+            && $fingerprintService->preAlertFingerprint($freshShipment) !== $preAlertFingerprintBefore
+        ) {
+            try {
+                app(ShipmentPreAlertService::class)->generate($freshShipment);
+            } catch (\Throwable $e) {
+                Log::warning('Pre-alert generation after shipment save failed: ' . $e->getMessage());
+            }
+        }
+
+        $message = 'Shipment ' . $shipment->shipment_number . ' updated successfully.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
+        return $this->redirectAfterShipmentSave($request, $shipment, $message);
+    }
+
+    private function redirectAfterShipmentSave(Request $request, Shipment $shipment, string $message)
+    {
+        $redirectTo = $request->input('redirect_after_save');
+        if (is_string($redirectTo) && $redirectTo !== '' && $this->isSafeAppRedirect($redirectTo)) {
+            return redirect($redirectTo)->with('success', $message);
+        }
+
+        return redirect()
+            ->route('shipments.edit', $shipment->id)
+            ->with('success', $message);
+    }
+
+    private function isSafeAppRedirect(string $url): bool
+    {
+        if (! str_starts_with($url, '/') || str_starts_with($url, '//')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function validateShipmentRequest(Request $request): array
+    {
+        return $request->validate([
+            'departure' => 'nullable|string|max:255',
+            'departure_port_code' => 'nullable|string|max:255',
+            'service' => 'nullable|string|max:255',
+            'preferred_shipment_date' => 'nullable|string',
+            'deadline_arrival' => 'nullable|string',
+            'vessel_eta' => 'nullable|string',
+            'vessel_etd' => 'nullable|string',
+            'pre_alert_reminder' => 'nullable|string',
+            'customer_reference' => 'nullable|string|max:255',
+            'consignee' => 'nullable|string|max:255',
+            'consignee_address' => 'nullable|string',
+            'consignee_city' => 'nullable|string|max:255',
+            'consignee_district' => 'nullable|string|max:255',
+            'consignee_zip' => 'nullable|string|max:255',
+            'consignee_country' => 'nullable|string|max:255',
+            'consignee_port_code' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'consignee_att' => 'nullable|string|max:255',
+            'consignee_email' => 'nullable|email|max:255',
+            'account_manager' => 'nullable|integer|exists:contacts,id',
+            'status' => 'nullable|string|max:255',
+            'special_considerations_destination' => 'nullable|string',
+            'comments_departure_hub' => 'nullable|string',
+            'comments_consignee' => 'nullable|string',
+            'crr_ids' => 'nullable|array',
+            'crr_ids.*' => 'integer|exists:crrs,id',
+            'irregularities' => 'nullable|array',
+            'irregularities.*.irregularity_date' => 'nullable|string',
+            'irregularities.*.irregularity_type' => 'nullable|string|max:255',
+            'irregularities.*.party_responsible' => 'nullable|string|max:255',
+            'irregularities.*.consequence' => 'nullable|string|max:255',
+            'irregularities.*.extra_cost_mt_usd' => 'nullable|numeric',
+            'irregularities.*.status' => 'nullable|string|max:255',
+            'irregularities.*.cause_of_irregularity' => 'nullable|string',
+            'irregularities.*.action_taken' => 'nullable|string',
+            'irregularities.*.customer_response' => 'nullable|string',
+            'irregularities.*.hub_agent_comments' => 'nullable|string',
+            'irregularities.*.handled_by' => 'nullable|string|max:255',
+            'flights' => 'nullable|array',
+            'flights.*.leg_reference' => 'nullable|string|max:255',
+            'flights.*.flight_number' => 'nullable|string|max:255',
+            'flights.*.departure_date' => 'nullable|string',
+            'flights.*.arrival_date' => 'nullable|string',
+            'flights.*.arrival_time' => 'nullable|string|max:5',
+            'sea_legs' => 'nullable|array',
+            'sea_legs.*.bill_of_lading' => 'nullable|string|max:255',
+            'sea_legs.*.container_number' => 'nullable|string|max:255',
+            'sea_legs.*.transport_vessel_imo' => 'nullable|string|max:255',
+            'sea_legs.*.transport_vessel_name' => 'nullable|string|max:255',
+            'sea_legs.*.etd' => 'nullable|string',
+            'sea_legs.*.eta' => 'nullable|string',
+            'sea_legs.*.arrival_time' => 'nullable|string|max:5',
+            'truck_legs' => 'nullable|array',
+            'truck_legs.*.cmr' => 'nullable|string|max:255',
+            'truck_legs.*.freight_company' => 'nullable|string|max:255',
+            'truck_legs.*.departure_date' => 'nullable|string',
+            'truck_legs.*.arrival_date' => 'nullable|string',
+            'truck_legs.*.arrival_time' => 'nullable|string|max:5',
+            'courier_legs' => 'nullable|array',
+            'courier_legs.*.airway_bill' => 'nullable|string|max:255',
+            'courier_legs.*.carrier' => 'nullable|string|max:255',
+            'courier_legs.*.departure_date' => 'nullable|string',
+            'courier_legs.*.arrival_date' => 'nullable|string',
+            'courier_legs.*.arrival_time' => 'nullable|string|max:5',
+            'release_legs' => 'nullable|array',
+            'release_legs.*.freight_company' => 'nullable|string|max:255',
+            'release_legs.*.delivery_date' => 'nullable|string',
+            'release_legs.*.delivery_time' => 'nullable|string|max:5',
+            'hand_carry_legs' => 'nullable|array',
+            'hand_carry_legs.*.departure_date' => 'nullable|string',
+            'hand_carry_legs.*.arrival_date' => 'nullable|string',
+            'hand_carry_legs.*.arrival_time' => 'nullable|string|max:5',
+            'hand_carry_legs.*.contact_name' => 'nullable|string|max:255',
+            'hand_carry_legs.*.contact_phone' => 'nullable|string|max:255',
+            'hand_carry_legs.*.onboard_hand_carry' => 'nullable|boolean',
+        ]);
+    }
+
+    private function normalizeManifestGenerationRequest(Request $request): void
+    {
+        if ($request->input('account_manager') === '' || $request->input('account_manager') === null) {
+            $request->merge(['account_manager' => null]);
+        }
+    }
+
+    private function manifestGenerationRules(): array
+    {
+        return [
+            'departure' => 'nullable|string|max:255',
+            'departure_port_code' => 'nullable|string|max:255',
+            'service' => 'nullable|string|max:255',
+            'preferred_shipment_date' => 'nullable|string',
+            'deadline_arrival' => 'nullable|string',
+            'vessel_eta' => 'nullable|string',
+            'vessel_etd' => 'nullable|string',
+            'pre_alert_reminder' => 'nullable|string',
+            'customer_reference' => 'nullable|string|max:255',
+            'consignee' => 'nullable|string|max:255',
+            'consignee_address' => 'nullable|string',
+            'consignee_city' => 'nullable|string|max:255',
+            'consignee_district' => 'nullable|string|max:255',
+            'consignee_zip' => 'nullable|string|max:255',
+            'consignee_country' => 'nullable|string|max:255',
+            'consignee_port_code' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'consignee_att' => 'nullable|string|max:255',
+            'consignee_email' => 'nullable|string|max:255',
+            'account_manager' => 'nullable|integer|exists:contacts,id',
+            'status' => 'nullable|string|max:255',
+            'special_considerations_destination' => 'nullable|string',
+            'comments_departure_hub' => 'nullable|string',
+            'comments_consignee' => 'nullable|string',
+            'not_applicable_for_consolidation' => 'nullable|boolean',
+            'skip_instruction_dest' => 'nullable|boolean',
+            'skip_instruction_hub' => 'nullable|boolean',
+            'skip_prealert' => 'nullable|boolean',
+            'project_logistics' => 'nullable|boolean',
+            'port_agency' => 'nullable|boolean',
+            'crr_ids' => 'nullable|array',
+            'crr_ids.*' => 'integer|exists:crrs,id',
+        ];
+    }
+
+    private function preAlertMailRules(): array
+    {
+        return array_merge($this->manifestGenerationRules(), [
+            'flights' => 'nullable|array',
+            'flights.*.leg_reference' => 'nullable|string|max:255',
+            'flights.*.flight_number' => 'nullable|string|max:255',
+            'flights.*.departure_date' => 'nullable|string',
+            'flights.*.arrival_date' => 'nullable|string',
+            'flights.*.arrival_time' => 'nullable|string|max:5',
+            'sea_legs' => 'nullable|array',
+            'sea_legs.*.bill_of_lading' => 'nullable|string|max:255',
+            'sea_legs.*.container_number' => 'nullable|string|max:255',
+            'sea_legs.*.transport_vessel_imo' => 'nullable|string|max:255',
+            'sea_legs.*.transport_vessel_name' => 'nullable|string|max:255',
+            'sea_legs.*.etd' => 'nullable|string',
+            'sea_legs.*.eta' => 'nullable|string',
+            'sea_legs.*.arrival_time' => 'nullable|string|max:5',
+            'truck_legs' => 'nullable|array',
+            'truck_legs.*.cmr' => 'nullable|string|max:255',
+            'truck_legs.*.freight_company' => 'nullable|string|max:255',
+            'truck_legs.*.departure_date' => 'nullable|string',
+            'truck_legs.*.arrival_date' => 'nullable|string',
+            'truck_legs.*.arrival_time' => 'nullable|string|max:5',
+            'courier_legs' => 'nullable|array',
+            'courier_legs.*.airway_bill' => 'nullable|string|max:255',
+            'courier_legs.*.carrier' => 'nullable|string|max:255',
+            'courier_legs.*.departure_date' => 'nullable|string',
+            'courier_legs.*.arrival_date' => 'nullable|string',
+            'courier_legs.*.arrival_time' => 'nullable|string|max:5',
+            'release_legs' => 'nullable|array',
+            'release_legs.*.freight_company' => 'nullable|string|max:255',
+            'release_legs.*.delivery_date' => 'nullable|string',
+            'release_legs.*.delivery_time' => 'nullable|string|max:5',
+            'hand_carry_legs' => 'nullable|array',
+            'hand_carry_legs.*.departure_date' => 'nullable|string',
+            'hand_carry_legs.*.arrival_date' => 'nullable|string',
+            'hand_carry_legs.*.arrival_time' => 'nullable|string|max:5',
+            'hand_carry_legs.*.contact_name' => 'nullable|string|max:255',
+            'hand_carry_legs.*.contact_phone' => 'nullable|string|max:255',
+            'hand_carry_legs.*.onboard_hand_carry' => 'nullable|boolean',
+        ]);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function parseMailDocumentIds(mixed $documentIds): array
+    {
+        if ($documentIds === null || $documentIds === '') {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            'intval',
+            is_array($documentIds) ? $documentIds : explode(',', (string) $documentIds)
+        ))));
+    }
+
+    /**
+     * @return array<int, array{url: string, filename: string}>
+     */
+    private function manifestMailAttachmentSources(Shipment $shipment, CombinedPoPdfService $combinedPoPdfService): array
+    {
+        $sources = [];
+        $latestManifest = $shipment->manifests->sortByDesc('version')->first();
+
+        if ($latestManifest) {
+            $sources[] = [
+                'url' => route('shipments.manifests.show', [$shipment->id, $latestManifest->id]),
+                'filename' => $latestManifest->displayLabel() . '-' . $shipment->shipment_number . '.pdf',
+            ];
+        } else {
+            $sources[] = [
+                'url' => route('shipments.combined-manifest-documents', $shipment->id),
+                'filename' => 'manifest-' . $shipment->shipment_number . '.pdf',
+            ];
+        }
+
+        if ($combinedPoPdfService->documentsForShipment($shipment)->isNotEmpty()) {
+            $sources[] = [
+                'url' => route('shipments.combined-po-documents', $shipment->id),
+                'filename' => 'combined-po-documents-' . $shipment->shipment_number . '.pdf',
+            ];
+        }
+
+        return $sources;
+    }
+
+    /**
+     * @return array<int, array{url: string, filename: string}>
+     */
+    private function preAlertMailAttachmentSources(Shipment $shipment): array
+    {
+        $sources = [];
+        $latestPreAlert = $shipment->preAlerts->sortByDesc('version')->first();
+
+        if ($latestPreAlert) {
+            $sources[] = [
+                'url' => route('shipments.pre-alerts.show', [$shipment->id, $latestPreAlert->id]),
+                'filename' => 'pre-alert-' . $shipment->shipment_number . '-' . $latestPreAlert->version . '.pdf',
+            ];
+        }
+
+        return $sources;
+    }
+
+    private function manifestToArray(ShipmentManifest $manifest): array
+    {
+        return [
+            'id' => $manifest->id,
+            'version' => $manifest->version,
+            'file_name' => $manifest->file_name,
+            'display_label' => $manifest->displayLabel(),
+            'file_url' => route('shipments.manifests.show', [$manifest->shipment_id, $manifest->id]),
+            'date' => $manifest->created_at->format('d.m.Y'),
+            'time' => $manifest->created_at->format('H:i'),
+        ];
+    }
+
+    private function preAlertToArray(ShipmentPreAlert $preAlert): array
+    {
+        return [
+            'id' => $preAlert->id,
+            'version' => $preAlert->version,
+            'file_name' => $preAlert->file_name,
+            'display_label' => $preAlert->displayLabel(),
+            'file_url' => route('shipments.pre-alerts.show', [$preAlert->shipment_id, $preAlert->id]),
+            'date' => $preAlert->created_at->format('d.m.Y'),
+            'time' => $preAlert->created_at->format('H:i'),
+        ];
+    }
+
+    private function shipmentDocumentCount(Shipment $shipment, CombinedPoPdfService $combinedPoPdfService): int
+    {
+        $combinedPoCount = $combinedPoPdfService->documentsForShipment($shipment)->isNotEmpty() ? 1 : 0;
+
+        return $combinedPoCount
+            + $shipment->manifests()->count()
+            + $shipment->preAlerts()->count()
+            + $shipment->documents()->count();
+    }
+
+    private function buildShipmentAttributes(Request $request, array $validated, bool $onlyPresent = false): array
+    {
+        $attributes = [
+            'departure' => $validated['departure'] ?? null,
+            'departure_port_code' => $validated['departure_port_code'] ?? null,
+            'service' => $validated['service'] ?? null,
+            'preferred_shipment_date' => $this->parseDate($validated['preferred_shipment_date'] ?? null),
+            'deadline_arrival' => $this->parseDate($validated['deadline_arrival'] ?? null),
+            'vessel_eta' => $this->parseDate($validated['vessel_eta'] ?? null),
+            'vessel_etd' => $this->parseDate($validated['vessel_etd'] ?? null),
+            'pre_alert_reminder' => $this->parseDate($validated['pre_alert_reminder'] ?? null),
+            'customer_reference' => $validated['customer_reference'] ?? null,
+            'not_applicable_for_consolidation' => $request->boolean('not_applicable_for_consolidation'),
+            'consignee' => $validated['consignee'] ?? null,
+            'consignee_address' => $validated['consignee_address'] ?? null,
+            'consignee_city' => $validated['consignee_city'] ?? null,
+            'consignee_district' => $validated['consignee_district'] ?? null,
+            'consignee_zip' => $validated['consignee_zip'] ?? null,
+            'consignee_country' => $validated['consignee_country'] ?? null,
+            'consignee_port_code' => $validated['consignee_port_code'] ?? null,
+            'location' => $validated['location'] ?? null,
+            'consignee_att' => $validated['consignee_att'] ?? null,
+            'consignee_email' => $validated['consignee_email'] ?? null,
+            'account_manager_id' => !empty($validated['account_manager']) ? (int) $validated['account_manager'] : null,
+            'special_considerations_destination' => $validated['special_considerations_destination'] ?? null,
+            'skip_instruction_dest' => $request->boolean('skip_instruction_dest'),
+            'comments_departure_hub' => $validated['comments_departure_hub'] ?? null,
+            'skip_instruction_hub' => $request->boolean('skip_instruction_hub'),
+            'comments_consignee' => $validated['comments_consignee'] ?? null,
+            'skip_prealert' => $request->boolean('skip_prealert'),
+            'project_logistics' => $request->boolean('project_logistics'),
+            'port_agency' => $request->boolean('port_agency'),
+            'status' => $validated['status'] ?? $request->input('status', 'In process'),
+        ];
+
+        if (!$onlyPresent) {
+            return $attributes;
+        }
+
+        $booleanFields = [
+            'not_applicable_for_consolidation',
+            'skip_instruction_dest',
+            'skip_instruction_hub',
+            'skip_prealert',
+            'project_logistics',
+            'port_agency',
+        ];
+
+        $requestKeyMap = [
+            'account_manager_id' => 'account_manager',
+        ];
+
+        return collect($attributes)->filter(function ($value, $key) use ($request, $booleanFields, $requestKeyMap) {
+            if (in_array($key, $booleanFields, true)) {
+                return true;
+            }
+
+            $requestKey = $requestKeyMap[$key] ?? $key;
+
+            return $request->has($requestKey);
+        })->all();
+    }
+
+    private function syncCrrInternalShipments(Shipment $shipment, array $crrIds, ?array $previousCrrIds = null): void
+    {
+        if (!empty($crrIds)) {
+            Crr::whereIn('id', $crrIds)->update([
+                'internal_shipment' => $shipment->shipment_number,
+                'status' => Crr::STATUS_IN_PROGRESS,
+            ]);
+        }
+
+        if ($previousCrrIds === null) {
+            return;
+        }
+
+        $removedCrrIds = array_diff($previousCrrIds, $crrIds);
+        if (empty($removedCrrIds)) {
+            return;
+        }
+
+        Crr::whereIn('id', $removedCrrIds)
+            ->where('internal_shipment', $shipment->shipment_number)
+            ->update(['internal_shipment' => null]);
+    }
+
+    private function syncIrregularities(Shipment $shipment, array $irregularities): void
+    {
+        $shipment->irregularities()->delete();
+
+        foreach ($irregularities as $irregularity) {
+            if (!$this->irregularityHasData($irregularity)) {
+                continue;
+            }
+
+            ShipmentIrregularity::create([
+                'shipment_id' => $shipment->id,
+                'irregularity_date' => $this->parseDate($irregularity['irregularity_date'] ?? null),
+                'irregularity_type' => $irregularity['irregularity_type'] ?? null,
+                'party_responsible' => $irregularity['party_responsible'] ?? null,
+                'consequence' => $irregularity['consequence'] ?? null,
+                'extra_cost_mt_usd' => $irregularity['extra_cost_mt_usd'] ?? null,
+                'status' => $irregularity['status'] ?? null,
+                'cause_of_irregularity' => $irregularity['cause_of_irregularity'] ?? null,
+                'action_taken' => $irregularity['action_taken'] ?? null,
+                'customer_response' => $irregularity['customer_response'] ?? null,
+                'hub_agent_comments' => $irregularity['hub_agent_comments'] ?? null,
+                'handled_by' => $irregularity['handled_by'] ?? null,
+            ]);
+        }
+    }
+
+    private function syncFlights(Shipment $shipment, array $flights, ?string $service): void
+    {
+        $shipment->flights()->delete();
+
+        if ($service !== 'Airfreight') {
+            return;
+        }
+
+        foreach ($flights as $index => $flight) {
+            if (!$this->flightHasData($flight)) {
+                continue;
+            }
+
+            ShipmentFlight::create([
+                'shipment_id' => $shipment->id,
+                'leg_reference' => $flight['leg_reference'] ?? null,
+                'flight_number' => $flight['flight_number'] ?? null,
+                'departure_date' => $this->parseDate($flight['departure_date'] ?? null),
+                'arrival_date' => $this->parseDate($flight['arrival_date'] ?? null),
+                'arrival_time' => $this->parseArrivalTime($flight['arrival_time'] ?? null),
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
+    private function syncSeaLegs(Shipment $shipment, array $seaLegs, ?string $service): void
+    {
+        $shipment->seaLegs()->delete();
+
+        if ($service !== 'Sea freight') {
+            return;
+        }
+
+        foreach ($seaLegs as $index => $leg) {
+            if (!$this->seaLegHasData($leg)) {
+                continue;
+            }
+
+            ShipmentSeaLeg::create([
+                'shipment_id' => $shipment->id,
+                'bill_of_lading' => $leg['bill_of_lading'] ?? null,
+                'container_number' => $leg['container_number'] ?? null,
+                'transport_vessel_imo' => $leg['transport_vessel_imo'] ?? null,
+                'transport_vessel_name' => $leg['transport_vessel_name'] ?? null,
+                'etd' => $this->parseDate($leg['etd'] ?? null),
+                'eta' => $this->parseDate($leg['eta'] ?? null),
+                'arrival_time' => $this->parseArrivalTime($leg['arrival_time'] ?? null),
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
+    private function seaLegHasData(array $leg): bool
+    {
+        foreach (['bill_of_lading', 'container_number', 'transport_vessel_imo', 'transport_vessel_name', 'etd', 'eta', 'arrival_time'] as $field) {
+            if (!empty($leg[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function syncTruckLegs(Shipment $shipment, array $truckLegs, ?string $service): void
+    {
+        $shipment->truckLegs()->delete();
+
+        if ($service !== 'Truck') {
+            return;
+        }
+
+        foreach ($truckLegs as $index => $leg) {
+            if (!$this->truckLegHasData($leg)) {
+                continue;
+            }
+
+            ShipmentTruckLeg::create([
+                'shipment_id' => $shipment->id,
+                'cmr' => $leg['cmr'] ?? null,
+                'freight_company' => $leg['freight_company'] ?? null,
+                'departure_date' => $this->parseDate($leg['departure_date'] ?? null),
+                'arrival_date' => $this->parseDate($leg['arrival_date'] ?? null),
+                'arrival_time' => $this->parseArrivalTime($leg['arrival_time'] ?? null),
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
+    private function truckLegHasData(array $leg): bool
+    {
+        foreach (['cmr', 'freight_company', 'departure_date', 'arrival_date', 'arrival_time'] as $field) {
+            if (!empty($leg[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function syncCourierLegs(Shipment $shipment, array $courierLegs, ?string $service): void
+    {
+        $shipment->courierLegs()->delete();
+
+        if ($service !== 'Courier') {
+            return;
+        }
+
+        foreach ($courierLegs as $index => $leg) {
+            if (!$this->courierLegHasData($leg)) {
+                continue;
+            }
+
+            ShipmentCourierLeg::create([
+                'shipment_id' => $shipment->id,
+                'airway_bill' => $leg['airway_bill'] ?? null,
+                'carrier' => $leg['carrier'] ?? null,
+                'departure_date' => $this->parseDate($leg['departure_date'] ?? null),
+                'arrival_date' => $this->parseDate($leg['arrival_date'] ?? null),
+                'arrival_time' => $this->parseArrivalTime($leg['arrival_time'] ?? null),
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
+    private function courierLegHasData(array $leg): bool
+    {
+        foreach (['airway_bill', 'carrier', 'departure_date', 'arrival_date', 'arrival_time'] as $field) {
+            if (!empty($leg[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function syncReleaseLegs(Shipment $shipment, array $releaseLegs, ?string $service): void
+    {
+        $shipment->releaseLegs()->delete();
+
+        if ($service !== 'Release') {
+            return;
+        }
+
+        foreach ($releaseLegs as $index => $leg) {
+            if (!$this->releaseLegHasData($leg)) {
+                continue;
+            }
+
+            ShipmentReleaseLeg::create([
+                'shipment_id' => $shipment->id,
+                'freight_company' => $leg['freight_company'] ?? null,
+                'delivery_date' => $this->parseDate($leg['delivery_date'] ?? null),
+                'delivery_time' => $this->parseArrivalTime($leg['delivery_time'] ?? null),
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
+    private function releaseLegHasData(array $leg): bool
+    {
+        foreach (['freight_company', 'delivery_date', 'delivery_time'] as $field) {
+            if (!empty($leg[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function syncHandCarryLegs(Shipment $shipment, array $handCarryLegs, ?string $service): void
+    {
+        $shipment->handCarryLegs()->delete();
+
+        if ($service !== 'Hand Carry') {
+            return;
+        }
+
+        foreach ($handCarryLegs as $index => $leg) {
+            if (!$this->handCarryLegHasData($leg)) {
+                continue;
+            }
+
+            ShipmentHandCarryLeg::create([
+                'shipment_id' => $shipment->id,
+                'departure_date' => $this->parseDate($leg['departure_date'] ?? null),
+                'arrival_date' => $this->parseDate($leg['arrival_date'] ?? null),
+                'arrival_time' => $this->parseArrivalTime($leg['arrival_time'] ?? null),
+                'contact_name' => $leg['contact_name'] ?? null,
+                'contact_phone' => $leg['contact_phone'] ?? null,
+                'onboard_hand_carry' => !empty($leg['onboard_hand_carry']),
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
+    private function handCarryLegHasData(array $leg): bool
+    {
+        if (!empty($leg['onboard_hand_carry'])) {
+            return true;
+        }
+
+        foreach (['departure_date', 'arrival_date', 'arrival_time', 'contact_name', 'contact_phone'] as $field) {
+            if (!empty($leg[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function flightHasData(array $flight): bool
+    {
+        foreach (['leg_reference', 'flight_number', 'departure_date', 'arrival_date', 'arrival_time'] as $field) {
+            if (!empty($flight[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function parseArrivalTime(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        if (preg_match('/^\d{1,2}:\d{2}$/', $value)) {
+            [$hours, $minutes] = explode(':', $value);
+
+            return sprintf('%02d:%02d', (int) $hours, (int) $minutes);
+        }
+
+        return $value;
+    }
+
+    private function irregularityFormOptions(): array
+    {
+        return [
+            'irregularityTypeOptions' => [
+                'Customer complaint',
+                'Shipment missing (and found)',
+                'Delayed shipment',
+                'Damage to shipment',
+                'Incorrect or missing shipping documentation',
+                'Cross label',
+                'Shipment short shipped',
+                'Shipment misrouted',
+                'Slow or unclear communication by agent',
+                'Quotation unclear or incomplete',
+                'Other',
+                'No cost provided by agent',
+                'Send pre-alert in wrong format',
+                'Billing discrepancy',
+            ],
+            'partyResponsibleOptions' => [
+                'Marinetrans',
+                'Departing Hub',
+                'Receiving Agent',
+                'Customer',
+                'Carrier',
+            ],
+            'consequenceOptions' => [
+                'Deadline and delivery met',
+                'Original deadline missed, but vessel/destination reached',
+                'Deadline and vessel missed',
+                'Official customer claim',
+            ],
+            'statusOptions' => [
+                'Not started',
+                'In process',
+                'Closed',
+            ],
+        ];
+    }
+
+    private function parseDate(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('d.m.Y', $value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            try {
+                return Carbon::parse($value)->format('Y-m-d');
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+    }
+
+    private function irregularityHasData(array $irregularity): bool
+    {
+        foreach ($irregularity as $value) {
+            if ($value !== null && $value !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>{{ config('app.name', 'Laravel') }}</title>
+
+    <!-- Fonts -->
+    <link rel="dns-prefetch" href="//fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
+
+    <!-- Scripts -->
+    <!-- Favicon icon -->
+    <link rel="icon" href="{{asset('files/assets/images/favicon.ico')}}" type="image/x-icon">
+    <!-- Google font-->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,800" rel="stylesheet">
+    <!-- Required Fremwork -->
+    <link rel="stylesheet" type="text/css"
+        href="{{asset('files/bower_components/bootstrap/dist/css/bootstrap.min.css')}}">
+    <!-- themify-icons line icon -->
+    <link rel="stylesheet" type="text/css" href="{{asset('files/assets/icon/themify-icons/themify-icons.css')}}">
+    <!-- ico font -->
+    <link rel="stylesheet" type="text/css" href="{{asset('files/assets/icon/icofont/css/icofont.css')}}">
+    <!-- Style.css -->
+    <link rel="stylesheet" type="text/css" href="{{asset('files/assets/css/style.css')}}">
+
+    <!-- Required Fremwork -->
+    <!-- radial chart.css -->
+    <link rel="stylesheet" href="{{asset('files/assets/pages/chart/radial/css/radial.css')}}" type="text/css"
+        media="all">
+    <!-- feather Awesome -->
+    <link rel="stylesheet" type="text/css" href="{{asset('files/assets/icon/feather/css/feather.css')}}">
+    <!-- Style.css -->
+    <link rel="stylesheet" type="text/css" href="{{asset('files/assets/css/jquery.mCustomScrollbar.css')}}">
+    <style>
+        body {
+            color: rgb(24, 100, 131) !important;
+        }
+
+        td a {
+            color: rgb(24, 100, 131) !important;
+        }
+
+        td a:hover {
+            color: rgb(24, 100, 131) !important;
+        }
+
+        .heading-route {
+            font-size: 16px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+    </style>
+    @yield('styles')
+</head>
+
+<body>
+    <div id="app">
+        <main>
+            @yield('content')
+        </main>
+    </div>
+</body>
+
+</html>
