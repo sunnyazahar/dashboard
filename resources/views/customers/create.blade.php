@@ -515,11 +515,11 @@
                                                         </select>
                                                     </div>
 
-                                                    <div class="custom-checkbox-group">
+                                                    <div class="custom-checkbox-group d-none">
                                                         <input type="checkbox" name="show_transport_details">
                                                         <span>Show transport details on customer portal</span>
                                                     </div>
-                                                    <div class="custom-checkbox-group">
+                                                    <div class="custom-checkbox-group d-none">
                                                         <input type="checkbox" name="esea_store_stock_only">
                                                         <span>eSea store stock only</span>
                                                     </div>

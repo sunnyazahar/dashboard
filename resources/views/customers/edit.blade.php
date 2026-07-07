@@ -393,11 +393,11 @@
                                                         <input type="text" name="un_locode" class="form-control" value="{{ $customer->un_locode }}">
                                                     </div>
                                                     
-                                                    <div class="custom-checkbox-group">
+                                                    <div class="custom-checkbox-group d-none">
                                                         <input type="checkbox" name="show_transport_details" {{ $customer->show_transport_details ? 'checked' : '' }}>
                                                         <span>Show transport details on customer portal</span>
                                                     </div>
-                                                    <div class="custom-checkbox-group">
+                                                    <div class="custom-checkbox-group d-none">
                                                         <input type="checkbox" name="esea_store_stock_only" {{ $customer->esea_store_stock_only ? 'checked' : '' }}>
                                                         <span>eSea store stock only</span>
                                                     </div>
