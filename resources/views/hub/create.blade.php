@@ -526,7 +526,7 @@
                                                                                 <input type="text" name="company_id" class="form-input-custom form-input-readonly" value="" >
                                                                             </div>
 
-                                                                            <div class="form-group-custom">
+                                                                            <div class="form-group-custom d-none">
                                                                                 <label class="form-label-custom">Customer number from FM</label>
                                                                                 <input type="text" name="customer_number_fm" class="form-input-custom">
                                                                             </div>

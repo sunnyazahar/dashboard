@@ -633,7 +633,7 @@
                                                                                 <input type="text" name="email" class="form-input-custom" value="{{ $hub->email }}">
                                                                             </div>
 
-                                                                            <div class="form-group-custom" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 5px;">
+                                                                            <div class="form-group-custom d-none" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 5px;">
                                                                                 <input type="checkbox" name="is_gts_company" id="is_gts_company" value="1" {{ $hub->is_gts_company ? 'checked' : '' }}>
                                                                                 <label class="form-label-custom" for="is_gts_company">This hub is part of GTS company</label>
                                                                             </div>
