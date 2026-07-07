@@ -418,6 +418,7 @@ Route::get('/api/account-managers', function (\Illuminate\Http\Request $request)
             'type' => $contact->category,
             'type_label' => $typeLabel,
             'email' => $contact->email,
+            'office_short_name' => optional($contact->office)->office_short_name ?? '',
         ];
     };
 

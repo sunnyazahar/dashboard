@@ -703,22 +703,43 @@
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Main account manager</label>
-                                                        <select name="main_account_manager"
-                                                            class="form-control select2-field">
-                                                            <option></option>
-                                                            @foreach($accountManagers as $manager)
-                                                                <option value="{{ $manager->id }}">{{ $manager->name }}</option>
-                                                            @endforeach
+                                                        <select id="main-account-manager-select" name="main_account_manager"
+                                                            class="form-control select2-office-user">
+                                                            <option value=""></option>
+                                                            @php
+                                                                $selectedMainAccountManager = old('main_account_manager')
+                                                                    ? \App\Models\Contact::find(old('main_account_manager'))
+                                                                    : null;
+                                                            @endphp
+                                                            @if($selectedMainAccountManager)
+                                                                <option value="{{ $selectedMainAccountManager->id }}" selected>{{ $selectedMainAccountManager->name }}</option>
+                                                            @endif
                                                         </select>
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Responsible accounting users</label>
-                                                        <select name="responsible_accounting_users" class="form-control">
-                                                            <option></option>
-                                                            @foreach($accountManagers as $manager)
-                                                                <option value="{{ $manager->id }}">{{ $manager->name }}</option>
-                                                            @endforeach
+                                                        <select id="responsible-accounting-users-select" name="responsible_accounting_users"
+                                                            class="form-control select2-office-user">
+                                                            <option value=""></option>
+                                                            @php
+                                                                $selectedAccountingUser = old('responsible_accounting_users')
+                                                                    ? \App\Models\Contact::with('office')->find(old('responsible_accounting_users'))
+                                                                    : null;
+                                                                $responsibleOfficeShortName = old(
+                                                                    'responsible_office',
+                                                                    $selectedAccountingUser?->office?->office_short_name ?? ''
+                                                                );
+                                                            @endphp
+                                                            @if($selectedAccountingUser)
+                                                                <option value="{{ $selectedAccountingUser->id }}" selected
+                                                                    data-office-short-name="{{ $selectedAccountingUser->office?->office_short_name ?? '' }}">{{ $selectedAccountingUser->name }}</option>
+                                                            @endif
                                                         </select>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Responsible Office</label>
+                                                        <input type="text" id="responsible-office-input" name="responsible_office"
+                                                            class="form-control" value="{{ $responsibleOfficeShortName }}" readonly>
                                                     </div>
                                                 </div>
                                             </div>
@@ -805,6 +826,78 @@
                 return $state;
             };
 
+            function formatOfficeUser(item) {
+                if (!item.id) {
+                    return item.text;
+                }
+
+                var subtitleParts = [];
+                if (item.type_label) {
+                    subtitleParts.push(item.type_label);
+                }
+                if (item.subtitle) {
+                    subtitleParts.push(item.subtitle);
+                }
+
+                var subtitle = subtitleParts.join(' · ');
+                return $(
+                    '<div style="line-height:1.1;"><div style="font-weight:600;">' + item.text + '</div>' +
+                    (subtitle ? '<div style="font-size:11px;color:#6b7280;">' + subtitle + '</div>' : '') +
+                    '</div>'
+                );
+            }
+
+            function formatOfficeUserSelection(item) {
+                return item.text || item.id;
+            }
+
+            function initOfficeUserSelect(selector, placeholder) {
+                $(selector).select2({
+                    placeholder: placeholder,
+                    allowClear: true,
+                    width: '100%',
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: @json(url('/api/account-managers')),
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return {
+                                q: params.term || '',
+                                categories: 'operations,account,manager'
+                            };
+                        },
+                        processResults: function (data) {
+                            return { results: data };
+                        }
+                    },
+                    templateResult: formatOfficeUser,
+                    templateSelection: formatOfficeUserSelection
+                });
+            }
+
+            initOfficeUserSelect('#main-account-manager-select', 'Select account manager');
+            initOfficeUserSelect('#responsible-accounting-users-select', 'Select accounting user');
+
+            function setResponsibleOfficeFromAccountingUser(officeShortName) {
+                $('#responsible-office-input').val(officeShortName || '');
+            }
+
+            $('#responsible-accounting-users-select').on('select2:select', function (e) {
+                setResponsibleOfficeFromAccountingUser(e.params.data.office_short_name);
+            });
+
+            $('#responsible-accounting-users-select').on('select2:clear', function () {
+                setResponsibleOfficeFromAccountingUser('');
+            });
+
+            var $preselectedAccountingUser = $('#responsible-accounting-users-select option:selected');
+            if ($preselectedAccountingUser.length && $preselectedAccountingUser.val()) {
+                setResponsibleOfficeFromAccountingUser(
+                    $preselectedAccountingUser.attr('data-office-short-name') || $('#responsible-office-input').val()
+                );
+            }
+
             $('.select2-field').select2({
                 placeholder: 'Select an option',
                 allowClear: true,
@@ -814,7 +907,7 @@
             });
 
             // Trigger validation on Select2 change
-            $('.select2-field').on('change', function () {
+            $('.select2-field, .select2-office-user').on('change', function () {
                 $(this).valid();
                 // Handle the red border for Select2 container
                 if ($(this).hasClass('error')) {
@@ -884,7 +977,7 @@
                     main_account_manager: "Please select account manager"
                 },
                 errorPlacement: function (error, element) {
-                    if (element.hasClass('select2-field')) {
+                    if (element.hasClass('select2-field') || element.hasClass('select2-office-user')) {
                         error.insertAfter(element.next('.select2-container'));
                     } else if (element.parent('.input-with-icon').length) {
                         error.insertAfter(element.parent());
@@ -894,21 +987,21 @@
                 },
                 highlight: function (element) {
                     $(element).addClass('error');
-                    if ($(element).hasClass('select2-field')) {
+                    if ($(element).hasClass('select2-field') || $(element).hasClass('select2-office-user')) {
                         $(element).next('.select2-container').addClass('error');
                     }
                 },
                 unhighlight: function (element) {
                     $(element).removeClass('error');
-                    if ($(element).hasClass('select2-field')) {
+                    if ($(element).hasClass('select2-field') || $(element).hasClass('select2-office-user')) {
                         $(element).next('.select2-container').removeClass('error');
                     }
                 }
             });
 
             // Also initialize the existing responsible accounting users select
-            if ($('select.form-control').not('.select2-field').length) {
-                $('select.form-control').not('.select2-field').select2({
+            if ($('select.form-control').not('.select2-field, .select2-office-user').length) {
+                $('select.form-control').not('.select2-field, .select2-office-user').select2({
                     placeholder: 'Select user',
                     width: '100%'
                 });

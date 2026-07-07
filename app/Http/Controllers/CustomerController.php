@@ -31,10 +31,9 @@ class CustomerController extends Controller
     {
         $countries = Country::all();
         $salesManagers = Contact::where('category', 'sales')->get();
-        $accountManagers = Contact::where('category', 'account')->get();
         $groups = CustomerGroup::all();
         
-        return view('customers.create', compact('countries', 'salesManagers', 'accountManagers', 'groups'));
+        return view('customers.create', compact('countries', 'salesManagers', 'groups'));
     }
 
     public function store(Request $request)
@@ -182,7 +181,7 @@ class CustomerController extends Controller
             'invoiceDetail',
             'responsible.accountManager',
             'responsible.salesManager',
-            'responsible.accountingUser',
+            'responsible.accountingUser.office',
             'group',
             'sop',
             'notificationSetting',
@@ -192,10 +191,9 @@ class CustomerController extends Controller
         ])->findOrFail($id);
         $countries = Country::all();
         $salesManagers = Contact::where('category', 'sales')->get();
-        $accountManagers = Contact::where('category', 'account')->get();
         $groups = CustomerGroup::all();
         
-        return view('customers.edit', compact('customer', 'countries', 'salesManagers', 'accountManagers', 'groups', 'id'));
+        return view('customers.edit', compact('customer', 'countries', 'salesManagers', 'groups', 'id'));
     }
 
     public function update(Request $request, $id)
