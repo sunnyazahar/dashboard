@@ -152,15 +152,35 @@ class Shipment extends Model
         return $names->isNotEmpty() ? $names->implode(', ') : '—';
     }
 
-    public function getVesselDisplayAttribute(): string
+    public function getVesselNamesAttribute(): Collection
     {
-        $names = $this->crrs
+        return $this->crrs
             ->pluck('vessel_name')
             ->filter()
             ->unique()
             ->values();
+    }
+
+    public function getVesselDisplayAttribute(): string
+    {
+        $names = $this->vessel_names;
 
         return $names->isNotEmpty() ? $names->implode(', ') : '—';
+    }
+
+    public function getVesselDisplayShortAttribute(): string
+    {
+        $names = $this->vessel_names;
+
+        if ($names->isEmpty()) {
+            return '—';
+        }
+
+        if ($names->count() <= 2) {
+            return $names->implode(', ');
+        }
+
+        return $names->take(2)->implode(', ') . ', ...';
     }
 
     public function getPoNumbersDisplayAttribute(): string
@@ -178,6 +198,42 @@ class Shipment extends Model
             ->values();
 
         return $numbers->implode(', ');
+    }
+
+    public function getServiceReferenceValuesAttribute(): Collection
+    {
+        return collect()
+            ->merge($this->flights->pluck('leg_reference'))
+            ->merge($this->courierLegs->pluck('airway_bill'))
+            ->merge($this->seaLegs->pluck('bill_of_lading'))
+            ->merge($this->truckLegs->pluck('cmr'))
+            ->merge($this->truckLegs->pluck('freight_company'))
+            ->merge($this->releaseLegs->pluck('freight_company'))
+            ->filter(fn ($value) => filled($value))
+            ->unique()
+            ->values();
+    }
+
+    public function getServiceReferenceDisplayAttribute(): string
+    {
+        $values = $this->service_reference_values;
+
+        return $values->isNotEmpty() ? $values->implode(', ') : '—';
+    }
+
+    public function getServiceReferenceDisplayShortAttribute(): string
+    {
+        $values = $this->service_reference_values;
+
+        if ($values->isEmpty()) {
+            return '—';
+        }
+
+        if ($values->count() <= 2) {
+            return $values->implode(', ');
+        }
+
+        return $values->take(2)->implode(', ') . ', ...';
     }
 
     public function getDestinationDisplayAttribute(): string

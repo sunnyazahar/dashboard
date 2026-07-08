@@ -501,7 +501,7 @@
                                                         <div class="row no-gutters filter-row">
                                                             <div id="col-Departure-hub" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
-                                                                    <span class="filter-label">Departure hub/agent</span>
+                                                                    <span class="filter-label">Departure port code</span>
                                                                     <select class="form-control filter-input select2" multiple="multiple">
                                                                         @foreach ($departureOptions as $departure)
                                                                             <option value="{{ $departure }}">{{ $departure }}</option>
@@ -598,7 +598,6 @@
                                                         <tbody>
                                                             @forelse ($shipments as $shipment)
                                                             @php
-                                                                $departureDisplay = $shipment->partyDisplay($shipment->departure, $partyNames);
                                                                 $consigneeDisplay = $shipment->partyDisplay($shipment->consignee, $partyNames);
                                                             @endphp
                                                             <tr
@@ -615,11 +614,23 @@
                                                                     @endif
                                                                 </td>
                                                                 <td>{{ $shipment->customer_display }}</td>
-                                                                <td>{{ $shipment->vessel_display }}</td>
+                                                                <td>
+                                                                    @if ($shipment->vessel_names->count() > 2)
+                                                                        <span title="{{ $shipment->vessel_display }}" style="cursor: help;">{{ $shipment->vessel_display_short }}</span>
+                                                                    @else
+                                                                        {{ $shipment->vessel_display }}
+                                                                    @endif
+                                                                </td>
                                                                 <td>{{ $shipment->service ?? '—' }}</td>
-                                                                <td>{{ $shipment->customer_reference ?? '—' }}</td>
+                                                                <td>
+                                                                    @if ($shipment->service_reference_values->count() > 2)
+                                                                        <span title="{{ $shipment->service_reference_display }}" style="cursor: help;">{{ $shipment->service_reference_display_short }}</span>
+                                                                    @else
+                                                                        {{ $shipment->service_reference_display }}
+                                                                    @endif
+                                                                </td>
                                                                 <td>{{ $consigneeDisplay }}</td>
-                                                                <td>{{ $departureDisplay }}</td>
+                                                                <td>{{ $shipment->departure_port_code ?: '—' }}</td>
                                                                 <td>{{ $shipment->destination_display }}</td>
                                                                 <td>{{ $shipment->deadline_arrival?->format('d.m.Y') ?? '—' }}</td>
                                                                 <td>{{ $shipment->pre_alert_reminder?->format('d.m.Y') ?? '—' }}</td>

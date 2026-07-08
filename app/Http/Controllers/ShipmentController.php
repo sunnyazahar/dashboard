@@ -49,6 +49,11 @@ class ShipmentController extends Controller
             'accountManager.office',
             'creator',
             'irregularities',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+            'releaseLegs',
         ])->latest()->get();
 
         $partyNames = Shipment::batchResolvePartyNames($shipments);
@@ -71,16 +76,9 @@ class ShipmentController extends Controller
 
         $services = $shipments->pluck('service')->filter()->unique()->sort()->values();
 
-        $hubs = Hub::orderBy('hub_name')->get();
-        $agents = Agent::orderBy('agent_name')->get();
-
         $departureOptions = $shipments
-            ->map(fn (Shipment $shipment) => $shipment->partyDisplay($shipment->departure, $partyNames))
-            ->filter(fn ($value) => $value !== '—')
-            ->values()
-            ->toBase()
-            ->merge($hubs->pluck('hub_name'))
-            ->merge($agents->pluck('agent_name'))
+            ->pluck('departure_port_code')
+            ->filter()
             ->unique()
             ->sort()
             ->values();
