@@ -141,15 +141,55 @@ class Shipment extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function getCustomerDisplayAttribute(): string
+    public function getCustomerNamesAttribute(): Collection
     {
-        $names = $this->crrs
+        return $this->crrs
             ->map(fn (Crr $crr) => $crr->customerVessel?->customer?->customer_name)
             ->filter()
             ->unique()
             ->values();
+    }
+
+    public function customerNamesFromVessels(array $vesselCustomerMap = []): Collection
+    {
+        return $this->crrs
+            ->map(function (Crr $crr) use ($vesselCustomerMap) {
+                return $crr->customerVessel?->customer?->customer_name
+                    ?? ($crr->vessel_name ? ($vesselCustomerMap[$crr->vessel_name] ?? null) : null);
+            })
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
+    public function getCustomerDisplayAttribute(): string
+    {
+        $names = $this->customer_names;
 
         return $names->isNotEmpty() ? $names->implode(', ') : '—';
+    }
+
+    public function getCustomerDisplayShortAttribute(): string
+    {
+        return $this->formatNamesDisplayShort($this->customer_names);
+    }
+
+    public function formatNamesDisplay(Collection $names): string
+    {
+        return $names->isNotEmpty() ? $names->implode(', ') : '—';
+    }
+
+    public function formatNamesDisplayShort(Collection $names): string
+    {
+        if ($names->isEmpty()) {
+            return '—';
+        }
+
+        if ($names->count() <= 2) {
+            return $names->implode(', ');
+        }
+
+        return $names->take(2)->implode(', ') . ', ...';
     }
 
     public function getVesselNamesAttribute(): Collection
@@ -170,17 +210,7 @@ class Shipment extends Model
 
     public function getVesselDisplayShortAttribute(): string
     {
-        $names = $this->vessel_names;
-
-        if ($names->isEmpty()) {
-            return '—';
-        }
-
-        if ($names->count() <= 2) {
-            return $names->implode(', ');
-        }
-
-        return $names->take(2)->implode(', ') . ', ...';
+        return $this->formatNamesDisplayShort($this->vessel_names);
     }
 
     public function getPoNumbersDisplayAttribute(): string
@@ -223,17 +253,7 @@ class Shipment extends Model
 
     public function getServiceReferenceDisplayShortAttribute(): string
     {
-        $values = $this->service_reference_values;
-
-        if ($values->isEmpty()) {
-            return '—';
-        }
-
-        if ($values->count() <= 2) {
-            return $values->implode(', ');
-        }
-
-        return $values->take(2)->implode(', ') . ', ...';
+        return $this->formatNamesDisplayShort($this->service_reference_values);
     }
 
     public function getDestinationDisplayAttribute(): string
@@ -388,5 +408,44 @@ class Shipment extends Model
         }
 
         return $partyNames[$composite] ?? $composite;
+    }
+
+    public static function batchResolveVesselCustomerNames(Collection $shipments): array
+    {
+        $vesselNames = $shipments
+            ->flatMap(fn (self $shipment) => $shipment->crrs->pluck('vessel_name'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($vesselNames->isEmpty()) {
+            return [];
+        }
+
+        $lookup = [];
+
+        CustomerVessel::with('customer')
+            ->where(function ($query) use ($vesselNames) {
+                $query->whereIn('vessel', $vesselNames)
+                    ->orWhereIn('vessel_name_alias', $vesselNames);
+            })
+            ->get()
+            ->each(function (CustomerVessel $customerVessel) use (&$lookup) {
+                $customerName = $customerVessel->customer?->customer_name;
+
+                if (!$customerName) {
+                    return;
+                }
+
+                if ($customerVessel->vessel) {
+                    $lookup[$customerVessel->vessel] = $customerName;
+                }
+
+                if ($customerVessel->vessel_name_alias) {
+                    $lookup[$customerVessel->vessel_name_alias] = $customerName;
+                }
+            });
+
+        return $lookup;
     }
 }

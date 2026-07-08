@@ -599,6 +599,9 @@
                                                             @forelse ($shipments as $shipment)
                                                             @php
                                                                 $consigneeDisplay = $shipment->partyDisplay($shipment->consignee, $partyNames);
+                                                                $customerNames = $shipment->customerNamesFromVessels($vesselCustomerMap ?? []);
+                                                                $customerDisplay = $shipment->formatNamesDisplay($customerNames);
+                                                                $customerDisplayShort = $shipment->formatNamesDisplayShort($customerNames);
                                                             @endphp
                                                             <tr
                                                                 data-po-numbers="{{ $shipment->po_numbers_display }}"
@@ -613,7 +616,13 @@
                                                                         <i class="ti-alert text-danger ml-2" title="Open irregularities"></i>
                                                                     @endif
                                                                 </td>
-                                                                <td>{{ $shipment->customer_display }}</td>
+                                                                <td>
+                                                                    @if ($customerNames->count() > 2)
+                                                                        <span title="{{ $customerDisplay }}" style="cursor: help;">{{ $customerDisplayShort }}</span>
+                                                                    @else
+                                                                        {{ $customerDisplay }}
+                                                                    @endif
+                                                                </td>
                                                                 <td>
                                                                     @if ($shipment->vessel_names->count() > 2)
                                                                         <span title="{{ $shipment->vessel_display }}" style="cursor: help;">{{ $shipment->vessel_display_short }}</span>

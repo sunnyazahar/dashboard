@@ -57,11 +57,10 @@ class ShipmentController extends Controller
         ])->latest()->get();
 
         $partyNames = Shipment::batchResolvePartyNames($shipments);
+        $vesselCustomerMap = Shipment::batchResolveVesselCustomerNames($shipments);
 
         $customers = $shipments
-            ->flatMap(fn (Shipment $shipment) => $shipment->crrs->map(
-                fn (Crr $crr) => $crr->customerVessel?->customer?->customer_name
-            ))
+            ->flatMap(fn (Shipment $shipment) => $shipment->customerNamesFromVessels($vesselCustomerMap))
             ->filter()
             ->unique()
             ->sort()
@@ -101,6 +100,7 @@ class ShipmentController extends Controller
         return view('Shipment.shipments', compact(
             'shipments',
             'partyNames',
+            'vesselCustomerMap',
             'customers',
             'vessels',
             'services',
