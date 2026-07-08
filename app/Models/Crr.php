@@ -24,6 +24,7 @@ class Crr extends Model
         'deadline_warehouse',
         'internal_shipment',
         'delivery_irregularities',
+        'incoterm',
         'hub_agent',
         'transit_type',
         'transit_id',

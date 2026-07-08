@@ -2444,6 +2444,39 @@
                 table.columns().search('').draw();
             });
 
+            function setAccountManagerFromStock(accountManagerId, accountManagerName) {
+                var $select = $('#account-manager-select');
+
+                if (!accountManagerId) {
+                    $select.val(null).trigger('change');
+                    return;
+                }
+
+                if ($select.find('option[value="' + accountManagerId + '"]').length === 0) {
+                    $select.append(new Option(accountManagerName, accountManagerId, true, true));
+                }
+
+                $select.val(accountManagerId).trigger('change');
+            }
+
+            function updateAccountManagerFromSelectedStocks() {
+                var accountManagerId = null;
+                var accountManagerName = null;
+
+                $('#stock-items-table tbody tr.selected-stock-row').each(function () {
+                    var rowAccountManagerId = $(this).attr('data-account-manager-id');
+                    var rowAccountManagerName = $(this).attr('data-account-manager-name');
+
+                    if (rowAccountManagerId) {
+                        accountManagerId = rowAccountManagerId;
+                        accountManagerName = rowAccountManagerName;
+                        return false;
+                    }
+                });
+
+                setAccountManagerFromStock(accountManagerId, accountManagerName);
+            }
+
             // Stock Items Modal
             $('#add-stock-items-btn').on('click', function() {
                 $('#stock-items-modal').modal('show');
@@ -2592,10 +2625,14 @@
                     var weight = $modalRow.data('weight') || '—';
                     var cbm = $modalRow.data('cbm') || '—';
                     var value = $modalRow.data('value') || '—';
+                    var accountManagerId = $modalRow.attr('data-account-manager-id') || '';
+                    var accountManagerName = $modalRow.attr('data-account-manager-name') || '';
                     var status = 'In Progress';
                     var statusClass = 'label label-stock';
 
-                    var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '">' +
+                    var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '"'
+                        + ' data-account-manager-id="' + accountManagerId + '"'
+                        + ' data-account-manager-name="' + accountManagerName + '">' +
                         '<td>' + hub + '</td>' +
                         '<td>' + vessel + '</td>' +
                         '<td style="max-width: 150px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;display: block;">' + po + '</td>' +
@@ -2613,6 +2650,7 @@
                 });
 
                 refreshStockItemsTable();
+                updateAccountManagerFromSelectedStocks();
                 $('.modal-row-checkbox').prop('checked', false);
                 $('#modal-select-all').prop('checked', false);
                 $('#stock-items-modal').modal('hide');
@@ -2621,6 +2659,7 @@
             $(document).on('click', '.remove-stock-item', function() {
                 $(this).closest('tr.selected-stock-row').remove();
                 refreshStockItemsTable();
+                updateAccountManagerFromSelectedStocks();
             });
 
             $('#shipment-form').on('submit', function() {
@@ -2770,10 +2809,15 @@
                                     $hasMedicine = $crr->packages->where('is_medicine', true)->isNotEmpty();
                                     $hasDeliveryIrreg = is_array($crr->delivery_irregularities) && in_array('Yes', $crr->delivery_irregularities);
                                 @endphp
+                                @php
+                                    $mainAccountManager = $crr->customerVessel?->customer?->responsible?->accountManager;
+                                @endphp
                                 <tr data-id="{{ $crr->id }}"
                                     data-hub="{{ $crr->hub_code ?? '' }}"
                                     data-customer="{{ $crr->customerVessel && $crr->customerVessel->customer ? $crr->customerVessel->customer->customer_name : '' }}"
                                     data-vessel="{{ $crr->vessel_name ?? '' }}"
+                                    data-account-manager-id="{{ $mainAccountManager?->id ?? '' }}"
+                                    data-account-manager-name="{{ $mainAccountManager?->name ?? '' }}"
                                     data-status="{{ \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown' }}"
                                     data-landed="{{ $crr->is_landed_goods ? '1' : '0' }}"
                                     data-stock="{{ $crr->stock_number ?? '' }}"

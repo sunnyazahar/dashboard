@@ -754,6 +754,25 @@
                                                             <option value="No">No</option>
                                                         </select>
                                                     </div>
+                                                    <div class="crr-field-group">
+                                                        <label class="crr-label">Incoterm</label>
+                                                        <select class="form-control select2-incoterm"
+                                                            name="incoterm" >
+                                                            <option value=""></option>
+                                                            <option value="CFR - Cost and Freight">CFR - Cost and Freight</option>
+                                                            <option value="CIF - Cost, Insurance and Freight">CIF - Cost, Insurance and Freight</option>
+                                                            <option value="CIP - Carriage and Insurance Paid To">CIP - Carriage and Insurance Paid To</option>
+                                                            <option value="CPT - Carriage Paid To">CPT - Carriage Paid To</option>
+                                                            <option value="DAP - Delivered at Place">DAP - Delivered at Place</option>
+                                                            <option value="DDP - Delivered Duty Paid">DDP - Delivered Duty Paid</option>
+                                                            <option value="DDU - Delivered Duty Unpaid">DDU - Delivered Duty Unpaid</option>
+                                                            <option value="DPU - Delivered at Place Unloaded">DPU - Delivered at Place Unloaded</option>
+                                                            <option value="EXW - Ex Works">EXW - Ex Works</option>
+                                                            <option value="FAS - Free Alongside Ship">FAS - Free Alongside Ship</option>
+                                                            <option value="FCA - Free Carrier">FCA - Free Carrier</option>
+                                                            <option value="FOB - Free On Board">FOB - Free On Board</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
 
                                                 <!-- Column 3 -->
@@ -1271,6 +1290,12 @@
             $('.select2:not([name="po_numbers[]"])').select2({
                 placeholder: "Click here",
                 allowClear: false,
+                width: '100%'
+            });
+
+            $('.select2-incoterm').select2({
+                placeholder: 'Select incoterm',
+                allowClear: true,
                 width: '100%'
             });
 

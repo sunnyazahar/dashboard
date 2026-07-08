@@ -1411,6 +1411,7 @@
                                         <div class="main-content-area">
                                             <!-- Summary Header -->
                                             <div class="summary-header">
+                                                <input type="hidden" id="shipment-current-status" value="{{ $shipment->status }}">
                                                 <div class="header-meta-group">
                                                     <div class="meta-item">
                                                         <span class="meta-label">Shipment no</span>
@@ -1432,22 +1433,24 @@
                                                         <span class="meta-label">Flags</span>
                                                         @php
                                                             $shipmentFlags = $shipment->flags ?? \App\Models\Shipment::defaultFlags();
+                                                            $selectedShipmentFlag = $shipmentFlags[0] ?? null;
                                                         @endphp
                                                         <div class="header-inline-edit" id="flags-edit-container">
                                                             <div class="header-inline-display flags-display">
                                                                 <div class="flags-pills" style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap;">
-                                                                    @forelse ($shipmentFlags as $flag)
-                                                                        <span class="summary-flag">{{ $flag }}</span>
-                                                                    @empty
+                                                                    @if ($selectedShipmentFlag)
+                                                                        <span class="summary-flag">{{ $selectedShipmentFlag }}</span>
+                                                                    @else
                                                                         <span class="text-muted" style="font-size: 11px; font-weight: 500;">—</span>
-                                                                    @endforelse
+                                                                    @endif
                                                                 </div>
                                                                 <i class="ti-pencil-alt" style="color: #64748b; font-size: 15px; cursor: pointer;"></i>
                                                             </div>
                                                             <div class="header-inline-select flags-select-wrapper">
-                                                                <select class="select2-flags-inline" name="header_flags[]" multiple="multiple">
+                                                                <select class="select2-flags-inline" name="header_flags">
+                                                                    <option value=""></option>
                                                                     @foreach (\App\Models\Shipment::availableFlags() as $flagOption)
-                                                                        <option value="{{ $flagOption }}" {{ in_array($flagOption, $shipmentFlags, true) ? 'selected' : '' }}>{{ $flagOption }}</option>
+                                                                        <option value="{{ $flagOption }}" {{ $selectedShipmentFlag === $flagOption ? 'selected' : '' }}>{{ $flagOption }}</option>
                                                                     @endforeach
                                                                 </select>
                                                             </div>
@@ -2866,8 +2869,11 @@
                     }
 
                     if (response.status) {
-                        $('select[name="status"]').val(response.status).trigger('change');
                         $('.header-meta-group .status-badge').text(response.status);
+                        $('.select2-status-inline').val(response.status).trigger('change.select2');
+                        $('#shipment-current-status').val(response.status);
+                        syncAddStockItemsButtonState();
+                        syncFinalizeTransitButtonState();
                     }
 
                     (response.stocks || []).forEach(function(stock) {
@@ -2927,8 +2933,11 @@
 
                     $('#consignee-party-code').val(consigneeCode);
                     if (response.status) {
-                        $('select[name="status"]').val(response.status).trigger('change');
                         $('.header-meta-group .status-badge').text(response.status);
+                        $('.select2-status-inline').val(response.status).trigger('change.select2');
+                        $('#shipment-current-status').val(response.status);
+                        syncAddStockItemsButtonState();
+                        syncFinalizeTransitButtonState();
                     }
 
                     $('#finalize-shipment-transit-modal').modal('hide');
@@ -3078,26 +3087,10 @@
             $('textarea[name="special_considerations_destination"]').val('');
         });
 
-        $('#account-manager-select').select2({
-            placeholder: 'Type account manager',
-            allowClear: true,
-            width: '100%',
-            minimumInputLength: 0,
-            ajax: {
-                url: '/laravel/api/account-managers',
-                dataType: 'json',
-                delay: 250,
-                data: function(params) { return { q: params.term || '' }; },
-                processResults: function(data) { return { results: data }; }
-            },
-            templateResult: formatParty,
-            templateSelection: formatPartySelection
-        });
-
         var shipmentUpdateStatusUrl = @json(route('shipments.update-status', $shipment->id));
         var shipmentUpdateFlagsUrl = @json(route('shipments.update-flags', $shipment->id));
         var lastHeaderStatus = @json($shipment->status);
-        var lastHeaderFlags = @json($shipment->flags ?? \App\Models\Shipment::defaultFlags());
+        var lastHeaderFlags = @json(array_slice($shipment->flags ?? \App\Models\Shipment::defaultFlags(), 0, 1));
         var suppressFlagsChange = false;
         var flagsConfirmOpen = false;
         var suppressStatusChange = false;
@@ -3139,6 +3132,19 @@
             });
         }
 
+        function initHeaderFlagsSelect2($select, dropdownParent) {
+            if ($select.hasClass('select2-hidden-accessible')) {
+                return;
+            }
+
+            $select.select2({
+                width: '100%',
+                dropdownParent: dropdownParent,
+                placeholder: 'Select flag',
+                allowClear: true
+            });
+        }
+
         $('#status-edit-container .status-display').on('click', function(e) {
             e.stopPropagation();
             closeHeaderInlineEditors('#status-edit-container');
@@ -3157,7 +3163,7 @@
             $('#flags-edit-container .flags-select-wrapper').show();
 
             var $select = $('.select2-flags-inline');
-            initHeaderSelect2($select, $('.main-content-area'));
+            initHeaderFlagsSelect2($select, $('.main-content-area'));
             $select.select2('open');
         });
 
@@ -3274,8 +3280,9 @@
         }
 
         function revertHeaderFlagsSelection() {
+            var currentFlags = normalizeFlagsValue(lastHeaderFlags);
             suppressFlagsChange = true;
-            $('.select2-flags-inline').val(lastHeaderFlags).trigger('change.select2');
+            $('.select2-flags-inline').val(currentFlags[0] || '').trigger('change.select2');
             suppressFlagsChange = false;
             closeHeaderInlineEditors();
         }
@@ -3913,12 +3920,12 @@
         });
 
         function syncAddStockItemsButtonState() {
-            var isCompleted = ($('select[name="status"]').val() || $('.header-meta-group .status-badge').text().trim()) === 'Completed';
+            var isCompleted = ($('#shipment-current-status').val() || $('.header-meta-group .status-badge').text().trim()) === 'Completed';
             $('#add-stock-items-btn').prop('disabled', isCompleted);
         }
 
         function syncFinalizeTransitButtonState() {
-            var status = ($('select[name="status"]').val() || $('.header-meta-group .status-badge').text().trim());
+            var status = ($('#shipment-current-status').val() || $('.header-meta-group .status-badge').text().trim());
             var canTransit = status === 'Completed';
             var $transitBtn = $('#finalize-shipment-transit-btn');
 
@@ -3928,11 +3935,6 @@
 
         syncAddStockItemsButtonState();
         syncFinalizeTransitButtonState();
-
-        $('select[name="status"]').on('change', function() {
-            syncAddStockItemsButtonState();
-            syncFinalizeTransitButtonState();
-        });
 
         $('#add-stock-items-btn').on('click', function() {
             if ($(this).prop('disabled')) {

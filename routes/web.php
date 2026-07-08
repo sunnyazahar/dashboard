@@ -123,7 +123,7 @@ Route::get('/accounting', function () {
 
 Route::get('/create-shipment', function () {
     $countries = \App\Models\Country::where('is_active', true)->orderBy('name')->get();
-    $crrs = \App\Models\Crr::with(['packages', 'documents', 'customerVessel.customer'])
+    $crrs = \App\Models\Crr::with(['packages', 'documents', 'customerVessel.customer.responsible.accountManager'])
         ->selectableForShipment()
         ->latest()
         ->get();

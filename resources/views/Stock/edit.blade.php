@@ -1360,6 +1360,29 @@
                                                             <option value="No" {{ is_array($crr->delivery_irregularities) && in_array('No', $crr->delivery_irregularities) ? 'selected' : '' }}>No</option>
                                                         </select>
                                                     </div>
+
+                                                    <div class="field-group">
+                                                        <label class="field-label">Incoterm</label>
+                                                        <select class="field-input select2-incoterm" name="incoterm">
+                                                            <option value=""></option>
+                                                            @foreach([
+                                                                'CFR - Cost and Freight',
+                                                                'CIF - Cost, Insurance and Freight',
+                                                                'CIP - Carriage and Insurance Paid To',
+                                                                'CPT - Carriage Paid To',
+                                                                'DAP - Delivered at Place',
+                                                                'DDP - Delivered Duty Paid',
+                                                                'DDU - Delivered Duty Unpaid',
+                                                                'DPU - Delivered at Place Unloaded',
+                                                                'EXW - Ex Works',
+                                                                'FAS - Free Alongside Ship',
+                                                                'FCA - Free Carrier',
+                                                                'FOB - Free On Board',
+                                                            ] as $incoterm)
+                                                                <option value="{{ $incoterm }}" {{ $crr->incoterm === $incoterm ? 'selected' : '' }}>{{ $incoterm }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
                                                 </div>
 
                                                 <!-- Column 3 -->
@@ -2334,6 +2357,12 @@
             $('.select2, .select2-irregularities').select2({
                 placeholder: "Select an option",
                 allowClear: false,
+                width: '100%'
+            });
+
+            $('.select2-incoterm').select2({
+                placeholder: 'Select incoterm',
+                allowClear: true,
                 width: '100%'
             });
 

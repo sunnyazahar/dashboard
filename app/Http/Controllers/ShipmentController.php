@@ -378,6 +378,7 @@ class ShipmentController extends Controller
         ]);
 
         $flags = array_values(array_unique($validated['flags'] ?? []));
+        $flags = array_slice($flags, 0, 1);
         $shipment->update(['flags' => $flags]);
 
         return response()->json([
@@ -1289,7 +1290,7 @@ class ShipmentController extends Controller
         try {
             $previousCrrIds = $shipment->crrs()->pluck('crrs.id')->all();
 
-            $shipment->update($this->buildShipmentAttributes($request, $validated));
+            $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
 
             if ($shipment->status !== 'Completed') {
                 $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));

@@ -176,22 +176,6 @@
 
     <div class="form-col">
         <div class="form-group-custom">
-            <label>Account manager</label>
-            <select id="account-manager-select" name="account_manager" class="form-control-sm-custom select2-account-manager">
-                @if ($shipment->accountManager)
-                    <option value="{{ $shipment->account_manager_id }}" selected>{{ $shipment->accountManager->name }}</option>
-                @endif
-            </select>
-        </div>
-        <div class="form-group-custom">
-            <label>Status</label>
-            <select name="status" class="form-control-sm-custom select2">
-                @foreach (['Draft', 'In process', 'In transit', 'Delivered', 'Completed', 'Pending'] as $statusOption)
-                    <option value="{{ $statusOption }}" {{ old('status', $shipment->status) === $statusOption ? 'selected' : '' }}>{{ $statusOption }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group-custom">
             <label>Special considerations for destination</label>
             <textarea name="special_considerations_destination" class="form-control" style="font-size: 11px; height: 50px;">{{ old('special_considerations_destination', $shipment->special_considerations_destination) }}</textarea>
             <div class="checkbox-fade fade-in-primary mt-1">
