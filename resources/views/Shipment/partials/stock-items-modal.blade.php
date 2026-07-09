@@ -2,8 +2,11 @@
     <div class="modal fade" id="stock-items-modal" tabindex="-1" role="dialog" aria-labelledby="stockItemsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document" style="max-width: 95%;">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="stockItemsModalLabel" style="font-size: 14px; font-weight: 600;">Select Stock Items</h5>
+                <div class="modal-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="modal-title mb-1" id="stockItemsModalLabel" style="font-size: 14px; font-weight: 600;">Select Stock Items</h5>
+                        <div id="stock-items-modal-error" style="display:none; font-size: 11px; color: #dc2626; font-weight: 600;"></div>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -17,9 +20,6 @@
                                 <option value="" selected disabled hidden></option>
                                 @php $modalCustomers = []; @endphp
                                 @foreach($crrs as $crr)
-                                    @if((int) $crr->status === \App\Models\Crr::STATUS_COMPLETED)
-                                        @continue
-                                    @endif
                                     @php
                                         $customerName = $crr->customerVessel && $crr->customerVessel->customer ? $crr->customerVessel->customer->customer_name : '';
                                     @endphp
@@ -36,9 +36,6 @@
                                 <option value="" selected disabled hidden></option>
                                 @php $modalVessels = []; @endphp
                                 @foreach($crrs as $crr)
-                                    @if((int) $crr->status === \App\Models\Crr::STATUS_COMPLETED)
-                                        @continue
-                                    @endif
                                     @php $vesselName = $crr->vessel_name ?? ''; @endphp
                                     @if($vesselName && !in_array($vesselName, $modalVessels, true))
                                         @php $modalVessels[] = $vesselName; @endphp
@@ -68,7 +65,7 @@
                             <select id="modal-status-filter" class="form-control filter-input select2 modal-select2">
                                 <option value="" selected disabled hidden></option>
                                 @foreach(\App\Models\Crr::getStatusLabels() as $value => $label)
-                                    @if($value !== \App\Models\Crr::STATUS_COMPLETED)
+                                    @if(!in_array($value, [\App\Models\Crr::STATUS_COMPLETED, \App\Models\Crr::STATUS_CANCELLED], true))
                                         <option value="{{ $label }}">{{ $label }}</option>
                                     @endif
                                 @endforeach
@@ -122,9 +119,6 @@
                             </thead>
                             <tbody>
                                 @forelse($crrs as $crr)
-                                @if((int) $crr->status === \App\Models\Crr::STATUS_COMPLETED)
-                                    @continue
-                                @endif
                                 @php
                                     $status = $crr->status ?? 'Pending';
                                     $badgeClass = ($status === 'Stock') ? 'label label-stock' : 'label label-pending';
@@ -138,7 +132,8 @@
                                     $hasDeliveryIrreg = is_array($crr->delivery_irregularities) && in_array('Yes', $crr->delivery_irregularities);
                                 @endphp
                                 <tr data-id="{{ $crr->id }}"
-                                    data-hub="{{ $crr->hub_code ?? '' }}"
+                                    data-hub="{{ trim((string) ($crr->hub_code ?? '')) }}"
+                                    data-hub-agent="{{ trim((string) ($crr->hub_agent ?? '')) }}"
                                     data-customer="{{ $crr->customerVessel && $crr->customerVessel->customer ? $crr->customerVessel->customer->customer_name : '' }}"
                                     data-vessel="{{ $crr->vessel_name ?? '' }}"
                                     data-status="{{ \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown' }}"
@@ -151,7 +146,7 @@
                                     data-cbm="{{ $crr->cbm ?? '' }}"
                                     data-value="{{ $crr->customs_value ? number_format($crr->customs_value, 2, '.', '') : '' }}">
                                     <td class="text-center"><input type="checkbox" class="modal-row-checkbox" value="{{ $crr->id }}"></td>
-                                    <td>{{ $crr->hub_code ?? '—' }}</td>
+                                    <td>{{ $crr->hub_code ?: ($crr->hub_agent ?: '—') }}</td>
                                     <td>
                                         <div class="d-flex align-items-center justify-content-between">
                                             <span style="color: #008080; font-weight: 500;">{{ $crr->stock_number }}</span>

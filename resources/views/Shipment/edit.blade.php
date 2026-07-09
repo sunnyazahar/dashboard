@@ -2454,6 +2454,24 @@
 
 <script>
     $(document).ready(function() {
+        var serverErrors = @json($errors->all());
+        var serverErrorMessage = @json(session('error'));
+
+        if (serverErrors.length || serverErrorMessage) {
+            var message = serverErrorMessage || serverErrors[0] || 'Please check the form and try again.';
+
+            if (typeof swal === 'function') {
+                swal({
+                    title: 'Validation error',
+                    text: message,
+                    type: 'error',
+                    confirmButtonText: 'OK'
+                });
+            } else {
+                alert(message);
+            }
+        }
+
         var $sidebarTooltipBackdrop = $('<div id="sidebar-info-tooltip-backdrop" class="sidebar-info-tooltip-backdrop"></div>');
         $('body').append($sidebarTooltipBackdrop);
 
@@ -4136,6 +4154,82 @@
         initFlightDatepickers($('#hand-carry-legs-container'));
         initFlightDatepickers($('#on-board-legs-container'));
 
+        function showStockModalError(message) {
+            $('#stock-items-modal-error').text(message).show();
+        }
+
+        function clearStockModalError() {
+            $('#stock-items-modal-error').hide().text('');
+        }
+
+        function normalizeHubKey(value) {
+            return String(value || '')
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, ' ');
+        }
+
+        function getHubKeyFromSelectedStockRow($row) {
+            var hubKey = normalizeHubKey($row.attr('data-hub-key'));
+            if (hubKey) {
+                return hubKey;
+            }
+
+            var hubText = normalizeHubKey($row.find('td').eq(0).text());
+            return hubText && hubText !== '—' ? hubText : '';
+        }
+
+        function getHubKeyFromModalRow($row) {
+            var hubCode = normalizeHubKey($row.attr('data-hub'));
+            var hubAgent = normalizeHubKey($row.attr('data-hub-agent'));
+            if (hubCode || hubAgent) {
+                return hubCode || hubAgent;
+            }
+
+            var hubText = normalizeHubKey($row.find('td').eq(1).text());
+            return hubText && hubText !== '—' ? hubText : '';
+        }
+
+        function collectSelectedHubKeysForValidation() {
+            var selectedHubKeys = [];
+
+            $('#stock-items-table tbody tr.selected-stock-row').each(function() {
+                var existingHubKey = getHubKeyFromSelectedStockRow($(this));
+                if (existingHubKey && selectedHubKeys.indexOf(existingHubKey) === -1) {
+                    selectedHubKeys.push(existingHubKey);
+                }
+            });
+
+            $('.modal-row-checkbox:checked').each(function() {
+                var id = $(this).val();
+                var $modalRow = $('#stock-items-modal-table tbody tr[data-id="' + id + '"]');
+                if (!$modalRow.length) {
+                    return;
+                }
+
+                var hubKey = getHubKeyFromModalRow($modalRow);
+                if (hubKey && selectedHubKeys.indexOf(hubKey) === -1) {
+                    selectedHubKeys.push(hubKey);
+                }
+            });
+
+            return selectedHubKeys;
+        }
+
+        function updateRealtimeHubValidation() {
+            var selectedHubKeys = collectSelectedHubKeysForValidation();
+            var hasMismatch = selectedHubKeys.length > 1;
+
+            if (hasMismatch) {
+                showStockModalError('All selected stock items must belong to the same hub.');
+            } else {
+                clearStockModalError();
+            }
+
+            $('#modal-add-selected').prop('disabled', hasMismatch);
+            return !hasMismatch;
+        }
+
         function refreshStockItemsTable() {
             var count = $('#stock-items-table tbody tr.selected-stock-row').length;
             $('.stock-tab[data-panel="stock-panel-items"]').text('Stock items (' + count + ')');
@@ -4154,7 +4248,30 @@
             });
         }
 
-        $('#shipment-edit-form').on('submit', function() {
+        $('#shipment-edit-form').on('submit', function(e) {
+            var selectedHubKeys = [];
+            $('#stock-items-table tbody tr.selected-stock-row').each(function() {
+                var hubKey = getHubKeyFromSelectedStockRow($(this));
+                if (hubKey && selectedHubKeys.indexOf(hubKey) === -1) {
+                    selectedHubKeys.push(hubKey);
+                }
+            });
+
+            if (selectedHubKeys.length > 1) {
+                e.preventDefault();
+                if (typeof swal === 'function') {
+                    swal({
+                        title: 'Validation error',
+                        text: 'All selected stock items must belong to the same hub.',
+                        type: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    alert('All selected stock items must belong to the same hub.');
+                }
+                return false;
+            }
+
             syncCrrHiddenInputs();
         });
 
@@ -4293,6 +4410,8 @@
         }
 
         $('#stock-items-modal').on('shown.bs.modal', function() {
+            clearStockModalError();
+            $('#modal-add-selected').prop('disabled', false);
             $('.modal-select2').select2({
                 placeholder: 'Click here',
                 allowClear: true,
@@ -4304,6 +4423,12 @@
             $('.modal-filter-input').off('input change').on('input change', applyStockModalFilters);
             applyStockModalFilters();
             syncModalCheckboxesFromStockTable();
+            updateRealtimeHubValidation();
+        });
+
+        $('#stock-items-modal').on('hidden.bs.modal', function() {
+            clearStockModalError();
+            $('#modal-add-selected').prop('disabled', false);
         });
 
         $(document).on('click', '.modal-clear-filters', function() {
@@ -4311,23 +4436,31 @@
             $('.modal-filter-input').val('').trigger('change');
             applyStockModalFilters();
             syncModalCheckboxesFromStockTable();
+            updateRealtimeHubValidation();
         });
 
         $('#modal-select-all').on('change', function() {
             $('#stock-items-modal-table tbody tr:visible .modal-row-checkbox').prop('checked', $(this).prop('checked'));
             updateModalRowHighlights();
+            updateRealtimeHubValidation();
         });
 
         $(document).on('change', '.modal-row-checkbox', function() {
             updateModalSelectAllState();
             updateModalRowHighlights();
+            updateRealtimeHubValidation();
         });
 
         $('#modal-add-selected').on('click', function() {
+            clearStockModalError();
             var selectedIds = [];
             $('.modal-row-checkbox:checked').each(function() {
                 selectedIds.push(String($(this).val()));
             });
+
+            if (!updateRealtimeHubValidation()) {
+                return;
+            }
 
             $('#stock-items-table tbody tr.selected-stock-row').each(function() {
                 var id = String($(this).attr('data-crr-id'));
@@ -4341,6 +4474,10 @@
                 if ($('#stock-items-table tbody tr.selected-stock-row[data-crr-id="' + id + '"]').length) return;
                 var $modalRow = $('#stock-items-modal-table tbody tr[data-id="' + id + '"]');
                 if ($modalRow.length === 0) return;
+                var hubCode = String($modalRow.attr('data-hub') || '').trim();
+                var hubAgent = String($modalRow.attr('data-hub-agent') || '').trim();
+                var hub = hubCode || hubAgent || '—';
+                var hubKey = normalizeHubKey(hubCode || hubAgent);
                 var status = $modalRow.data('status') || 'Pending';
                 var statusClass = 'label';
                 if (status === 'Pending') {
@@ -4348,8 +4485,8 @@
                 } else {
                     statusClass += ' label-stock';
                 }
-                var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '">' +
-                    '<td>' + ($modalRow.data('hub') || '—') + '</td>' +
+                var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '" data-hub-key="' + hubKey + '">' +
+                    '<td>' + hub + '</td>' +
                     '<td>' + ($modalRow.data('vessel') || '—') + '</td>' +
                     '<td style="max-width:150px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block;">' + ($modalRow.data('po') || '—') + '</td>' +
                     '<td>' + ($modalRow.data('supplier') || '—') + '</td>' +

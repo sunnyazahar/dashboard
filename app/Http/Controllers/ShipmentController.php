@@ -1392,7 +1392,7 @@ class ShipmentController extends Controller
 
     private function validateShipmentRequest(Request $request): array
     {
-        return $request->validate([
+        $rules = [
             'departure' => 'nullable|string|max:255',
             'departure_port_code' => 'nullable|string|max:255',
             'service' => 'nullable|string|max:255',
@@ -1473,7 +1473,59 @@ class ShipmentController extends Controller
             'on_board_legs.*.departure_date' => 'nullable|string',
             'on_board_legs.*.delivery_date' => 'nullable|string',
             'on_board_legs.*.delivery_time' => 'nullable|string|max:5',
-        ]);
+        ];
+
+        $validator = validator($request->all(), $rules);
+
+        $validator->after(function ($validator) use ($request) {
+            $crrIds = array_values(array_unique($request->input('crr_ids', [])));
+
+            $this->validateSelectableCrrsForShipment($crrIds, $validator);
+            $this->validateSingleHubForSelectedCrrs($crrIds, $validator);
+        });
+
+        return $validator->validate();
+    }
+
+    private function validateSelectableCrrsForShipment(array $crrIds, \Illuminate\Contracts\Validation\Validator $validator): void
+    {
+        if (empty($crrIds)) {
+            return;
+        }
+
+        $invalidCount = Crr::query()
+            ->whereIn('id', $crrIds)
+            ->whereIn('status', [Crr::STATUS_COMPLETED, Crr::STATUS_CANCELLED])
+            ->count();
+
+        if ($invalidCount > 0) {
+            $validator->errors()->add('crr_ids', 'Completed and cancelled stock items cannot be added to a shipment.');
+        }
+    }
+
+    private function validateSingleHubForSelectedCrrs(array $crrIds, \Illuminate\Contracts\Validation\Validator $validator): void
+    {
+        if (count($crrIds) <= 1) {
+            return;
+        }
+
+        $hubValues = Crr::query()
+            ->whereIn('id', $crrIds)
+            ->get()
+            ->map(function (Crr $crr) {
+                $hubValue = trim((string) ($crr->hub_code ?: $crr->hub_agent));
+
+                return $hubValue !== '' ? mb_strtolower($hubValue) : null;
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($hubValues->count() <= 1) {
+            return;
+        }
+
+        $validator->errors()->add('crr_ids', 'All selected stock items must belong to the same hub.');
     }
 
     private function normalizeManifestGenerationRequest(Request $request): void

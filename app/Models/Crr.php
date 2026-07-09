@@ -106,7 +106,10 @@ class Crr extends Model
 
     public function scopeSelectableForShipment($query)
     {
-        return $query->where('status', '!=', self::STATUS_COMPLETED);
+        return $query->whereNotIn('status', [
+            self::STATUS_COMPLETED,
+            self::STATUS_CANCELLED,
+        ]);
     }
 
     public function shipments()

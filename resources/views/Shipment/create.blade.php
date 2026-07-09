@@ -803,23 +803,6 @@
                                                             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                                                         </div>
                                                     @endif
-                                                    @if (session('error'))
-                                                        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="font-size: 12px;">
-                                                            {{ session('error') }}
-                                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                                        </div>
-                                                    @endif
-                                                    @if ($errors->any())
-                                                        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="font-size: 12px;">
-                                                            <ul class="mb-0 pl-3">
-                                                                @foreach ($errors->all() as $error)
-                                                                    <li>{{ $error }}</li>
-                                                                @endforeach
-                                                            </ul>
-                                                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                                        </div>
-                                                    @endif
-
                                                 <div class="row">
                                                     <!-- Pillar 1: Departure -->
                                                     <div class="col-md-4 custom-col">
@@ -1572,13 +1555,161 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/assets/js/sweetalert.js') }}"></script>
     <!-- date-range-picker js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/moment/moment.js') }}"></script>
     <script type="text/javascript"
         src="{{ asset('files/bower_components/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
 
     <script>
+        (function () {
+            var sessionError = @json(session('error'));
+            var validationErrors = @json($errors->all());
+            var message = '';
+
+            if (sessionError && String(sessionError).trim() !== '') {
+                message = String(sessionError).trim();
+            } else if (Array.isArray(validationErrors) && validationErrors.length > 0) {
+                message = String(validationErrors[0] || '').trim();
+            }
+
+            if (!message) {
+                return;
+            }
+
+            function showValidationAlert() {
+                if (typeof swal === 'function') {
+                    try {
+                        swal('Validation error', message, 'error');
+                        return;
+                    } catch (e) {
+                        try {
+                            swal({
+                                title: 'Validation error',
+                                text: message,
+                                type: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                            return;
+                        } catch (ignored) {}
+                    }
+                }
+
+                alert(message);
+            }
+
+            if (document.readyState === 'complete') {
+                setTimeout(showValidationAlert, 0);
+            } else {
+                window.addEventListener('load', function () {
+                    setTimeout(showValidationAlert, 0);
+                });
+            }
+        })();
+    </script>
+
+    <script>
         $(document).ready(function () {
+            function showStockModalError(message) {
+                $('#stock-items-modal-error').text(message).show();
+            }
+
+            function clearStockModalError() {
+                $('#stock-items-modal-error').hide().text('');
+            }
+
+            function showValidationSwal(message) {
+                if (typeof swal === 'function') {
+                    try {
+                        swal('Validation error', message, 'error');
+                        return;
+                    } catch (e) {
+                        try {
+                            swal({
+                                title: 'Validation error',
+                                text: message,
+                                type: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                            return;
+                        } catch (ignored) {}
+                    }
+                }
+
+                alert(message);
+            }
+
+            function normalizeHubKey(value) {
+                return String(value || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, ' ');
+            }
+
+            function getHubKeyFromSelectedStockRow($row) {
+                var hubKey = normalizeHubKey($row.attr('data-hub-key'));
+                if (hubKey) {
+                    return hubKey;
+                }
+
+                var hubText = normalizeHubKey($row.find('td').eq(0).text());
+                return hubText && hubText !== '—' ? hubText : '';
+            }
+
+            function getHubKeyFromModalRow($row) {
+                var hubCode = normalizeHubKey($row.attr('data-hub'));
+                var hubAgent = normalizeHubKey($row.attr('data-hub-agent'));
+                if (hubCode || hubAgent) {
+                    return hubCode || hubAgent;
+                }
+
+                // Modal table layout: [0]=checkbox, [1]=hub
+                var hubText = normalizeHubKey($row.find('td').eq(1).text());
+                return hubText && hubText !== '—' ? hubText : '';
+            }
+
+            function collectSelectedHubKeysForValidation() {
+                var selectedHubKeys = [];
+
+                // Hubs already added in selected stock table
+                $('#stock-items-table tbody tr.selected-stock-row').each(function () {
+                    var existingHubKey = getHubKeyFromSelectedStockRow($(this));
+                    if (existingHubKey && selectedHubKeys.indexOf(existingHubKey) === -1) {
+                        selectedHubKeys.push(existingHubKey);
+                    }
+                });
+
+                // Hubs currently checked in modal
+                $('.modal-row-checkbox:checked').each(function () {
+                    var id = $(this).val();
+                    var $modalRow = $('#stock-items-modal-table tbody tr[data-id="' + id + '"]');
+                    if (!$modalRow.length) {
+                        return;
+                    }
+
+                    var hubKey = getHubKeyFromModalRow($modalRow);
+                    if (hubKey && selectedHubKeys.indexOf(hubKey) === -1) {
+                        selectedHubKeys.push(hubKey);
+                    }
+                });
+
+                return selectedHubKeys;
+            }
+
+            function updateRealtimeHubValidation() {
+                var selectedHubKeys = collectSelectedHubKeysForValidation();
+                var hasMismatch = selectedHubKeys.length > 1;
+
+                if (hasMismatch) {
+                    showStockModalError('All selected stock items must belong to the same hub.');
+                } else {
+                    clearStockModalError();
+                }
+
+                $('#modal-add-selected').prop('disabled', hasMismatch);
+                return !hasMismatch;
+            }
+
             // Initialize Select2 for standard filters
             $('.select2').select2({
                 placeholder: "Click here",
@@ -2570,6 +2701,8 @@
             }
 
             $('#stock-items-modal').on('shown.bs.modal', function() {
+                clearStockModalError();
+                $('#modal-add-selected').prop('disabled', false);
                 $('.modal-select2').select2({
                     placeholder: "Click here",
                     allowClear: true,
@@ -2580,6 +2713,12 @@
                 $('.modal-select2').off('change').on('change', applyStockModalFilters);
                 $('.modal-filter-input').off('input change').on('input change', applyStockModalFilters);
                 applyStockModalFilters();
+                updateRealtimeHubValidation();
+            });
+
+            $('#stock-items-modal').on('hidden.bs.modal', function() {
+                clearStockModalError();
+                $('#modal-add-selected').prop('disabled', false);
             });
 
             // Clear filters for modal
@@ -2594,6 +2733,11 @@
             // Select all checkboxes in modal
             $('#modal-select-all').on('change', function() {
                 $('.modal-row-checkbox').prop('checked', $(this).prop('checked'));
+                updateRealtimeHubValidation();
+            });
+
+            $(document).on('change', '.modal-row-checkbox', function() {
+                updateRealtimeHubValidation();
             });
             
             function refreshStockItemsTable() {
@@ -2613,6 +2757,7 @@
 
             // Add selected stock items
             $('#modal-add-selected').on('click', function() {
+                clearStockModalError();
                 var selectedIds = [];
                 $('.modal-row-checkbox:checked').each(function() {
                     selectedIds.push($(this).val());
@@ -2620,6 +2765,31 @@
 
                 if (selectedIds.length === 0) {
                     alert('Please select at least one stock item.');
+                    return;
+                }
+
+                var selectedHubKeys = [];
+                $('#stock-items-table tbody tr.selected-stock-row').each(function () {
+                    var existingHubKey = getHubKeyFromSelectedStockRow($(this));
+                    if (existingHubKey && selectedHubKeys.indexOf(existingHubKey) === -1) {
+                        selectedHubKeys.push(existingHubKey);
+                    }
+                });
+
+                selectedIds.forEach(function (id) {
+                    var $modalRow = $('#stock-items-modal-table tbody tr[data-id="' + id + '"]');
+                    if (!$modalRow.length) {
+                        return;
+                    }
+
+                    var candidateHubKey = getHubKeyFromModalRow($modalRow);
+                    if (candidateHubKey && selectedHubKeys.indexOf(candidateHubKey) === -1) {
+                        selectedHubKeys.push(candidateHubKey);
+                    }
+                });
+
+                if (selectedHubKeys.length > 1) {
+                    showStockModalError('All selected stock items must belong to the same hub.');
                     return;
                 }
 
@@ -2633,7 +2803,10 @@
                         return;
                     }
 
-                    var hub = $modalRow.data('hub') || '—';
+                    var hubCode = String($modalRow.attr('data-hub') || '').trim();
+                    var hubAgent = String($modalRow.attr('data-hub-agent') || '').trim();
+                    var hub = hubCode || hubAgent || '—';
+                    var hubKey = (hubCode || hubAgent).toLowerCase();
                     var vessel = $modalRow.data('vessel') || '—';
                     var po = $modalRow.data('po') || '—';
                     var supplier = $modalRow.data('supplier') || '—';
@@ -2648,6 +2821,7 @@
                     var statusClass = 'label label-stock';
 
                     var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '"'
+                        + ' data-hub-key="' + hubKey + '"'
                         + ' data-account-manager-id="' + accountManagerId + '"'
                         + ' data-account-manager-name="' + accountManagerName + '">' +
                         '<td>' + hub + '</td>' +
@@ -2680,6 +2854,19 @@
             });
 
             $('#shipment-form').on('submit', function() {
+                var selectedHubKeys = [];
+                $('#stock-items-table tbody tr.selected-stock-row').each(function () {
+                    var hubKey = getHubKeyFromSelectedStockRow($(this));
+                    if (hubKey && selectedHubKeys.indexOf(hubKey) === -1) {
+                        selectedHubKeys.push(hubKey);
+                    }
+                });
+
+                if (selectedHubKeys.length > 1) {
+                    showValidationSwal('All selected stock items must belong to the same hub.');
+                    return false;
+                }
+
                 $('#crr-ids-container').empty();
                 $('#stock-items-table tbody tr.selected-stock-row').each(function() {
                     var crrId = $(this).data('crr-id');
@@ -2697,8 +2884,11 @@
     <div class="modal fade" id="stock-items-modal" tabindex="-1" role="dialog" aria-labelledby="stockItemsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document" style="max-width: 95%;">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="stockItemsModalLabel" style="font-size: 14px; font-weight: 600;">Select Stock Items</h5>
+                <div class="modal-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="modal-title mb-1" id="stockItemsModalLabel" style="font-size: 14px; font-weight: 600;">Select Stock Items</h5>
+                        <div id="stock-items-modal-error" style="display:none; font-size: 11px; color: #dc2626; font-weight: 600;"></div>
+                    </div>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -2757,7 +2947,7 @@
                             <select id="modal-status-filter" class="form-control filter-input select2 modal-select2">
                                 <option value="" selected disabled hidden></option>
                                 @foreach(\App\Models\Crr::getStatusLabels() as $value => $label)
-                                    @if($value !== \App\Models\Crr::STATUS_COMPLETED)
+                                    @if(!in_array($value, [\App\Models\Crr::STATUS_COMPLETED, \App\Models\Crr::STATUS_CANCELLED], true))
                                         <option value="{{ $label }}">{{ $label }}</option>
                                     @endif
                                 @endforeach
@@ -2811,9 +3001,6 @@
                             </thead>
                             <tbody>
                                 @forelse($crrs as $crr)
-                                @if((int) $crr->status === \App\Models\Crr::STATUS_COMPLETED)
-                                    @continue
-                                @endif
                                 @php
                                     $status = $crr->status ?? 'Pending';
                                     $badgeClass = ($status === 'Stock') ? 'label label-stock' : 'label label-pending';
@@ -2830,7 +3017,8 @@
                                     $mainAccountManager = $crr->customerVessel?->customer?->responsible?->accountManager;
                                 @endphp
                                 <tr data-id="{{ $crr->id }}"
-                                    data-hub="{{ $crr->hub_code ?? '' }}"
+                                    data-hub="{{ trim((string) ($crr->hub_code ?? '')) }}"
+                                    data-hub-agent="{{ trim((string) ($crr->hub_agent ?? '')) }}"
                                     data-customer="{{ $crr->customerVessel && $crr->customerVessel->customer ? $crr->customerVessel->customer->customer_name : '' }}"
                                     data-vessel="{{ $crr->vessel_name ?? '' }}"
                                     data-account-manager-id="{{ $mainAccountManager?->id ?? '' }}"

@@ -273,9 +273,10 @@
                         @php
                             $poNumbers = is_array($crr->po_numbers) ? implode(', ', $crr->po_numbers) : ($crr->po_numbers ?? '—');
                             $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Pending';
+                            $hubKey = strtolower(trim((string) ($crr->hub_code ?: $crr->hub_agent)));
                         @endphp
-                        <tr class="selected-stock-row" data-crr-id="{{ $crr->id }}">
-                            <td>{{ $crr->hub_code ?? '—' }}</td>
+                        <tr class="selected-stock-row" data-crr-id="{{ $crr->id }}" data-hub-key="{{ $hubKey }}">
+                            <td>{{ $crr->hub_code ?: ($crr->hub_agent ?: '—') }}</td>
                             <td>{{ $crr->vessel_name ?? '—' }}</td>
                             <td style="max-width: 150px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;display: block;">{{ $poNumbers ?: '—' }}</td>
                             <td>{{ $crr->supplier ?? '—' }}</td>
