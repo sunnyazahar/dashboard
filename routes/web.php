@@ -121,7 +121,7 @@ Route::get('/accounting', function () {
     return view('Billing.accounting');
 })->name('accounting');
 
-Route::get('/create-shipment', function () {
+Route::get('/create-shipment', function (\Illuminate\Http\Request $request) {
     $countries = \App\Models\Country::where('is_active', true)->orderBy('name')->get();
     $crrs = \App\Models\Crr::with(['packages', 'documents', 'customerVessel.customer.responsible.accountManager'])
         ->selectableForShipment()
@@ -129,7 +129,85 @@ Route::get('/create-shipment', function () {
         ->get();
     $hubs = \App\Models\Hub::orderBy('hub_name')->get();
     $agents = \App\Models\Agent::with('country')->orderBy('agent_name')->get();
-    return view('Shipment.create', compact('countries', 'crrs', 'hubs', 'agents'));
+
+    $preselectedCrrIds = collect(explode(',', (string) $request->query('crr_ids', '')))
+        ->map(fn ($id) => (int) trim((string) $id))
+        ->filter(fn ($id) => $id > 0)
+        ->unique()
+        ->values()
+        ->all();
+
+    if ($preselectedCrrIds !== []) {
+        $preselectedCrrIds = \App\Models\Crr::query()
+            ->selectableForShipment()
+            ->whereIn('id', $preselectedCrrIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
+    }
+
+    $resolveShipmentDepartureParty = function (\App\Models\Crr $crr, $hubs, $agents): ?array {
+        $candidates = array_values(array_unique(array_filter([
+            trim((string) ($crr->hub_code ?? '')),
+            trim((string) ($crr->hub_agent ?? '')),
+        ])));
+
+        foreach ($candidates as $candidate) {
+            $matchedHub = $hubs->first(function ($hub) use ($candidate) {
+                return strcasecmp((string) ($hub->code ?? ''), $candidate) === 0
+                    || strcasecmp((string) ($hub->hub_name ?? ''), $candidate) === 0;
+            });
+
+            if ($matchedHub) {
+                return [
+                    'id' => 'hub:' . $matchedHub->id,
+                    'text' => $matchedHub->hub_name,
+                    'type' => 'hub',
+                    'hub_code' => $matchedHub->code,
+                    'port_code' => $matchedHub->port_code,
+                ];
+            }
+
+            $matchedAgent = $agents->first(function ($agent) use ($candidate) {
+                return strcasecmp((string) ($agent->code ?? ''), $candidate) === 0
+                    || strcasecmp((string) ($agent->agent_name ?? ''), $candidate) === 0;
+            });
+
+            if ($matchedAgent) {
+                return [
+                    'id' => 'agent:' . $matchedAgent->id,
+                    'text' => $matchedAgent->agent_name,
+                    'type' => 'agent',
+                    'port_code' => $matchedAgent->port_code,
+                ];
+            }
+        }
+
+        return null;
+    };
+
+    $departurePartiesByCrrId = [];
+    foreach ($crrs as $crr) {
+        $party = $resolveShipmentDepartureParty($crr, $hubs, $agents);
+        if ($party) {
+            $departurePartiesByCrrId[$crr->id] = $party;
+        }
+    }
+
+    $preselectedDepartureParty = ($preselectedCrrIds[0] ?? null)
+        ? ($departurePartiesByCrrId[$preselectedCrrIds[0]] ?? null)
+        : null;
+
+    return view('Shipment.create', compact(
+        'countries',
+        'crrs',
+        'hubs',
+        'agents',
+        'preselectedCrrIds',
+        'departurePartiesByCrrId',
+        'preselectedDepartureParty'
+    ));
 })->name('create-shipment');
 
 // API: combined parties search for Departure select2 (hubs, agents, customers)

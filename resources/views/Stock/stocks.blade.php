@@ -359,6 +359,118 @@
             margin-left: 5px;
             display: inline-block;
         }
+
+        .stock-bulk-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1050;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+            padding: 10px 20px;
+            display: none;
+        }
+
+        .stock-bulk-footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stock-bulk-footer-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .stock-bulk-footer-actions .btn-teal {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 14px;
+            height: 32px;
+            border-radius: 3px;
+        }
+
+        .stock-bulk-icon-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            color: #64748b;
+            border-radius: 3px;
+        }
+
+        .stock-bulk-icon-btn:hover {
+            background: #f1f5f9;
+            color: #008080;
+            border-color: #cbd5e1;
+        }
+
+        .stock-bulk-footer-stats {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .stock-bulk-footer-stats strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        body.stock-bulk-footer-visible .table-scroll-wrapper {
+            max-height: calc(100vh - 210px);
+        }
+
+        body.stock-bulk-footer-visible {
+            padding-bottom: 56px;
+        }
+
+        #bulk-create-shipment:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .stock-copy-toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #008080;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .stock-copy-toast.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        body.stock-bulk-footer-visible .stock-copy-toast {
+            bottom: 68px;
+        }
     </style>
 @endsection
 
@@ -603,6 +715,7 @@
                                                                 $poNumbers = is_array($crr->po_numbers) ? implode(', ', $crr->po_numbers) : ($crr->po_numbers ?? '');
                                                                 $totalItems = $crr->packages->count();
                                                                 $totalWeight = $crr->packages->sum('weight');
+                                                                $totalCbm = $crr->packages->sum('cbm');
                                                                 $hasDgr = $crr->packages->where('is_dgr', true)->isNotEmpty();
                                                                 $hasDocs = $crr->documents->isNotEmpty();
                                                                 $isNotStackable = $crr->packages->where('is_not_stackable', true)->isNotEmpty();
@@ -623,6 +736,9 @@
                                                                 data-service-reference="{{ $crr->supplier_reference ?? '' }}"
                                                                 data-shipment="{{ $crr->internal_shipment ?? '' }}"
                                                                 data-transit-id="{{ $crr->transit_id ?? '' }}"
+                                                                data-items="{{ $totalItems }}"
+                                                                data-weight="{{ $totalWeight > 0 ? number_format($totalWeight, 2, '.', '') : '0' }}"
+                                                                data-cbm="{{ $totalCbm > 0 ? number_format($totalCbm, 2, '.', '') : '0' }}"
                                                             >
                                                                  <td class="text-center"><input type="checkbox" class="row-checkbox" value="{{ $crr->id }}"></td>
                                                                 <td>{{ $crr->hub_code ?? '—' }}</td>
@@ -722,6 +838,32 @@
             </div>
         </div>
     </div>
+
+    <div id="stock-bulk-footer" class="stock-bulk-footer">
+        <div class="stock-bulk-footer-inner">
+            <div class="stock-bulk-footer-actions">
+                <button type="button" class="btn btn-teal btn-sm" id="bulk-create-shipment">
+                    Create shipment (<span class="bulk-action-count">0</span>)
+                </button>
+                <button type="button" class="btn btn-teal btn-sm" id="bulk-create-customer-request">
+                    Create customer request (<span class="bulk-action-count">0</span>)
+                </button>
+                <button type="button" class="stock-bulk-icon-btn" id="bulk-copy-selected" title="Copy selected rows">
+                    <i class="ti-layers"></i>
+                </button>
+                <button type="button" class="stock-bulk-icon-btn" id="bulk-print-selected" title="Print selected stocks">
+                    <i class="ti-printer"></i>
+                </button>
+            </div>
+            <div class="stock-bulk-footer-stats">
+                <span>Total selected: <strong id="bulk-stat-selected">0</strong></span>
+                <span>Total items: <strong id="bulk-stat-items">0</strong></span>
+                <span>Total weight: <strong id="bulk-stat-weight">0.00 kg</strong></span>
+                <span>Total volume: <strong id="bulk-stat-cbm">0.00 CBM</strong></span>
+            </div>
+        </div>
+    </div>
+
      <!-- Required Jquery -->
     <script type="text/javascript" src="{{ asset('files/bower_components/jquery/dist/jquery.min.js') }}"></script>
     <script type="text/javascript" src="{{ asset('files/bower_components/jquery-ui/jquery-ui.min.js') }}"></script>
@@ -957,13 +1099,265 @@
             $('#offices-table thead input[type="checkbox"]').on('change', function() {
                 var isChecked = $(this).prop('checked');
                 $('#offices-table tbody input[type="checkbox"]').prop('checked', isChecked);
+                updateBulkFooter();
+            });
+
+            $(document).on('change', '.row-checkbox', function() {
+                updateBulkFooter();
+            });
+
+            table.on('draw', function() {
+                updateBulkFooter();
+            });
+
+            function getSelectedRows() {
+                var rows = [];
+                $('.row-checkbox:checked').each(function() {
+                    rows.push($(this).closest('tr'));
+                });
+                return rows;
+            }
+
+            function getSelectedIds() {
+                return $('.row-checkbox:checked').map(function() {
+                    return $(this).val();
+                }).get();
+            }
+
+            function getCellCopyText($cell) {
+                var $clone = $cell.clone();
+                $clone.find('input, button, i, .landed-badge').remove();
+                return $.trim($clone.text()).replace(/\s+/g, ' ');
+            }
+
+            function getRowCopyValues($row) {
+                var values = [];
+
+                $row.find('td').each(function(index) {
+                    if (index === 0) {
+                        return;
+                    }
+
+                    values.push(getCellCopyText($(this)));
+                });
+
+                return values;
+            }
+
+            function getTableCopyHeaders() {
+                var headers = [];
+
+                $('#offices-table thead tr:first th').each(function(index) {
+                    if (index === 0) {
+                        return;
+                    }
+
+                    headers.push($.trim($(this).text()));
+                });
+
+                return headers;
+            }
+
+            function buildSelectedRowsCopyText(rows) {
+                var lines = [];
+                var headers = getTableCopyHeaders();
+
+                if (headers.length) {
+                    lines.push(headers.join('\t'));
+                }
+
+                rows.forEach(function($row) {
+                    lines.push(getRowCopyValues($row).join('\t'));
+                });
+
+                return lines.join('\n');
+            }
+
+            function copyTextToClipboard(text) {
+                function fallbackCopy() {
+                    var textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.setAttribute('readonly', '');
+                    textarea.style.position = 'fixed';
+                    textarea.style.top = '0';
+                    textarea.style.left = '0';
+                    textarea.style.width = '2em';
+                    textarea.style.height = '2em';
+                    textarea.style.padding = '0';
+                    textarea.style.border = 'none';
+                    textarea.style.outline = 'none';
+                    textarea.style.boxShadow = 'none';
+                    textarea.style.background = 'transparent';
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+
+                    var success = false;
+                    try {
+                        success = document.execCommand('copy');
+                    } catch (err) {
+                        success = false;
+                    }
+
+                    document.body.removeChild(textarea);
+                    return success;
+                }
+
+                if (navigator.clipboard && window.isSecureContext) {
+                    return navigator.clipboard.writeText(text).catch(function() {
+                        return fallbackCopy() ? Promise.resolve() : Promise.reject();
+                    });
+                }
+
+                return fallbackCopy() ? Promise.resolve() : Promise.reject();
+            }
+
+            var copyToastTimer = null;
+
+            function showCopyNotification(rowCount) {
+                var label = rowCount === 1 ? 'row' : 'rows';
+                var $toast = $('#stock-copy-toast');
+
+                if (!$toast.length) {
+                    $toast = $('<div id="stock-copy-toast" class="stock-copy-toast" role="status" aria-live="polite"></div>');
+                    $('body').append($toast);
+                }
+
+                $toast.html('<i class="ti-check"></i> Copied ' + rowCount + ' ' + label + ' to clipboard');
+
+                if (copyToastTimer) {
+                    clearTimeout(copyToastTimer);
+                }
+
+                $toast.addClass('is-visible');
+
+                copyToastTimer = setTimeout(function() {
+                    $toast.removeClass('is-visible');
+                }, 2500);
+            }
+
+            function normalizeHubKey(value) {
+                return String(value || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, ' ');
+            }
+
+            function getHubKeyFromRow($row) {
+                var hubCode = normalizeHubKey($row.attr('data-hub-agent'));
+                var hubAgent = normalizeHubKey($row.attr('data-hub-agent-raw'));
+
+                return hubCode || hubAgent || '';
+            }
+
+            function selectedStocksHaveMixedHubs($checked) {
+                var hubKeys = [];
+
+                $checked.each(function() {
+                    var hubKey = getHubKeyFromRow($(this).closest('tr')) || '__empty__';
+                    if (hubKeys.indexOf(hubKey) === -1) {
+                        hubKeys.push(hubKey);
+                    }
+                });
+
+                return hubKeys.length > 1;
+            }
+
+            function updateBulkFooter() {
+                var $checked = $('.row-checkbox:checked');
+                var count = $checked.length;
+
+                if (count === 0) {
+                    $('#stock-bulk-footer').hide();
+                    $('body').removeClass('stock-bulk-footer-visible');
+                    $('#offices-table thead input[type="checkbox"]').prop('checked', false);
+                    return;
+                }
+
+                var totalItems = 0;
+                var totalWeight = 0;
+                var totalCbm = 0;
+
+                $checked.each(function() {
+                    var $row = $(this).closest('tr');
+                    totalItems += parseInt($row.attr('data-items') || 0, 10) || 0;
+                    totalWeight += parseFloat($row.attr('data-weight') || 0) || 0;
+                    totalCbm += parseFloat($row.attr('data-cbm') || 0) || 0;
+                });
+
+                $('.bulk-action-count').text(count);
+                $('#bulk-stat-selected').text(count);
+                $('#bulk-stat-items').text(totalItems);
+                $('#bulk-stat-weight').text(totalWeight.toFixed(2) + ' kg');
+                $('#bulk-stat-cbm').text(totalCbm.toFixed(2) + ' CBM');
+
+                var hasMixedHubs = selectedStocksHaveMixedHubs($checked);
+                var $createShipmentBtn = $('#bulk-create-shipment');
+                $createShipmentBtn.prop('disabled', hasMixedHubs);
+                $createShipmentBtn.attr(
+                    'title',
+                    hasMixedHubs ? 'All selected stock items must belong to the same hub.' : ''
+                );
+
+                $('#stock-bulk-footer').show();
+                $('body').addClass('stock-bulk-footer-visible');
+
+                var totalVisible = $('#offices-table tbody .row-checkbox').length;
+                var allChecked = totalVisible > 0 && $checked.length === totalVisible;
+                $('#offices-table thead input[type="checkbox"]').prop('checked', allChecked);
+            }
+
+            $('#bulk-create-shipment').on('click', function() {
+                if ($(this).prop('disabled')) {
+                    return;
+                }
+
+                var selectedIds = getSelectedIds();
+                if (selectedIds.length === 0) {
+                    return;
+                }
+
+                window.location.href = '{{ route('create-shipment') }}?crr_ids=' + selectedIds.join(',');
+            });
+
+            $('#bulk-create-customer-request').on('click', function() {
+                var selectedIds = getSelectedIds();
+                if (selectedIds.length === 0) {
+                    return;
+                }
+
+                alert('Create customer request for ' + selectedIds.length + ' selected stock item(s).');
+            });
+
+            $('#bulk-copy-selected').on('click', function() {
+                var selectedRows = getSelectedRows();
+
+                if (selectedRows.length === 0) {
+                    alert('Please select at least one item to copy.');
+                    return;
+                }
+
+                var text = buildSelectedRowsCopyText(selectedRows);
+
+                copyTextToClipboard(text).then(function() {
+                    showCopyNotification(selectedRows.length);
+                }).catch(function() {
+                    alert('Could not copy to clipboard. Please copy manually:\n\n' + text);
+                });
+            });
+
+            $('#bulk-print-selected').on('click', function() {
+                var selectedIds = getSelectedIds();
+                if (selectedIds.length === 0) {
+                    alert('Please select at least one item to print.');
+                    return;
+                }
+
+                window.open('{{ route("stocks.print") }}?ids=' + selectedIds.join(','), '_blank');
             });
 
             $('#btn-export-pdf').on('click', function() {
-                var selectedIds = [];
-                $('.row-checkbox:checked').each(function() {
-                    selectedIds.push($(this).val());
-                });
+                var selectedIds = getSelectedIds();
 
                 if (selectedIds.length === 0) {
                     alert('Please select at least one item to export.');

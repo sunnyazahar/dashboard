@@ -1609,6 +1609,12 @@
     </script>
 
     <script>
+        window.shipmentDepartureParties = @json($departurePartiesByCrrId ?? []);
+        window.preselectedCrrIds = @json($preselectedCrrIds ?? []);
+        window.preselectedDepartureParty = @json($preselectedDepartureParty);
+    </script>
+
+    <script>
         $(document).ready(function () {
             function showStockModalError(message) {
                 $('#stock-items-modal-error').text(message).show();
@@ -2607,6 +2613,71 @@
                 $select.val(accountManagerId).trigger('change');
             }
 
+            function setDepartureFromParty(party) {
+                if (!party || !party.id) {
+                    return;
+                }
+
+                var $select = $('#departure-select');
+                var $existingOption = $select.find('option[value="' + party.id + '"]');
+
+                if ($existingOption.length === 0) {
+                    $select.append(new Option(party.text, party.id, true, true));
+                } else {
+                    $existingOption.text(party.text);
+                }
+
+                $select.val(party.id).trigger('change');
+                $select.trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: party
+                    }
+                });
+                applyDeparturePortCode(party);
+            }
+
+            function getDeparturePartyForCrrId(crrId) {
+                if (window.shipmentDepartureParties && window.shipmentDepartureParties[crrId]) {
+                    return window.shipmentDepartureParties[crrId];
+                }
+
+                if (window.shipmentDepartureParties && window.shipmentDepartureParties[String(crrId)]) {
+                    return window.shipmentDepartureParties[String(crrId)];
+                }
+
+                var $modalRow = $('#stock-items-modal-table tbody tr[data-id="' + crrId + '"]');
+                return parseDepartureParty($modalRow.attr('data-departure-party'));
+            }
+
+            function parseDepartureParty(partyJson) {
+                if (!partyJson) {
+                    return null;
+                }
+
+                try {
+                    return JSON.parse(partyJson);
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            function updateDepartureFromSelectedStocks() {
+                var party = null;
+
+                $('#stock-items-table tbody tr.selected-stock-row').each(function () {
+                    var crrId = $(this).attr('data-crr-id');
+                    party = getDeparturePartyForCrrId(crrId);
+                    if (party && party.id) {
+                        return false;
+                    }
+                });
+
+                if (party && party.id) {
+                    setDepartureFromParty(party);
+                }
+            }
+
             function updateAccountManagerFromSelectedStocks() {
                 var accountManagerId = null;
                 var accountManagerName = null;
@@ -2623,6 +2694,11 @@
                 });
 
                 setAccountManagerFromStock(accountManagerId, accountManagerName);
+            }
+
+            function updateFieldsFromSelectedStocks() {
+                updateAccountManagerFromSelectedStocks();
+                updateDepartureFromSelectedStocks();
             }
 
             // Stock Items Modal
@@ -2755,6 +2831,53 @@
                 $('.nav-link[href="#stock-items"]').text('Stock items (' + count + ')');
             }
 
+            function appendStockRowFromModal(id) {
+                if ($('#stock-items-table tbody tr.selected-stock-row[data-crr-id="' + id + '"]').length) {
+                    return;
+                }
+
+                var $modalRow = $('#stock-items-modal-table tbody tr[data-id="' + id + '"]');
+                if ($modalRow.length === 0) {
+                    return;
+                }
+
+                var hubCode = String($modalRow.attr('data-hub') || '').trim();
+                var hubAgent = String($modalRow.attr('data-hub-agent') || '').trim();
+                var hub = hubCode || hubAgent || '—';
+                var hubKey = (hubCode || hubAgent).toLowerCase();
+                var vessel = $modalRow.data('vessel') || '—';
+                var po = $modalRow.data('po') || '—';
+                var supplier = $modalRow.data('supplier') || '—';
+                var stock = $modalRow.data('stock') || '—';
+                var items = $modalRow.data('items') || '—';
+                var weight = $modalRow.data('weight') || '—';
+                var cbm = $modalRow.data('cbm') || '—';
+                var value = $modalRow.data('value') || '—';
+                var accountManagerId = $modalRow.attr('data-account-manager-id') || '';
+                var accountManagerName = $modalRow.attr('data-account-manager-name') || '';
+                var status = 'In Progress';
+                var statusClass = 'label label-stock';
+
+                var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '"'
+                    + ' data-hub-key="' + hubKey + '"'
+                    + ' data-account-manager-id="' + accountManagerId + '"'
+                    + ' data-account-manager-name="' + accountManagerName + '">' +
+                    '<td>' + hub + '</td>' +
+                    '<td>' + vessel + '</td>' +
+                    '<td style="max-width: 150px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;display: block;">' + po + '</td>' +
+                    '<td>' + supplier + '</td>' +
+                    '<td>' + stock + '</td>' +
+                    '<td>' + items + '</td>' +
+                    '<td>' + weight + '</td>' +
+                    '<td>' + cbm + '</td>' +
+                    '<td>' + value + '</td>' +
+                    '<td><span class="' + statusClass + '">' + status + '</span></td>' +
+                    '<td><button type="button" class="btn btn-link btn-sm p-0 remove-stock-item" data-crr-id="' + id + '" title="Remove"><i class="icofont icofont-ui-delete text-danger"></i></button></td>' +
+                    '</tr>';
+
+                $('#stock-items-table tbody').append(rowHtml);
+            }
+
             // Add selected stock items
             $('#modal-add-selected').on('click', function() {
                 clearStockModalError();
@@ -2794,54 +2917,11 @@
                 }
 
                 selectedIds.forEach(function(id) {
-                    if ($('#stock-items-table tbody tr.selected-stock-row[data-crr-id="' + id + '"]').length) {
-                        return;
-                    }
-
-                    var $modalRow = $('#stock-items-modal-table tbody tr[data-id="' + id + '"]');
-                    if ($modalRow.length === 0) {
-                        return;
-                    }
-
-                    var hubCode = String($modalRow.attr('data-hub') || '').trim();
-                    var hubAgent = String($modalRow.attr('data-hub-agent') || '').trim();
-                    var hub = hubCode || hubAgent || '—';
-                    var hubKey = (hubCode || hubAgent).toLowerCase();
-                    var vessel = $modalRow.data('vessel') || '—';
-                    var po = $modalRow.data('po') || '—';
-                    var supplier = $modalRow.data('supplier') || '—';
-                    var stock = $modalRow.data('stock') || '—';
-                    var items = $modalRow.data('items') || '—';
-                    var weight = $modalRow.data('weight') || '—';
-                    var cbm = $modalRow.data('cbm') || '—';
-                    var value = $modalRow.data('value') || '—';
-                    var accountManagerId = $modalRow.attr('data-account-manager-id') || '';
-                    var accountManagerName = $modalRow.attr('data-account-manager-name') || '';
-                    var status = 'In Progress';
-                    var statusClass = 'label label-stock';
-
-                    var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '"'
-                        + ' data-hub-key="' + hubKey + '"'
-                        + ' data-account-manager-id="' + accountManagerId + '"'
-                        + ' data-account-manager-name="' + accountManagerName + '">' +
-                        '<td>' + hub + '</td>' +
-                        '<td>' + vessel + '</td>' +
-                        '<td style="max-width: 150px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;display: block;">' + po + '</td>' +
-                        '<td>' + supplier + '</td>' +
-                        '<td>' + stock + '</td>' +
-                        '<td>' + items + '</td>' +
-                        '<td>' + weight + '</td>' +
-                        '<td>' + cbm + '</td>' +
-                        '<td>' + value + '</td>' +
-                        '<td><span class="' + statusClass + '">' + status + '</span></td>' +
-                        '<td><button type="button" class="btn btn-link btn-sm p-0 remove-stock-item" data-crr-id="' + id + '" title="Remove"><i class="icofont icofont-ui-delete text-danger"></i></button></td>' +
-                        '</tr>';
-
-                    $('#stock-items-table tbody').append(rowHtml);
+                    appendStockRowFromModal(id);
                 });
 
                 refreshStockItemsTable();
-                updateAccountManagerFromSelectedStocks();
+                updateFieldsFromSelectedStocks();
                 $('.modal-row-checkbox').prop('checked', false);
                 $('#modal-select-all').prop('checked', false);
                 $('#stock-items-modal').modal('hide');
@@ -2850,7 +2930,7 @@
             $(document).on('click', '.remove-stock-item', function() {
                 $(this).closest('tr.selected-stock-row').remove();
                 refreshStockItemsTable();
-                updateAccountManagerFromSelectedStocks();
+                updateFieldsFromSelectedStocks();
             });
 
             $('#shipment-form').on('submit', function() {
@@ -2877,6 +2957,27 @@
                     }
                 });
             });
+
+            window.shipmentCreatePage = {
+                initializePreselectedStocks: function () {
+                    var preselectedCrrIds = window.preselectedCrrIds || [];
+
+                    if (!preselectedCrrIds.length) {
+                        return;
+                    }
+
+                    preselectedCrrIds.forEach(function (id) {
+                        appendStockRowFromModal(String(id));
+                    });
+
+                    refreshStockItemsTable();
+                    updateFieldsFromSelectedStocks();
+
+                    if (window.preselectedDepartureParty && window.preselectedDepartureParty.id) {
+                        setDepartureFromParty(window.preselectedDepartureParty);
+                    }
+                }
+            };
         });
     </script>
 
@@ -3012,9 +3113,46 @@
                                     $isNotStackable = $crr->packages->where('is_not_stackable', true)->isNotEmpty();
                                     $hasMedicine = $crr->packages->where('is_medicine', true)->isNotEmpty();
                                     $hasDeliveryIrreg = is_array($crr->delivery_irregularities) && in_array('Yes', $crr->delivery_irregularities);
-                                @endphp
-                                @php
                                     $mainAccountManager = $crr->customerVessel?->customer?->responsible?->accountManager;
+
+                                    $departureParty = null;
+                                    $departureCandidates = array_values(array_unique(array_filter([
+                                        trim((string) ($crr->hub_code ?? '')),
+                                        trim((string) ($crr->hub_agent ?? '')),
+                                    ])));
+
+                                    foreach ($departureCandidates as $departureCandidate) {
+                                        $matchedHub = $hubs->first(function ($hub) use ($departureCandidate) {
+                                            return strcasecmp((string) ($hub->code ?? ''), $departureCandidate) === 0
+                                                || strcasecmp((string) ($hub->hub_name ?? ''), $departureCandidate) === 0;
+                                        });
+
+                                        if ($matchedHub) {
+                                            $departureParty = [
+                                                'id' => 'hub:' . $matchedHub->id,
+                                                'text' => $matchedHub->hub_name,
+                                                'type' => 'hub',
+                                                'hub_code' => $matchedHub->code,
+                                                'port_code' => $matchedHub->port_code,
+                                            ];
+                                            break;
+                                        }
+
+                                        $matchedAgent = $agents->first(function ($agent) use ($departureCandidate) {
+                                            return strcasecmp((string) ($agent->code ?? ''), $departureCandidate) === 0
+                                                || strcasecmp((string) ($agent->agent_name ?? ''), $departureCandidate) === 0;
+                                        });
+
+                                        if ($matchedAgent) {
+                                            $departureParty = [
+                                                'id' => 'agent:' . $matchedAgent->id,
+                                                'text' => $matchedAgent->agent_name,
+                                                'type' => 'agent',
+                                                'port_code' => $matchedAgent->port_code,
+                                            ];
+                                            break;
+                                        }
+                                    }
                                 @endphp
                                 <tr data-id="{{ $crr->id }}"
                                     data-hub="{{ trim((string) ($crr->hub_code ?? '')) }}"
@@ -3023,6 +3161,7 @@
                                     data-vessel="{{ $crr->vessel_name ?? '' }}"
                                     data-account-manager-id="{{ $mainAccountManager?->id ?? '' }}"
                                     data-account-manager-name="{{ $mainAccountManager?->name ?? '' }}"
+                                    data-departure-party="{{ $departureParty ? e(json_encode($departureParty)) : '' }}"
                                     data-status="{{ \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown' }}"
                                     data-landed="{{ $crr->is_landed_goods ? '1' : '0' }}"
                                     data-stock="{{ $crr->stock_number ?? '' }}"
@@ -3104,4 +3243,12 @@
             </div>
         </div>
     </div>
+
+    <script>
+        $(function () {
+            if (window.shipmentCreatePage && typeof window.shipmentCreatePage.initializePreselectedStocks === 'function') {
+                window.shipmentCreatePage.initializePreselectedStocks();
+            }
+        });
+    </script>
 @endsection
