@@ -456,10 +456,14 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            position: relative;
+            z-index: 20;
+            overflow: visible;
         }
         .sidebar-section {
             padding: 15px;
             border-bottom: 1px solid #f3f4f6;
+            overflow: visible;
         }
         .sidebar-title {
             font-size: 10px;
@@ -480,6 +484,73 @@
             color: #008080;
             margin-bottom: 8px;
             font-weight: 600;
+        }
+        .sidebar-info-item {
+            position: relative;
+            cursor: pointer;
+        }
+        .sidebar-info-item.is-active {
+            color: #006666;
+        }
+        .sidebar-info-tooltip-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10040;
+            background: rgba(15, 23, 42, 0.08);
+            pointer-events: none;
+        }
+        .sidebar-info-tooltip-backdrop.is-visible {
+            display: block;
+        }
+        .sidebar-info-tooltip {
+            display: none;
+            position: fixed;
+            width: 300px;
+            max-height: 70vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+            z-index: 10050;
+            color: #334155;
+            font-weight: 400;
+            text-align: left;
+            pointer-events: auto;
+            touch-action: pan-y;
+        }
+        .sidebar-info-tooltip.is-visible {
+            display: block;
+        }
+        .sidebar-info-tooltip-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #1b5e6f;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .sidebar-tooltip-row {
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            gap: 6px 10px;
+            margin-bottom: 5px;
+            font-size: 10px;
+            line-height: 1.35;
+        }
+        .sidebar-tooltip-label {
+            color: #64748b;
+            font-weight: 600;
+        }
+        .sidebar-tooltip-value {
+            color: #1e293b;
+            word-break: break-word;
         }
         .doc-tabs {
             display: flex;
@@ -2024,16 +2095,41 @@
                                             <div class="sidebar-section">
                                                 <div class="sidebar-title">Customers details</div>
                                                 @php
-                                                    $sidebarCustomers = $shipment->crrs->map(fn ($crr) => $crr->customerVessel?->customer?->customer_name)->filter()->unique();
-                                                    $sidebarVessels = $shipment->crrs->pluck('vessel_name')->filter()->unique();
+                                                    $sidebarCustomers = $shipment->crrs
+                                                        ->map(fn ($crr) => $crr->customerVessel?->customer)
+                                                        ->filter()
+                                                        ->unique('id')
+                                                        ->values();
+
+                                                    $sidebarVessels = $shipment->crrs
+                                                        ->map(function ($crr) {
+                                                            return [
+                                                                'display_name' => $crr->vessel_name ?: $crr->customerVessel?->vessel,
+                                                                'vessel' => $crr->customerVessel,
+                                                            ];
+                                                        })
+                                                        ->filter(fn ($item) => !empty($item['display_name']))
+                                                        ->unique('display_name')
+                                                        ->values();
                                                 @endphp
-                                                @forelse ($sidebarCustomers as $customerName)
-                                                    <div class="customer-item"><i class="ti-anchor"></i> {{ $customerName }}</div>
+                                                @forelse ($sidebarCustomers as $customer)
+                                                    <div class="customer-item sidebar-info-item" tabindex="0">
+                                                        @include('Shipment.partials.sidebar-customer-tooltip', ['customer' => $customer])
+                                                        <i class="ti-anchor"></i>
+                                                        <span>{{ $customer->customer_name }}</span>
+                                                    </div>
                                                 @empty
                                                     <div class="customer-item text-muted">No customer linked</div>
                                                 @endforelse
-                                                @foreach ($sidebarVessels as $vesselName)
-                                                    <div class="customer-item"><i class="ti-package"></i> {{ $vesselName }}</div>
+                                                @foreach ($sidebarVessels as $vesselItem)
+                                                    <div class="customer-item sidebar-info-item" tabindex="0">
+                                                        @include('Shipment.partials.sidebar-vessel-tooltip', [
+                                                            'vessel' => $vesselItem['vessel'],
+                                                            'displayName' => $vesselItem['display_name'],
+                                                        ])
+                                                        <i class="icofont icofont-ship"></i>
+                                                        <span>{{ $vesselItem['display_name'] }}</span>
+                                                    </div>
                                                 @endforeach
                                             </div>
                                             <div class="sidebar-section p-0">
@@ -2358,6 +2454,149 @@
 
 <script>
     $(document).ready(function() {
+        var $sidebarTooltipBackdrop = $('<div id="sidebar-info-tooltip-backdrop" class="sidebar-info-tooltip-backdrop"></div>');
+        $('body').append($sidebarTooltipBackdrop);
+
+        var $activeSidebarItem = null;
+
+        function getSidebarTooltip($item) {
+            return $item.data('floating-tooltip') || $item.find('.sidebar-info-tooltip').first();
+        }
+
+        function returnSidebarTooltipToItem($item) {
+            var $tooltip = $item.data('floating-tooltip');
+            if (!$tooltip || !$tooltip.length) {
+                return;
+            }
+
+            $tooltip.removeClass('is-visible').css({
+                left: '',
+                top: '',
+                maxHeight: '',
+                width: ''
+            }).scrollTop(0);
+
+            $item.append($tooltip);
+            $item.removeData('floating-tooltip');
+        }
+
+        function hideSidebarInfoTooltip($item) {
+            if (!$item || !$item.length) {
+                return;
+            }
+
+            returnSidebarTooltipToItem($item);
+            $item.removeClass('is-active');
+        }
+
+        function closeSidebarInfoTooltip() {
+            if ($activeSidebarItem) {
+                hideSidebarInfoTooltip($activeSidebarItem);
+                $activeSidebarItem = null;
+            }
+
+            $sidebarTooltipBackdrop.removeClass('is-visible');
+        }
+
+        function positionSidebarInfoTooltip($item, $tooltip) {
+            if (!$tooltip || !$tooltip.length) {
+                return;
+            }
+
+            var margin = 12;
+            var gap = 12;
+            var maxHeight = Math.max(220, Math.min(Math.floor(window.innerHeight * 0.7), window.innerHeight - (margin * 2)));
+
+            $tooltip.addClass('is-visible').css({
+                left: '-9999px',
+                top: '0',
+                width: '300px',
+                maxHeight: maxHeight + 'px'
+            });
+
+            var itemRect = $item[0].getBoundingClientRect();
+            var tipWidth = $tooltip.outerWidth();
+            var tipHeight = $tooltip.outerHeight();
+            var left = itemRect.left - tipWidth - gap;
+
+            if (left < margin) {
+                left = Math.max(margin, itemRect.right + gap);
+            }
+
+            if (left + tipWidth > window.innerWidth - margin) {
+                left = Math.max(margin, window.innerWidth - tipWidth - margin);
+            }
+
+            var top = itemRect.top;
+            if (top + tipHeight > window.innerHeight - margin) {
+                top = Math.max(margin, window.innerHeight - tipHeight - margin);
+            }
+            top = Math.max(margin, top);
+
+            $tooltip.css({
+                left: left + 'px',
+                top: top + 'px',
+                maxHeight: maxHeight + 'px'
+            });
+        }
+
+        function openSidebarInfoTooltip($item) {
+            closeSidebarInfoTooltip();
+
+            var $tooltip = $item.find('.sidebar-info-tooltip').first().detach();
+            $item.data('floating-tooltip', $tooltip);
+            $('body').append($tooltip);
+
+            positionSidebarInfoTooltip($item, $tooltip);
+
+            $item.addClass('is-active');
+            $activeSidebarItem = $item;
+            $sidebarTooltipBackdrop.addClass('is-visible');
+        }
+
+        $('.sidebar-info-item').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $item = $(this);
+
+            if ($activeSidebarItem && $activeSidebarItem[0] === this) {
+                closeSidebarInfoTooltip();
+                return;
+            }
+
+            openSidebarInfoTooltip($item);
+        });
+
+        $(document).on('click.sidebarTooltip', function(e) {
+            if (!$activeSidebarItem) {
+                return;
+            }
+
+            var $tooltip = getSidebarTooltip($activeSidebarItem);
+            if ($(e.target).closest('.sidebar-info-tooltip, .sidebar-info-item').length) {
+                return;
+            }
+
+            closeSidebarInfoTooltip();
+        });
+
+        $(document).on('wheel.sidebarTooltip touchmove.sidebarTooltip', '.sidebar-info-tooltip', function(e) {
+            e.stopPropagation();
+        });
+
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSidebarInfoTooltip();
+            }
+        });
+
+        $(window).on('resize', function() {
+            if ($activeSidebarItem) {
+                positionSidebarInfoTooltip($activeSidebarItem, getSidebarTooltip($activeSidebarItem));
+            }
+        });
+
         // Initialize Select2
         $('.select2').each(function() {
             if ($(this).hasClass('select2-country')) {

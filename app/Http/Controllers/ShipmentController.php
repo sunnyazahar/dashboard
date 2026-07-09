@@ -449,7 +449,10 @@ class ShipmentController extends Controller
     {
         $shipment = Shipment::with([
             'crrs.packages',
-            'crrs.customerVessel.customer',
+            'crrs.customerVessel.customer.primaryAddress.country',
+            'crrs.customerVessel.customer.responsible.accountManager.office',
+            'crrs.customerVessel.customer.responsible.salesManager',
+            'crrs.customerVessel.customer.group',
             'stockSnapshots',
             'accountManager.office',
             'creator',
