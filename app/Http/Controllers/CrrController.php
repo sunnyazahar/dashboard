@@ -13,6 +13,64 @@ use Illuminate\Support\Facades\Log;
 
 class CrrController extends Controller
 {
+    public function index()
+    {
+        $crrs = Crr::query()
+            ->with([
+                'packages',
+                'documents',
+                'customerVessel.customer.responsible.accountManager.office',
+            ])
+            ->latest()
+            ->get();
+
+        $customers = $crrs
+            ->map(fn (Crr $crr) => $crr->customerVessel?->customer?->customer_name)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $vessels = $crrs
+            ->pluck('vessel_name')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $accountManagers = $crrs
+            ->map(fn (Crr $crr) => $crr->accountManagerName())
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $offices = $crrs
+            ->map(fn (Crr $crr) => $crr->customerVessel?->customer?->responsible?->accountManager?->office?->office_name)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $hubAgentOptions = $crrs
+            ->flatMap(fn (Crr $crr) => array_filter([
+                $crr->hub_code,
+                $crr->hub_agent,
+            ]))
+            ->unique()
+            ->sort()
+            ->values();
+
+        return view('Stock.stocks', compact(
+            'crrs',
+            'customers',
+            'vessels',
+            'accountManagers',
+            'offices',
+            'hubAgentOptions',
+        ));
+    }
+
     public function store(Request $request)
     {
         DB::beginTransaction();

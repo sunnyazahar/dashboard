@@ -448,12 +448,7 @@ Route::get('/api/account-managers', function (\Illuminate\Http\Request $request)
     return response()->json($results);
 });
 
-Route::get('/stocks', function () {
-    $crrs = \App\Models\Crr::with(['packages', 'customerVessel.customer'])->latest()->get();
-    $hubs = \App\Models\Hub::orderBy('hub_name')->get();
-    $agents = \App\Models\Agent::with('country')->orderBy('agent_name')->get();
-    return view('Stock.stocks', compact('crrs', 'hubs', 'agents'));
-})->name('stocks');
+Route::get('/stocks', [App\Http\Controllers\CrrController::class, 'index'])->name('stocks');
 
 Route::get('/stocks/create-crr', function () {
     $vessels = \App\Models\CustomerVessel::with('customer')

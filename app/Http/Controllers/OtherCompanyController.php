@@ -12,8 +12,16 @@ class OtherCompanyController extends Controller
 {
     public function index()
     {
-        $companies = OtherCompany::all();
-        return view('Other Companies.index', compact('companies'));
+        $companies = OtherCompany::with('country')->orderBy('company_name')->get();
+
+        $countries = $companies
+            ->map(fn ($company) => $company->country?->name)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        return view('Other Companies.index', compact('companies', 'countries'));
     }
 
     public function create()

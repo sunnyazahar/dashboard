@@ -10,8 +10,23 @@ class AgentController extends Controller
 {
     public function index()
     {
-        $agents = Agent::with('country')->latest()->get();
-        return view('Agents.index', compact('agents'));
+        $agents = Agent::with('country')->orderBy('agent_name')->get();
+
+        $countries = $agents
+            ->map(fn ($agent) => $agent->country?->name)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $agentTypes = $agents
+            ->pluck('agent_type')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        return view('Agents.index', compact('agents', 'countries', 'agentTypes'));
     }
 
     public function create()

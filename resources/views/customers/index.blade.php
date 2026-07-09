@@ -163,47 +163,52 @@
                                                 style="gap: 15px; flex-grow: 1; flex-wrap: wrap;">
                                                 <div style="width: 150px;">
                                                     <span class="filter-label">Search</span>
-                                                    <input type="text" class="form-control filter-input"
+                                                    <input type="text" id="filter-customer-search" class="form-control filter-input"
                                                         placeholder="type here">
                                                 </div>
                                                 <div style="width: 180px;">
                                                     <span class="filter-label">Responsible offices</span>
-                                                    <select class="form-control filter-input select2">
-                                                        <option>Click here</option>
-                                                        <option>SIN</option>
-                                                        <option>RTM</option>
-                                                        <option>ATH</option>
-                                                        <option>OSA</option>
-                                                        <option>OSL</option>
-                                                        <option>HAM</option>
-                                                        <option>HOU</option>
+                                                    <select id="filter-responsible-office" class="form-control filter-input select2">
+                                                        <option value=""></option>
+                                                        @foreach ($responsibleOffices as $office)
+                                                            <option value="{{ $office }}">{{ $office }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                                 <div class="d-flex align-items-center"
                                                     style="border: 1px solid #ced4da; padding: 0 8px; border-radius: 2px; height: 28px;">
                                                     <span style="font-size: 11px; margin-right: 8px;">Hide inactive</span>
-                                                    <input type="checkbox" checked style="width: 14px; height: 14px;">
+                                                    <input type="checkbox" id="filter-hide-inactive" checked style="width: 14px; height: 14px;">
                                                 </div>
                                                 <div style="width: 150px;">
                                                     <span class="filter-label">Account managers</span>
-                                                    <select class="form-control filter-input select2">
-                                                        <option>Click here</option>
+                                                    <select id="filter-account-manager" class="form-control filter-input select2">
+                                                        <option value=""></option>
+                                                        @foreach ($accountManagers as $manager)
+                                                            <option value="{{ $manager }}">{{ $manager }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                                 <div style="width: 150px;">
                                                     <span class="filter-label">Sales managers</span>
-                                                    <select class="form-control filter-input select2">
-                                                        <option>Click here</option>
+                                                    <select id="filter-sales-manager" class="form-control filter-input select2">
+                                                        <option value=""></option>
+                                                        @foreach ($salesManagers as $manager)
+                                                            <option value="{{ $manager }}">{{ $manager }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                                 <div style="width: 120px;">
                                                     <span class="filter-label">Country</span>
-                                                    <select class="form-control filter-input select2">
-                                                        <option>Click here</option>
+                                                    <select id="filter-customer-country" class="form-control filter-input select2">
+                                                        <option value=""></option>
+                                                        @foreach ($countries as $country)
+                                                            <option value="{{ $country }}">{{ $country }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                                 <div style="padding-bottom: 5px;">
-                                                    <a class="clear-filters">Clear filters</a>
+                                                    <a href="#" id="clear-customer-filters" class="clear-filters">Clear filters</a>
                                                 </div>
                                             </div>
                                             <div class="d-flex" style="gap: 5px;">
@@ -230,7 +235,33 @@
                                                 </thead>
                                                 <tbody>
                                                     @foreach($customers as $customer)
-                                                        <tr>
+                                                        @php
+                                                            $mainContact = $customer->contacts->first();
+                                                            $mainContactName = $mainContact?->name ?? '';
+                                                            $responsibleOffice = $customer->responsible?->accountManager?->office?->office_short_name ?? '';
+                                                            $accountManager = $customer->responsible?->accountManager?->name ?? '';
+                                                            $salesManager = $customer->responsible?->salesManager?->name ?? '';
+                                                            $countryName = $customer->primaryAddress?->country?->name ?? '';
+                                                            $searchText = trim(implode(' ', array_filter([
+                                                                $customer->customer_name,
+                                                                $customer->customer_number,
+                                                                $customer->email,
+                                                                $customer->phone,
+                                                                $mainContactName,
+                                                                $responsibleOffice,
+                                                                $accountManager,
+                                                                $salesManager,
+                                                                $countryName,
+                                                            ])));
+                                                        @endphp
+                                                        <tr
+                                                            data-search-text="{{ $searchText }}"
+                                                            data-responsible-office="{{ $responsibleOffice }}"
+                                                            data-account-manager="{{ $accountManager }}"
+                                                            data-sales-manager="{{ $salesManager }}"
+                                                            data-country="{{ $countryName }}"
+                                                            data-is-inactive="0"
+                                                        >
                                                             <td>
                                                                 <a href="{{ route('customers.edit', $customer->id) }}"
                                                                     style="color: #3b82f6; font-weight: 500;">
@@ -238,8 +269,8 @@
                                                                 </a>
                                                             </td>
                                                             <td>{{ $customer->responsible->accountManager->office->phone_number ?? '—' }}</td>
-                                                            <td>{{ $customer->responsible->accountManager->office->office_short_name ?? '—' }}</td>
-                                                            <td>{{ $customer->responsible->accountManager->name ?? '—' }}</td>
+                                                            <td>{{ $responsibleOffice ?: '—' }}</td>
+                                                            <td>{{ $accountManager ?: '—' }}</td>
                                                             <td>
                                                                 <span class="label label-success">Active</span>
                                                             </td>
@@ -316,19 +347,22 @@
 
     <script>
         $(document).ready(function () {
-            // Initialize Select2 for standard filters
             $('.select2').select2({
                 placeholder: "Click here",
-                allowClear: true
+                allowClear: true,
+                width: 'resolve'
             });
 
-            $('#offices-table').DataTable({
+            var table = $('#offices-table').DataTable({
                 "lengthChange": false,
                 "pageLength": 25,
                 "responsive": false,
-                "searching": false,
+                "searching": true,
                 "ordering": true,
                 "autoWidth": false,
+                "columnDefs": [
+                    { "orderable": false, "targets": [5] }
+                ],
                 "language": {
                     "info": "Showing _START_ to _END_ of _TOTAL_ entries",
                     "paginate": {
@@ -336,6 +370,81 @@
                         "next": ">"
                     }
                 }
+            });
+
+            function rowData($row, key) {
+                return String($row.attr('data-' + key) || '');
+            }
+
+            function getFilterText(selector) {
+                return String($(selector).val() || '').toLowerCase().trim();
+            }
+
+            function matchesContains(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
+            }
+
+            function matchesExact(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '') === filterValue;
+            }
+
+            $('#filter-customer-search, #filter-responsible-office, #filter-account-manager, #filter-sales-manager, #filter-customer-country, #filter-hide-inactive').on('change keyup', function () {
+                table.draw();
+            });
+
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                if (settings.nTable.id !== 'offices-table') {
+                    return true;
+                }
+
+                var row = table.row(dataIndex).node();
+                if (!row) {
+                    return true;
+                }
+
+                var $row = $(row);
+
+                if ($('#filter-hide-inactive').is(':checked') && rowData($row, 'is-inactive') === '1') {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-customer-search'), rowData($row, 'search-text'))) {
+                    return false;
+                }
+
+                if (!matchesExact($('#filter-responsible-office').val(), rowData($row, 'responsible-office'))) {
+                    return false;
+                }
+
+                if (!matchesExact($('#filter-account-manager').val(), rowData($row, 'account-manager'))) {
+                    return false;
+                }
+
+                if (!matchesExact($('#filter-sales-manager').val(), rowData($row, 'sales-manager'))) {
+                    return false;
+                }
+
+                if (!matchesExact($('#filter-customer-country').val(), rowData($row, 'country'))) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            $('#clear-customer-filters').on('click', function (e) {
+                e.preventDefault();
+                $('#filter-customer-search').val('');
+                $('#filter-responsible-office, #filter-account-manager, #filter-sales-manager, #filter-customer-country').val(null).trigger('change');
+                $('#filter-hide-inactive').prop('checked', true);
+                table.search('').columns().search('').draw();
             });
         });
     </script>

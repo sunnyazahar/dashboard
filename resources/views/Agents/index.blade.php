@@ -77,6 +77,45 @@
             border-radius: 2px 0 0 2px;
         }
 
+        /* Select2 filter dropdowns - match text inputs */
+        .filter-row .select2-container--default .select2-selection--single {
+            height: 28px !important;
+            min-height: 28px !important;
+            font-size: 11px !important;
+            background-color: #fff !important;
+            background: #fff !important;
+            border: 1px solid #e0e0e0 !important;
+            border-radius: 2px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .filter-row .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 26px !important;
+            padding-left: 8px !important;
+            padding-right: 20px !important;
+            color: #333 !important;
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        .filter-row .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #ccc !important;
+            font-style: italic;
+        }
+
+        .filter-row .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 26px !important;
+            top: 1px !important;
+            background: transparent !important;
+        }
+
+        .filter-row .select2-container--default .select2-results__option--highlighted,
+        .filter-row .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #f3f4f6 !important;
+            color: #333 !important;
+        }
+
         .filter-checkbox-group {
             display: flex;
             align-items: center;
@@ -301,43 +340,49 @@
                                     <div class="filter-item">
                                         <label class="filter-label-custom">Name</label>
                                         <div class="input-group-custom">
-                                            <input type="text" class="filter-input-custom has-append"
+                                            <input type="text" id="filter-agent-name" class="filter-input-custom has-append"
                                                 placeholder="type here" style="width: 120px;">
                                             <button class="btn-input-append"><i class="ti-layout-grid3"></i></button>
                                         </div>
                                     </div>
                                     <div class="filter-item" style="margin-left: 15px;">
                                         <label class="filter-label-custom">Code</label>
-                                        <input type="text" class="filter-input-custom" placeholder="type here"
+                                        <input type="text" id="filter-agent-code" class="filter-input-custom" placeholder="type here"
                                             style="width: 100px;">
                                     </div>
                                     <div class="filter-item" style="margin-left: 15px;">
                                         <label class="filter-label-custom">Address</label>
-                                        <input type="text" class="filter-input-custom" placeholder="type here"
+                                        <input type="text" id="filter-agent-address" class="filter-input-custom" placeholder="type here"
                                             style="width: 180px;">
                                     </div>
                                     <div class="filter-item" style="margin-left: 15px;">
                                         <label class="filter-label-custom">City</label>
-                                        <input type="text" class="filter-input-custom" placeholder="type here"
+                                        <input type="text" id="filter-agent-city" class="filter-input-custom" placeholder="type here"
                                             style="width: 150px;">
                                     </div>
                                     <div class="filter-item" style="margin-left: 15px;">
                                         <label class="filter-label-custom">Country</label>
-                                        <select class="filter-input-custom" style="width: 150px;">
-                                            <option>Click here</option>
+                                        <select id="filter-agent-country" class="filter-input-custom select2" style="width: 150px;">
+                                            <option value=""></option>
+                                            @foreach ($countries as $country)
+                                                <option value="{{ $country }}">{{ $country }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                     <div class="filter-item" style="margin-left: 15px;">
                                         <label class="filter-label-custom">Type</label>
-                                        <select class="filter-input-custom" style="width: 120px;">
-                                            <option>Click here</option>
+                                        <select id="filter-agent-type" class="filter-input-custom select2" style="width: 120px;">
+                                            <option value=""></option>
+                                            @foreach ($agentTypes as $type)
+                                                <option value="{{ $type }}">{{ ucfirst(str_replace('_', ' ', $type)) }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                     <div class="filter-checkbox-group">
                                         <input type="checkbox" id="hide-inactive-check" checked>
                                         <label for="hide-inactive-check">Hide inactive</label>
                                     </div>
-                                    <a href="#" class="btn-clear-filters">Clear filters</a>
+                                    <a href="#" id="clear-agent-filters" class="btn-clear-filters">Clear filters</a>
                                     <a class="btn btn-primary" href="{{ route('agents.create') }}"
                                         style="font-size: 11px; padding: 6px 15px; border-radius: 2px; background: #fff; color: #1b5e6f; border: 1px solid #1b5e6f; font-weight: 600;">
                                         Add Agent
@@ -362,7 +407,25 @@
                                         </thead>
                                         <tbody>
                                             @forelse($agents as $agent)
-                                            <tr>
+                                            @php
+                                                $addressSearch = trim(implode(' ', array_filter([
+                                                    $agent->agent_address,
+                                                    $agent->office_address,
+                                                    $agent->district_state,
+                                                    $agent->zip_code,
+                                                ])));
+                                                $countryName = $agent->country->name ?? '';
+                                                $typeLabel = $agent->agent_type ? ucfirst(str_replace('_', ' ', $agent->agent_type)) : '';
+                                            @endphp
+                                            <tr
+                                                data-agent-name="{{ $agent->agent_name }}"
+                                                data-code="{{ $agent->code }}"
+                                                data-address="{{ $addressSearch }}"
+                                                data-city="{{ $agent->city }}"
+                                                data-country="{{ $countryName }}"
+                                                data-agent-type="{{ $agent->agent_type }}"
+                                                data-is-inactive="0"
+                                            >
                                                 <td>
                                                     <a href="{{ route('agents.edit', ['id' => $agent->id]) }}" class="agent-link">
                                                         {{ $agent->agent_name }}
@@ -370,7 +433,7 @@
                                                 </td>
                                                 <td>{{ $agent->code }}</td>
                                                 <td>{{ $agent->city }}</td>
-                                                <td>{{ $agent->country->name ?? '—' }}</td>
+                                                <td>{{ $countryName ?: '—' }}</td>
                                                 <td>{{ $agent->phone }}</td>
                                                 <td>
                                                     @if($agent->email)
@@ -379,7 +442,7 @@
                                                         —
                                                     @endif
                                                 </td>
-                                                <td>{{ $agent->agent_type ? ucfirst(str_replace('_', ' ', $agent->agent_type)) : '—' }}</td>
+                                                <td>{{ $typeLabel ?: '—' }}</td>
                                                 <td>
                                                     <span style="font-size:10px; padding:2px 8px; border-radius:10px; background:#d1fae5; color:#065f46; font-weight:600;">
                                                         Active
@@ -465,72 +528,22 @@
 
     <script>
         $(document).ready(function () {
-            // Initialize Select2 for standard filters
             $('.select2').select2({
                 placeholder: "Click here",
-                allowClear: true
+                allowClear: true,
+                width: 'resolve'
             });
 
-            // Initialize Bootstrap Multiselect for special filter toggle
-            $('#filter-multiselect').multiselect({
-                includeSelectAllOption: true,
-                enableFiltering: true,
-                buttonWidth: '100%',
-                maxHeight: 200,
-                nonSelectedText: '',
-                allSelectedText: '',
-                nSelectedText: '',
-                numberDisplayed: 0,
-                buttonClass: 'btn btn-outline-teal btn-filter-toggle',
-                templates: {
-                    button: '<button type="button" class="multiselect dropdown-toggle" data-toggle="dropdown"><i class="ti-filter"></i></button>'
-                },
-                onChange: function (option, checked) {
-                    toggleFilterVisibility();
-                },
-                onSelectAll: function () {
-                    toggleFilterVisibility();
-                },
-                onDeselectAll: function () {
-                    toggleFilterVisibility();
-                }
-            });
-
-            function toggleFilterVisibility() {
-                var selectedOptions = $('#filter-multiselect option:selected');
-                var selectedValues = [];
-                selectedOptions.each(function () {
-                    selectedValues.push($(this).val());
-                });
-
-                var allFilters = [
-                    { val: 'Office Name', id: 'col-Office-Name' },
-                    { val: 'Short Name', id: 'col-Short-Name' },
-                    { val: 'City', id: 'col-City' },
-                    { val: 'Country', id: 'col-Country' },
-                    { val: 'Phone', id: 'col-Phone' },
-                    { val: 'Email', id: 'col-Email' }
-                ];
-
-                allFilters.forEach(function (filter) {
-                    if (selectedValues.includes(filter.val)) {
-                        $('#' + filter.id).show();
-                    } else {
-                        $('#' + filter.id).hide();
-                    }
-                });
-            }
-
-            // Initial call to set visibility state
-            toggleFilterVisibility();
-
-            $('#agents-table').DataTable({
+            var table = $('#agents-table').DataTable({
                 "lengthChange": false,
                 "pageLength": 25,
                 "responsive": false,
-                "searching": false,
+                "searching": true,
                 "ordering": true,
                 "autoWidth": false,
+                "columnDefs": [
+                    { "orderable": false, "targets": [8] }
+                ],
                 "language": {
                     "info": "Showing _START_ to _END_ of _TOTAL_ entries",
                     "paginate": {
@@ -538,6 +551,85 @@
                         "next": ">"
                     }
                 }
+            });
+
+            function rowData($row, key) {
+                return String($row.attr('data-' + key) || '');
+            }
+
+            function getFilterText(selector) {
+                return String($(selector).val() || '').toLowerCase().trim();
+            }
+
+            function matchesContains(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
+            }
+
+            function matchesExact(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '') === filterValue;
+            }
+
+            $('#filter-agent-name, #filter-agent-code, #filter-agent-address, #filter-agent-city, #filter-agent-country, #filter-agent-type, #hide-inactive-check').on('change keyup', function () {
+                table.draw();
+            });
+
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                if (settings.nTable.id !== 'agents-table') {
+                    return true;
+                }
+
+                var row = table.row(dataIndex).node();
+                if (!row) {
+                    return true;
+                }
+
+                var $row = $(row);
+
+                if ($('#hide-inactive-check').is(':checked') && rowData($row, 'is-inactive') === '1') {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-agent-name'), rowData($row, 'agent-name'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-agent-code'), rowData($row, 'code'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-agent-address'), rowData($row, 'address'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-agent-city'), rowData($row, 'city'))) {
+                    return false;
+                }
+
+                if (!matchesExact($('#filter-agent-country').val(), rowData($row, 'country'))) {
+                    return false;
+                }
+
+                if (!matchesExact($('#filter-agent-type').val(), rowData($row, 'agent-type'))) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            $('#clear-agent-filters').on('click', function (e) {
+                e.preventDefault();
+                $('#filter-agent-name, #filter-agent-code, #filter-agent-address, #filter-agent-city').val('');
+                $('#filter-agent-country, #filter-agent-type').val(null).trigger('change');
+                $('#hide-inactive-check').prop('checked', true);
+                table.search('').columns().search('').draw();
             });
         });
     </script>

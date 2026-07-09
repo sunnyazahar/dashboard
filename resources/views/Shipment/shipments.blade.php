@@ -602,8 +602,17 @@
                                                                 $customerNames = $shipment->customerNamesFromVessels($vesselCustomerMap ?? []);
                                                                 $customerDisplay = $shipment->formatNamesDisplay($customerNames);
                                                                 $customerDisplayShort = $shipment->formatNamesDisplayShort($customerNames);
+                                                                $serviceReferenceDisplay = $shipment->service_reference_display;
                                                             @endphp
                                                             <tr
+                                                                data-customers="{{ $customerNames->implode(',') }}"
+                                                                data-vessels="{{ $shipment->vessel_names->implode(',') }}"
+                                                                data-shipment-number="{{ $shipment->shipment_number }}"
+                                                                data-service-reference="{{ $serviceReferenceDisplay }}"
+                                                                data-consignee="{{ $consigneeDisplay }}"
+                                                                data-departure-port-code="{{ $shipment->departure_port_code ?? '' }}"
+                                                                data-destination="{{ $shipment->destination_display }}"
+                                                                data-service="{{ $shipment->service ?? '' }}"
                                                                 data-po-numbers="{{ $shipment->po_numbers_display }}"
                                                                 data-account-manager="{{ $shipment->accountManager?->name ?? '' }}"
                                                                 data-created-by="{{ $shipment->creator?->name ?? '' }}"
@@ -807,44 +816,47 @@
                 "autoWidth": false
             });
 
-            var filterMap = {
-                '#col-Shipment-no input': 0,
-                '#col-Service-reference-number input': 4,
-                '#col-Departure-hub select': 6,
-                '#col-Consignee input': 5,
-                '#col-Port-of-destination input': 7,
-                '#col-Service select': 3
-            };
+            function rowData($row, key) {
+                return String($row.attr('data-' + key) || '');
+            }
 
-            $.each(filterMap, function(selector, colIndex) {
-                $(selector).on('change keyup', function() {
-                    var val = $(this).val();
-                    if (Array.isArray(val)) {
-                        var searchVal = val.length > 0 ? val.map(function(item) {
-                            return $.fn.dataTable.util.escapeRegex(item);
-                        }).join('|') : '';
-                        table.column(colIndex).search(searchVal, true, false).draw();
-                    } else {
-                        table.column(colIndex).search(val).draw();
-                    }
-                });
-            });
+            function getFilterText(selector) {
+                return String($(selector).val() || '').toLowerCase().trim();
+            }
 
-            $('#col-Customer select, #col-Vessel select').on('change', function() {
-                table.draw();
-            });
+            function matchesSelectedValues(selectedValues, rowValue) {
+                if (!selectedValues || selectedValues.length === 0) {
+                    return true;
+                }
 
-            function applyAttributeFilter(selector, attributeName) {
-                $(selector).on('change keyup', function() {
-                    table.draw();
+                return selectedValues.indexOf(String(rowValue || '')) !== -1;
+            }
+
+            function matchesAnySelectedValues(selectedValues, rowValuesString) {
+                if (!selectedValues || selectedValues.length === 0) {
+                    return true;
+                }
+
+                var rowValues = rowValuesString.split(',').map(function(value) {
+                    return value.trim();
+                }).filter(Boolean);
+
+                return selectedValues.some(function(selectedValue) {
+                    return rowValues.indexOf(selectedValue) !== -1;
                 });
             }
 
-            applyAttributeFilter('#col-Account-manager select', 'account-manager');
-            applyAttributeFilter('#col-Created-by select', 'created-by');
-            applyAttributeFilter('#col-Office select', 'office');
-            applyAttributeFilter('#col-PO-number input', 'po-numbers');
-            applyAttributeFilter('#col-Creation-date input', 'creation-date');
+            function matchesContains(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
+            }
+
+            $('#col-Customer select, #col-Vessel select, #col-Shipment-no input, #col-Service-reference-number input, #col-PO-number input, #col-Departure-hub select, #col-Consignee input, #col-Port-of-destination input, #col-Account-manager select, #col-Created-by select, #col-Office select, #col-Creation-date input, #col-Service select').on('change keyup', function() {
+                table.draw();
+            });
 
             $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
                 if (settings.nTable.id !== 'offices-table') {
@@ -858,51 +870,56 @@
 
                 var $row = $(row);
 
-                var customers = $('#col-Customer select').val() || [];
-                if (customers.length > 0) {
-                    var rowCustomer = data[1] || '';
-                    if (!customers.some(function(customer) {
-                        return rowCustomer.indexOf(customer) !== -1;
-                    })) {
-                        return false;
-                    }
+                if (!matchesAnySelectedValues($('#col-Customer select').val() || [], rowData($row, 'customers'))) {
+                    return false;
                 }
 
-                var vessels = $('#col-Vessel select').val() || [];
-                if (vessels.length > 0) {
-                    var rowVessel = data[2] || '';
-                    if (!vessels.some(function(vessel) {
-                        return rowVessel.indexOf(vessel) !== -1;
-                    })) {
-                        return false;
-                    }
+                if (!matchesAnySelectedValues($('#col-Vessel select').val() || [], rowData($row, 'vessels'))) {
+                    return false;
                 }
 
-                var poFilter = $('#col-PO-number input').val().toLowerCase().trim();
-                if (poFilter) {
-                    var poNumbers = ($row.data('po-numbers') || '').toString().toLowerCase();
-                    if (poNumbers.indexOf(poFilter) === -1) {
-                        return false;
-                    }
+                if (!matchesContains(getFilterText('#col-Shipment-no input'), rowData($row, 'shipment-number'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-Service-reference-number input'), rowData($row, 'service-reference'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-PO-number input'), rowData($row, 'po-numbers'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Departure-hub select').val() || [], rowData($row, 'departure-port-code'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-Consignee input'), rowData($row, 'consignee'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-Port-of-destination input'), rowData($row, 'destination'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Account-manager select').val() || [], rowData($row, 'account-manager'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Created-by select').val() || [], rowData($row, 'created-by'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Office select').val() || [], rowData($row, 'office'))) {
+                    return false;
                 }
 
                 var creationDate = $('#col-Creation-date input').val();
-                if (creationDate && $row.data('creation-date') !== creationDate) {
+                if (creationDate && rowData($row, 'creation-date') !== creationDate) {
                     return false;
                 }
 
-                var accountManagers = $('#col-Account-manager select').val() || [];
-                if (accountManagers.length > 0 && accountManagers.indexOf($row.data('account-manager')) === -1) {
-                    return false;
-                }
-
-                var createdBy = $('#col-Created-by select').val() || [];
-                if (createdBy.length > 0 && createdBy.indexOf($row.data('created-by')) === -1) {
-                    return false;
-                }
-
-                var offices = $('#col-Office select').val() || [];
-                if (offices.length > 0 && offices.indexOf($row.data('office')) === -1) {
+                if (!matchesSelectedValues($('#col-Service select').val() || [], rowData($row, 'service'))) {
                     return false;
                 }
 

@@ -463,16 +463,9 @@
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Hub/Agent</span>
                                                                     <select class="form-control filter-input select2" multiple="multiple">
-                                                                        <optgroup label="Hubs">
-                                                                            @foreach($hubs as $hub)
-                                                                                <option value="{{ $hub->code }}">{{ $hub->code }}</option>
-                                                                            @endforeach
-                                                                        </optgroup>
-                                                                        <optgroup label="Agents">
-                                                                            @foreach($agents as $agent)
-                                                                                <option value="{{ $agent->code }}">{{ $agent->code }}</option>
-                                                                            @endforeach
-                                                                        </optgroup>
+                                                                        @foreach($hubAgentOptions as $hubAgentOption)
+                                                                            <option value="{{ $hubAgentOption }}">{{ $hubAgentOption }}</option>
+                                                                        @endforeach
                                                                     </select>
                                                                 </div>
                                                             </div>
@@ -480,12 +473,9 @@
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Customer</span>
                                                                     <select class="form-control filter-input select2" multiple="multiple">
-                                                                        <option value="Anglo Eastern Ship...">Anglo Eastern Ship...</option>
-                                                                        <option value="M.T.M. Ship Manage...">M.T.M. Ship Manage...</option>
-                                                                        <option value="Solvang ASA">Solvang ASA</option>
-                                                                        <option value="Stolt Tankers b.v.">Stolt Tankers b.v.</option>
-                                                                        <option value="Wallem GmbH & Co. Kg">Wallem GmbH & Co. Kg</option>
-                                                                        <option value="Thome Ship Manage...">Thome Ship Manage...</option>
+                                                                        @foreach($customers as $customer)
+                                                                            <option value="{{ $customer }}">{{ $customer }}</option>
+                                                                        @endforeach
                                                                     </select>
                                                                 </div>
                                                             </div>
@@ -493,11 +483,9 @@
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Vessel</span>
                                                                     <select class="form-control filter-input select2" multiple="multiple">
-                                                                        <option value="Helsinki">Helsinki</option>
-                                                                        <option value="Aqua Ray">Aqua Ray</option>
-                                                                        <option value="Clipper Hermod">Clipper Hermod</option>
-                                                                        <option value="Stolt Loyalty">Stolt Loyalty</option>
-                                                                        <option value="Sfl Panther">Sfl Panther</option>
+                                                                        @foreach($vessels as $vessel)
+                                                                            <option value="{{ $vessel }}">{{ $vessel }}</option>
+                                                                        @endforeach
                                                                     </select>
                                                                 </div>
                                                             </div>
@@ -560,6 +548,9 @@
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Account manager</span>
                                                                     <select class="form-control filter-input select2" multiple="multiple">
+                                                                        @foreach($accountManagers as $accountManager)
+                                                                            <option value="{{ $accountManager }}">{{ $accountManager }}</option>
+                                                                        @endforeach
                                                                     </select>
                                                                 </div>
                                                             </div>
@@ -567,6 +558,9 @@
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Office</span>
                                                                     <select class="form-control filter-input select2" multiple="multiple">
+                                                                        @foreach($offices as $office)
+                                                                            <option value="{{ $office }}">{{ $office }}</option>
+                                                                        @endforeach
                                                                     </select>
                                                                 </div>
                                                             </div>
@@ -602,7 +596,10 @@
                                                             @forelse($crrs as $crr)
                                                             @php
                                                                 $status = $crr->status ?? 'Pending';
-                                                                $badgeClass = ($status === 'Stock') ? 'label label-stock' : 'label label-pending';
+                                                                $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
+                                                                $customerName = $crr->customerVessel?->customer?->customer_name ?? '';
+                                                                $accountManager = $crr->accountManagerName() ?? '';
+                                                                $officeName = $crr->customerVessel?->customer?->responsible?->accountManager?->office?->office_name ?? '';
                                                                 $poNumbers = is_array($crr->po_numbers) ? implode(', ', $crr->po_numbers) : ($crr->po_numbers ?? '');
                                                                 $totalItems = $crr->packages->count();
                                                                 $totalWeight = $crr->packages->sum('weight');
@@ -612,7 +609,21 @@
                                                                 $hasMedicine = $crr->packages->where('is_medicine', true)->isNotEmpty();
                                                                 $hasDeliveryIrreg = is_array($crr->delivery_irregularities) && in_array('Yes', $crr->delivery_irregularities);
                                                             @endphp
-                                                            <tr>
+                                                            <tr
+                                                                data-customer="{{ $customerName }}"
+                                                                data-vessel="{{ $crr->vessel_name ?? '' }}"
+                                                                data-hub-agent="{{ $crr->hub_code ?? '' }}"
+                                                                data-hub-agent-raw="{{ $crr->hub_agent ?? '' }}"
+                                                                data-status="{{ $statusLabel }}"
+                                                                data-account-manager="{{ $accountManager }}"
+                                                                data-office="{{ $officeName }}"
+                                                                data-stock-number="{{ $crr->stock_number ?? '' }}"
+                                                                data-po-numbers="{{ $poNumbers }}"
+                                                                data-supplier="{{ $crr->supplier ?? '' }}"
+                                                                data-service-reference="{{ $crr->supplier_reference ?? '' }}"
+                                                                data-shipment="{{ $crr->internal_shipment ?? '' }}"
+                                                                data-transit-id="{{ $crr->transit_id ?? '' }}"
+                                                            >
                                                                  <td class="text-center"><input type="checkbox" class="row-checkbox" value="{{ $crr->id }}"></td>
                                                                 <td>{{ $crr->hub_code ?? '—' }}</td>
                                                                 <td>
@@ -640,7 +651,7 @@
                                                                         </div>
                                                                     </div>
                                                                 </td>
-                                                                <td>{{ $crr->customerVessel && $crr->customerVessel->customer ? $crr->customerVessel->customer->customer_name : '—' }}</td>
+                                                                <td>{{ $customerName ?: '—' }}</td>
                                                                 <td>{{ $crr->vessel_name ?? '—' }}</td>
                                                                 <td>{{ $crr->expected_delivery_date ?? '—' }}</td>
                                                                 <td style="max-width: 150px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;display: block;">{{ $poNumbers ?: '—' }}</td>
@@ -653,7 +664,6 @@
                                                                 <td>{{ $crr->internal_shipment ?? '—' }}</td>
                                                                 <td>
                                                                     @php
-                                                                        $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
                                                                         $badgeClass = 'label';
                                                                         switch($crr->status) {
                                                                             case \App\Models\Crr::STATUS_NEW: $badgeClass .= ' label-pending'; break;
@@ -832,38 +842,115 @@
                 ]
             });
 
-            var filterMap = {
-                '#col-Customer select': 3,
-                '#col-Vessel select': 4,
-                '#col-Hub-Agent select': 1,
-                '#col-Status select': 14,
-                '#col-PO-number input': 6,
-                '#col-Supplier input': 7,
-                '#col-Stock-number input': 2,
-                '#col-Service-reference input': 5,
-                '#col-Shipment-no input': 13,
-                '#col-Transit-id input': 11,
-                '#col-Account-manager select': -1,
-                '#col-Office select': 1
-            };
+            function getFilterText(selector) {
+                return String($(selector).val() || '').toLowerCase().trim();
+            }
 
-            $.each(filterMap, function(selector, colIndex) {
-                if (colIndex === -1) return;
-                
-                $(selector).on('change keyup', function() {
-                    var val = $(this).val();
-                    if (Array.isArray(val)) {
-                        var searchVal = val.length > 0 ? '^(' + val.join('|') + ')$' : '';
-                        table.column(colIndex).search(searchVal, true, false).draw();
-                    } else {
-                        table.column(colIndex).search(val).draw();
-                    }
+            function matchesSelectedValues(selectedValues, rowValue) {
+                if (!selectedValues || selectedValues.length === 0) {
+                    return true;
+                }
+
+                return selectedValues.indexOf(String(rowValue || '')) !== -1;
+            }
+
+            function matchesContains(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
+            }
+
+            function rowData($row, key) {
+                return String($row.attr('data-' + key) || '');
+            }
+
+            function matchesHubAgent(selectedValues, rowHub, rowHubRaw) {
+                if (!selectedValues || selectedValues.length === 0) {
+                    return true;
+                }
+
+                return selectedValues.some(function(value) {
+                    return value === String(rowHub || '') || value === String(rowHubRaw || '');
                 });
+            }
+
+            $('#col-Customer select, #col-Vessel select, #col-Hub-Agent select, #col-Status select, #col-Account-manager select, #col-Office select, #col-PO-number input, #col-Supplier input, #col-Stock-number input, #col-Service-reference input, #col-Shipment-no input, #col-Transit-id input').on('change keyup', function() {
+                table.draw();
             });
 
-            $('.clear-filters').on('click', function() {
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'offices-table') {
+                    return true;
+                }
+
+                var row = table.row(dataIndex).node();
+                if (!row) {
+                    return true;
+                }
+
+                var $row = $(row);
+
+                if (!matchesHubAgent(
+                    $('#col-Hub-Agent select').val() || [],
+                    rowData($row, 'hub-agent'),
+                    rowData($row, 'hub-agent-raw')
+                )) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Customer select').val() || [], rowData($row, 'customer'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Vessel select').val() || [], rowData($row, 'vessel'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Status select').val() || [], rowData($row, 'status'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Account-manager select').val() || [], rowData($row, 'account-manager'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#col-Office select').val() || [], rowData($row, 'office'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-Stock-number input'), rowData($row, 'stock-number'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-PO-number input'), rowData($row, 'po-numbers'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-Supplier input'), rowData($row, 'supplier'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-Service-reference input'), rowData($row, 'service-reference'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-Shipment-no input'), rowData($row, 'shipment'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#col-Transit-id input'), rowData($row, 'transit-id'))) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            $('.clear-filters').on('click', function(e) {
+                e.preventDefault();
                 $('.select2').val(null).trigger('change');
-                $('.filter-input:not(select)').val('');
+                $('.filter-input:not(select)').val('').trigger('keyup');
                 table.columns().search('').draw();
             });
 

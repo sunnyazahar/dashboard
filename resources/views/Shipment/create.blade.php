@@ -823,7 +823,8 @@
                                                 <div class="row">
                                                     <!-- Pillar 1: Departure -->
                                                     <div class="col-md-4 custom-col">
-                                                        <div class="form-group mb-2">
+                                                        <div class="row">
+                                                        <div class="form-group col-md-12 mb-2">
                                                             <label class="mb-0" style="font-size: 11px;">Departure</label>
                                                             <div class="input-group mb-0" style="height: 30px;">
                                                                 <select id="departure-select" name="departure" class="form-control select2-departure">
@@ -831,12 +832,12 @@
                                                                 </select>
                                                             </div>
                                                         </div>
-                                                        <div class="form-group mb-2">
+                                                        <div class="form-group col-md-12 mb-2">
                                                             <label class="mb-0" style="font-size: 11px;">Port code</label>
                                                             <input type="text" id="departure-port-code" name="departure_port_code" class="form-control filter-input"
                                                                 placeholder="" value="{{ old('departure_port_code') }}">
                                                         </div>
-                                                        <div class="form-group mb-2">
+                                                        <div class="form-group col-md-6 mb-2">
                                                             <label class="mb-0" style="font-size: 11px;">Service</label>
                                                             <select name="service" class="form-control select2">
                                                                 <option></option>
@@ -849,6 +850,20 @@
                                                                 <option {{ old('service') === 'On-board delivery' ? 'selected' : '' }}>On-board delivery</option>
                                                             </select>
                                                         </div>
+                                                        <div class="form-group col-md-6 mb-2">
+                                                            <label class="mb-0" style="font-size: 11px;">Additional service </label>
+                                                            <select name="additional_service" class="form-control select2">
+                                                                <option></option>
+                                                                <option {{ old('additional_service') === 'Console' ? 'selected' : '' }}>Console</option>
+                                                                <option {{ old('additional_service') === 'Economy' ? 'selected' : '' }}>Economy</option>
+                                                                <option {{ old('additional_service') === 'Express' ? 'selected' : '' }}>Express</option>
+                                                                <option {{ old('additional_service') === 'Weekly console' ? 'selected' : '' }}>Weekly console</option>
+                                                                <option {{ old('additional_service') === 'Normal' ? 'selected' : '' }}>Normal</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+
                                                         <div class="row">
                                                             <div class="col-md-6 pr-1">
                                                                 <div class="form-group mb-2">
@@ -865,7 +880,9 @@
                                                                         </span>
                                                                     </div>
                                                                 </div>
+                                                                
                                                             </div>
+                                                            
                                                             <div class="col-md-6 pl-1">
                                                                 <div class="form-group mb-2">
                                                                     <label class="mb-0" style="font-size: 11px;">Deadline

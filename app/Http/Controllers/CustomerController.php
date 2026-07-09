@@ -23,8 +23,48 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::with(['primaryAddress', 'invoiceDetail', 'responsible.accountManager.office', 'responsible.salesManager', 'group'])->get();
-        return view('customers.index', compact('customers'));
+        $customers = Customer::with([
+            'primaryAddress.country',
+            'responsible.accountManager.office',
+            'responsible.salesManager',
+            'contacts' => fn ($query) => $query->where('is_main_contact', true),
+        ])->orderBy('customer_name')->get();
+
+        $responsibleOffices = $customers
+            ->map(fn ($customer) => $customer->responsible?->accountManager?->office?->office_short_name)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $accountManagers = $customers
+            ->map(fn ($customer) => $customer->responsible?->accountManager?->name)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $salesManagers = $customers
+            ->map(fn ($customer) => $customer->responsible?->salesManager?->name)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $countries = $customers
+            ->map(fn ($customer) => $customer->primaryAddress?->country?->name)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        return view('customers.index', compact(
+            'customers',
+            'responsibleOffices',
+            'accountManagers',
+            'salesManagers',
+            'countries'
+        ));
     }
 
     public function create()

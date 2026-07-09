@@ -5,6 +5,7 @@
     $totalCbm = $shipment->crrs->sum(fn ($crr) => $crr->packages->sum('cbm'));
     $totalValue = $shipment->crrs->sum('customs_value');
     $serviceOptions = ['Courier', 'Airfreight', 'Sea freight', 'Truck', 'Release', 'Hand Carry', 'On-board delivery'];
+    $additionalServiceOptions = ['Console', 'Economy', 'Express', 'Weekly console', 'Normal'];
 @endphp
 
 @if (session('success'))
@@ -35,13 +36,24 @@
             <input type="text" id="departure-port-code" name="departure_port_code" class="form-control-sm-custom" value="{{ old('departure_port_code', $shipment->departure_port_code) }}">
         </div>
         <div class="row">
-            <div class="col-12">
+            <div class="col-6">
                 <div class="form-group-custom">
                     <label>Service</label>
                     <select name="service" class="form-control-sm-custom select2">
                         <option></option>
                         @foreach ($serviceOptions as $serviceOption)
                             <option value="{{ $serviceOption }}" {{ old('service', $shipment->service) === $serviceOption ? 'selected' : '' }}>{{ $serviceOption }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-group-custom">
+                    <label>Additional service</label>
+                    <select name="additional_service" class="form-control-sm-custom select2">
+                        <option></option>
+                        @foreach ($additionalServiceOptions as $additionalServiceOption)
+                            <option value="{{ $additionalServiceOption }}" {{ old('additional_service', $shipment->additional_service) === $additionalServiceOption ? 'selected' : '' }}>{{ $additionalServiceOption }}</option>
                         @endforeach
                     </select>
                 </div>

@@ -519,6 +519,10 @@
                                                                     : '';
                                                             @endphp
                                                             <tr
+                                                                data-customers="{{ $shipment->customer_names->implode(',') }}"
+                                                                data-vessels="{{ $shipment->vessel_names->implode(',') }}"
+                                                                data-shipment-number="{{ $shipment->shipment_number }}"
+                                                                data-destination="{{ $shipment->destination_display }}"
                                                                 data-account-manager="{{ $shipment->accountManager?->name ?? '' }}"
                                                                 data-created-by="{{ $shipment->creator?->name ?? '' }}"
                                                                 data-has-etl="{{ $shipment->hasEtlStock() ? '1' : '0' }}"
@@ -719,18 +723,45 @@
                 table.columns.adjust();
             });
 
-            var filterMap = {
-                '#filter-shipment-no': 0,
-                '#filter-port-destination': 6
-            };
+            function rowData($row, key) {
+                return String($row.attr('data-' + key) || '');
+            }
 
-            $.each(filterMap, function(selector, colIndex) {
-                $(selector).on('keyup change', function() {
-                    table.column(colIndex).search($(this).val()).draw();
+            function getFilterText(selector) {
+                return String($(selector).val() || '').toLowerCase().trim();
+            }
+
+            function matchesSelectedValues(selectedValues, rowValue) {
+                if (!selectedValues || selectedValues.length === 0) {
+                    return true;
+                }
+
+                return selectedValues.indexOf(String(rowValue || '')) !== -1;
+            }
+
+            function matchesAnySelectedValues(selectedValues, rowValuesString) {
+                if (!selectedValues || selectedValues.length === 0) {
+                    return true;
+                }
+
+                var rowValues = rowValuesString.split(',').map(function(value) {
+                    return value.trim();
+                }).filter(Boolean);
+
+                return selectedValues.some(function(selectedValue) {
+                    return rowValues.indexOf(selectedValue) !== -1;
                 });
-            });
+            }
 
-            $('#filter-customer, #filter-vessel, #filter-account-manager, #filter-created-by, #filter-show-etl').on('change keyup', function() {
+            function matchesContains(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
+            }
+
+            $('#filter-shipment-no, #filter-port-destination, #filter-customer, #filter-vessel, #filter-account-manager, #filter-created-by, #filter-show-etl').on('change keyup', function() {
                 table.draw();
             });
 
@@ -745,40 +776,32 @@
                 }
 
                 var $row = $(row);
-                var showEtlOnly = $('#filter-show-etl').is(':checked');
-                var rowHasEtl = $row.data('has-etl') === 1 || $row.data('has-etl') === '1';
 
-                if (showEtlOnly && !rowHasEtl) {
+                if ($('#filter-show-etl').is(':checked') && rowData($row, 'has-etl') !== '1') {
                     return false;
                 }
 
-                var customers = $('#filter-customer').val() || [];
-                if (customers.length > 0) {
-                    var rowCustomer = data[1] || '';
-                    if (!customers.some(function(customer) {
-                        return rowCustomer.indexOf(customer) !== -1;
-                    })) {
-                        return false;
-                    }
-                }
-
-                var vessels = $('#filter-vessel').val() || [];
-                if (vessels.length > 0) {
-                    var rowVessel = data[2] || '';
-                    if (!vessels.some(function(vessel) {
-                        return rowVessel.indexOf(vessel) !== -1;
-                    })) {
-                        return false;
-                    }
-                }
-
-                var accountManagers = $('#filter-account-manager').val() || [];
-                if (accountManagers.length > 0 && accountManagers.indexOf($row.data('account-manager')) === -1) {
+                if (!matchesAnySelectedValues($('#filter-customer').val() || [], rowData($row, 'customers'))) {
                     return false;
                 }
 
-                var createdBy = $('#filter-created-by').val() || [];
-                if (createdBy.length > 0 && createdBy.indexOf($row.data('created-by')) === -1) {
+                if (!matchesAnySelectedValues($('#filter-vessel').val() || [], rowData($row, 'vessels'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#filter-account-manager').val() || [], rowData($row, 'account-manager'))) {
+                    return false;
+                }
+
+                if (!matchesSelectedValues($('#filter-created-by').val() || [], rowData($row, 'created-by'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-shipment-no'), rowData($row, 'shipment-number'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-port-destination'), rowData($row, 'destination'))) {
                     return false;
                 }
 

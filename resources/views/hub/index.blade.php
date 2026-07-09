@@ -282,18 +282,18 @@
                                                 <div class="d-flex align-items-center pt-2 pb-2" style="border-bottom: 2px solid #eef2f7; margin-bottom: 10px; padding-left: 10px; gap: 15px;">
                                                     <div class="form-group mb-0" style="width: 150px;">
                                                         <span class="filter-label">Name</span>
-                                                        <input type="text" class="form-control filter-input" placeholder="type here">
+                                                        <input type="text" id="filter-hub-name" class="form-control filter-input" placeholder="type here">
                                                     </div>
                                                     
                                                     <div class="form-group mb-0" style="width: 120px;">
                                                         <span class="filter-label">Code</span>
-                                                        <input type="text" class="form-control filter-input" placeholder="type here">
+                                                        <input type="text" id="filter-hub-code" class="form-control filter-input" placeholder="type here">
                                                     </div>
 
                                                     <div class="form-group mb-0" style="width: 150px;">
                                                         <span class="filter-label">Address</span>
                                                         <div style="position: relative;">
-                                                            <input type="text" class="form-control filter-input" placeholder="type here" style="padding-right: 30px;">
+                                                            <input type="text" id="filter-hub-address" class="form-control filter-input" placeholder="type here" style="padding-right: 30px;">
                                                             <div style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); pointer-events: none;">
                                                                 <i class="ti-more-alt" style="color: #999; font-size: 10px; background: #eee; padding: 2px 4px; border-radius: 2px;"></i>
                                                             </div>
@@ -302,20 +302,25 @@
 
                                                     <div class="form-group mb-0" style="width: 150px;">
                                                         <span class="filter-label">City</span>
-                                                        <input type="text" class="form-control filter-input" placeholder="type here">
+                                                        <input type="text" id="filter-hub-city" class="form-control filter-input" placeholder="type here">
                                                     </div>
 
                                                     <div class="form-group mb-0" style="width: 150px;">
                                                         <span class="filter-label">Country</span>
-                                                        <select class="form-control filter-input select2">
-                                                            <option>Click here</option>
+                                                        <select id="filter-hub-country" class="form-control filter-input select2">
+                                                            <option value=""></option>
+                                                            @foreach ($countries as $country)
+                                                                <option value="{{ $country }}">{{ $country }}</option>
+                                                            @endforeach
                                                         </select>
                                                     </div>
 
                                                     <div class="d-flex align-items-center" style="margin-top: 18px; border: 1px solid #ced4da; padding: 4px 8px; border-radius: 2px; height: 30px;">
                                                         <span style="font-size: 11px; margin-right: 8px; ">Hide inactive</span>
-                                                        <input type="checkbox" checked style="width: 14px; height: 14px;">
+                                                        <input type="checkbox" id="filter-hide-inactive" checked style="width: 14px; height: 14px;">
                                                     </div>
+
+                                                    <a href="#" id="clear-hub-filters" class="clear-filters" style="margin-top: 18px;">Clear filters</a>
 
                                                     <div class="d-flex align-items-center ml-auto" style="gap: 8px; margin-top: 18px;">
                                                         <a href="#" style="border: 1px solid #ced4da; padding: 4px 10px; border-radius: 2px; color: #666; font-size: 14px;">
@@ -344,14 +349,30 @@
                                                         </thead>
                                                         <tbody>
                                                             @foreach($hubs as $hub)
-                                                                <tr>
+                                                                @php
+                                                                    $addressSearch = trim(implode(' ', array_filter([
+                                                                        $hub->hub_address,
+                                                                        $hub->office_address,
+                                                                        $hub->district_state,
+                                                                        $hub->zip_code,
+                                                                    ])));
+                                                                    $isInactive = (bool) $hub->hide_in_portal;
+                                                                @endphp
+                                                                <tr
+                                                                    data-hub-name="{{ $hub->hub_name }}"
+                                                                    data-code="{{ $hub->code }}"
+                                                                    data-address="{{ $addressSearch }}"
+                                                                    data-city="{{ $hub->city }}"
+                                                                    data-country="{{ $hub->country }}"
+                                                                    data-is-inactive="{{ $isInactive ? '1' : '0' }}"
+                                                                >
                                                                     <td><a href="{{ route('hub.show', $hub->id) }}" style="color: #3b82f6;">{{ $hub->hub_name }}</a></td>
                                                                     <td>{{ $hub->code }}</td>
                                                                     <td>{{ $hub->city }}</td>
                                                                     <td>{{ $hub->country }}</td>
                                                                     <td>{{ $hub->phone_number }}</td>
                                                                     <td>{{ $hub->email }}</td>
-                                                                    <td></td>
+                                                                    <td>{{ $isInactive ? 'Inactive' : 'Active' }}</td>
                                                                     <td class="text-right">
                                                                         <a href="{{ route('hub.show', $hub->id) }}" style="color: #ccc; margin-right: 8px;"><i class="ti-pencil"></i></a>
                                                                         <a href="#" style="color: #ccc;"><i class="ti-trash"></i></a>
@@ -421,19 +442,22 @@
 
     <script>
         $(document).ready(function() {
-             // Initialize Select2 for Country filter
             $('.select2').select2({
                 placeholder: "Click here",
-                allowClear: true
+                allowClear: true,
+                width: '100%'
             });
 
-            $('#offices-table').DataTable({
+            var table = $('#offices-table').DataTable({
                 "lengthChange": false,
                 "pageLength": 25,
                 "responsive": false,
-                "searching": false,
+                "searching": true,
                 "ordering": true,
                 "autoWidth": false,
+                "columnDefs": [
+                    { "orderable": false, "targets": [7] }
+                ],
                 "language": {
                     "info": "Showing _START_ to _END_ of _TOTAL_ entries",
                     "paginate": {
@@ -441,6 +465,81 @@
                         "next": ">"
                     }
                 }
+            });
+
+            function rowData($row, key) {
+                return String($row.attr('data-' + key) || '');
+            }
+
+            function getFilterText(selector) {
+                return String($(selector).val() || '').toLowerCase().trim();
+            }
+
+            function matchesContains(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
+            }
+
+            function matchesCountry(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '') === filterValue;
+            }
+
+            $('#filter-hub-name, #filter-hub-code, #filter-hub-address, #filter-hub-city, #filter-hub-country, #filter-hide-inactive').on('change keyup', function() {
+                table.draw();
+            });
+
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'offices-table') {
+                    return true;
+                }
+
+                var row = table.row(dataIndex).node();
+                if (!row) {
+                    return true;
+                }
+
+                var $row = $(row);
+
+                if ($('#filter-hide-inactive').is(':checked') && rowData($row, 'is-inactive') === '1') {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-hub-name'), rowData($row, 'hub-name'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-hub-code'), rowData($row, 'code'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-hub-address'), rowData($row, 'address'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-hub-city'), rowData($row, 'city'))) {
+                    return false;
+                }
+
+                if (!matchesCountry($('#filter-hub-country').val(), rowData($row, 'country'))) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            $('#clear-hub-filters').on('click', function(e) {
+                e.preventDefault();
+                $('#filter-hub-name, #filter-hub-code, #filter-hub-address, #filter-hub-city').val('');
+                $('#filter-hub-country').val(null).trigger('change');
+                $('#filter-hide-inactive').prop('checked', true);
+                table.search('').columns().search('').draw();
             });
         });
     </script>

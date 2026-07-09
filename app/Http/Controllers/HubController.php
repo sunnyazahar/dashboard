@@ -10,8 +10,10 @@ class HubController extends Controller
 {
     public function index()
     {
-        $hubs = Hub::all();
-        return view('hub.index', compact('hubs'));
+        $hubs = Hub::orderBy('hub_name')->get();
+        $countries = $hubs->pluck('country')->filter()->unique()->sort()->values();
+
+        return view('hub.index', compact('hubs', 'countries'));
     }
 
     public function create()

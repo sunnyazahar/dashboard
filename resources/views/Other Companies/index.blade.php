@@ -61,23 +61,59 @@
         .filter-input-custom.has-append {
             border-radius: 2px 0 0 2px;
         }
+
+        /* Select2 filter dropdowns - match text inputs */
+        .filter-row .select2-container--default .select2-selection--single {
+            height: 30px !important;
+            min-height: 30px !important;
+            font-size: 12px !important;
+            background-color: #fff !important;
+            background: #fff !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 2px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .filter-row .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px !important;
+            padding-left: 8px !important;
+            padding-right: 20px !important;
+            color: #333 !important;
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        .filter-row .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #9ca3af !important;
+            font-style: italic;
+        }
+
+        .filter-row .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 28px !important;
+            top: 1px !important;
+            background: transparent !important;
+        }
+
+        .filter-row .select2-container--default .select2-results__option--highlighted,
+        .filter-row .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #f3f4f6 !important;
+            color: #333 !important;
+        }
+
+        .filter-checkbox-group input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            accent-color: #1b5e6f;
+        }
+
         .filter-checkbox-group {
             display: flex;
             align-items: center;
             gap: 6px;
             margin-bottom: 5px;
             white-space: nowrap;
-        }
-        .custom-checkbox-box {
-            width: 16px;
-            height: 16px;
-            background: #1b5e6f;
-            border-radius: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 10px;
         }
         .filter-checkbox-group label {
             font-size: 12px;
@@ -236,35 +272,36 @@
                                                 <div class="filter-item" style="width: 250px;">
                                                     <label class="filter-label-custom">Name</label>
                                                     <div class="input-group-custom">
-                                                        <input type="text" class="filter-input-custom has-append" placeholder="type here">
+                                                        <input type="text" id="filter-company-name" class="filter-input-custom has-append" placeholder="type here">
                                                         <button class="btn-input-append"><i class="ti-more-alt"></i></button>
                                                     </div>
                                                 </div>
                                                 <div class="filter-item" style="width: 100px;">
                                                     <label class="filter-label-custom">Code</label>
-                                                    <input type="text" class="filter-input-custom" placeholder="type here">
+                                                    <input type="text" id="filter-company-code" class="filter-input-custom" placeholder="type here">
                                                 </div>
                                                 <div class="filter-item" style="width: 220px;">
                                                     <label class="filter-label-custom">Address</label>
-                                                    <input type="text" class="filter-input-custom" placeholder="type here">
+                                                    <input type="text" id="filter-company-address" class="filter-input-custom" placeholder="type here">
                                                 </div>
                                                 <div class="filter-item" style="width: 120px;">
                                                     <label class="filter-label-custom">City</label>
-                                                    <input type="text" class="filter-input-custom" placeholder="type here">
+                                                    <input type="text" id="filter-company-city" class="filter-input-custom" placeholder="type here">
                                                 </div>
                                                 <div class="filter-item" style="width: 150px;">
                                                     <label class="filter-label-custom">Country</label>
-                                                    <select class="filter-input-custom">
-                                                        <option>Click here</option>
+                                                    <select id="filter-company-country" class="filter-input-custom select2">
+                                                        <option value=""></option>
+                                                        @foreach ($countries as $country)
+                                                            <option value="{{ $country }}">{{ $country }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                                 <div class="filter-checkbox-group">
-                                                    <div class="custom-checkbox-box">
-                                                        <i class="ti-check"></i>
-                                                    </div>
-                                                    <label>Hide inactive</label>
+                                                    <input type="checkbox" id="filter-hide-inactive" checked>
+                                                    <label for="filter-hide-inactive">Hide inactive</label>
                                                 </div>
-                                                <a href="#" class="btn-clear-filters">Clear filters</a>
+                                                <a href="#" id="clear-company-filters" class="btn-clear-filters">Clear filters</a>
                                                 <a href="{{ route('other-companies.create') }}" class="btn-add-other">Add other company</a>
                                             </div>
 
@@ -287,7 +324,23 @@
                                                     </thead>
                                                     <tbody>
                                                         @forelse($companies as $company)
-                                                        <tr>
+                                                        @php
+                                                            $addressSearch = trim(implode(' ', array_filter([
+                                                                $company->street_address,
+                                                                $company->office_street_address,
+                                                                $company->district_state,
+                                                                $company->zip_code,
+                                                            ])));
+                                                            $countryName = $company->country->name ?? '';
+                                                        @endphp
+                                                        <tr
+                                                            data-company-name="{{ $company->company_name }}"
+                                                            data-code="{{ $company->code }}"
+                                                            data-address="{{ $addressSearch }}"
+                                                            data-city="{{ $company->city }}"
+                                                            data-country="{{ $countryName }}"
+                                                            data-is-inactive="0"
+                                                        >
                                                             <td><a href="{{ route('other-companies.edit', $company->id) }}" class="company-link">{{ $company->company_name }}</a></td>
                                                             <td>{{ $company->code }}</td>
                                                             <td>{{ $company->company_type }}</td>
@@ -298,7 +351,7 @@
                                                                     @if($company->country->flag_url)
                                                                         <img src="{{ $company->country->flag_url }}" class="country-flag" alt="">
                                                                     @endif
-                                                                    {{ $company->country->name }}
+                                                                    {{ $countryName }}
                                                                 @endif
                                                             </td>
                                                             <td>{{ $company->phone_number }}</td>
@@ -381,72 +434,22 @@
 
     <script>
         $(document).ready(function() {
-             // Initialize Select2 for standard filters
             $('.select2').select2({
                 placeholder: "Click here",
-                allowClear: true
+                allowClear: true,
+                width: 'resolve'
             });
 
-            // Initialize Bootstrap Multiselect for special filter toggle
-            $('#filter-multiselect').multiselect({
-                includeSelectAllOption: true,
-                enableFiltering: true,
-                buttonWidth: '100%',
-                maxHeight: 200,
-                nonSelectedText: '',
-                allSelectedText: '',
-                nSelectedText: '',
-                numberDisplayed: 0,
-                buttonClass: 'btn btn-outline-teal btn-filter-toggle',
-                templates: {
-                    button: '<button type="button" class="multiselect dropdown-toggle" data-toggle="dropdown"><i class="ti-filter"></i></button>'
-                },
-                onChange: function(option, checked) {
-                    toggleFilterVisibility();
-                },
-                onSelectAll: function() {
-                    toggleFilterVisibility();
-                },
-                onDeselectAll: function() {
-                    toggleFilterVisibility();
-                }
-            });
-
-            function toggleFilterVisibility() {
-                var selectedOptions = $('#filter-multiselect option:selected');
-                var selectedValues = [];
-                selectedOptions.each(function() {
-                    selectedValues.push($(this).val());
-                });
-
-                var allFilters = [
-                    {val: 'Office Name', id: 'col-Office-Name'},
-                    {val: 'Short Name', id: 'col-Short-Name'},
-                    {val: 'City', id: 'col-City'},
-                    {val: 'Country', id: 'col-Country'},
-                    {val: 'Phone', id: 'col-Phone'},
-                    {val: 'Email', id: 'col-Email'}
-                ];
-
-                allFilters.forEach(function(filter) {
-                    if (selectedValues.includes(filter.val)) {
-                        $('#' + filter.id).show();
-                    } else {
-                        $('#' + filter.id).hide();
-                    }
-                });
-            }
-            
-            // Initial call to set visibility state
-            toggleFilterVisibility();
-
-            $('#other-companies-table').DataTable({
+            var table = $('#other-companies-table').DataTable({
                 "lengthChange": false,
                 "pageLength": 25,
                 "responsive": false,
-                "searching": false,
+                "searching": true,
                 "ordering": true,
                 "autoWidth": false,
+                "columnDefs": [
+                    { "orderable": false, "targets": [9] }
+                ],
                 "language": {
                     "info": "Showing _START_ to _END_ of _TOTAL_ entries",
                     "paginate": {
@@ -454,6 +457,81 @@
                         "next": ">"
                     }
                 }
+            });
+
+            function rowData($row, key) {
+                return String($row.attr('data-' + key) || '');
+            }
+
+            function getFilterText(selector) {
+                return String($(selector).val() || '').toLowerCase().trim();
+            }
+
+            function matchesContains(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
+            }
+
+            function matchesExact(filterValue, rowValue) {
+                if (!filterValue) {
+                    return true;
+                }
+
+                return String(rowValue || '') === filterValue;
+            }
+
+            $('#filter-company-name, #filter-company-code, #filter-company-address, #filter-company-city, #filter-company-country, #filter-hide-inactive').on('change keyup', function() {
+                table.draw();
+            });
+
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                if (settings.nTable.id !== 'other-companies-table') {
+                    return true;
+                }
+
+                var row = table.row(dataIndex).node();
+                if (!row) {
+                    return true;
+                }
+
+                var $row = $(row);
+
+                if ($('#filter-hide-inactive').is(':checked') && rowData($row, 'is-inactive') === '1') {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-company-name'), rowData($row, 'company-name'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-company-code'), rowData($row, 'code'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-company-address'), rowData($row, 'address'))) {
+                    return false;
+                }
+
+                if (!matchesContains(getFilterText('#filter-company-city'), rowData($row, 'city'))) {
+                    return false;
+                }
+
+                if (!matchesExact($('#filter-company-country').val(), rowData($row, 'country'))) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            $('#clear-company-filters').on('click', function(e) {
+                e.preventDefault();
+                $('#filter-company-name, #filter-company-code, #filter-company-address, #filter-company-city').val('');
+                $('#filter-company-country').val(null).trigger('change');
+                $('#filter-hide-inactive').prop('checked', true);
+                table.search('').columns().search('').draw();
             });
         });
     </script>

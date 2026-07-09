@@ -15,6 +15,7 @@ class Shipment extends Model
         'departure',
         'departure_port_code',
         'service',
+        'additional_service',
         'preferred_shipment_date',
         'deadline_arrival',
         'vessel_eta',
