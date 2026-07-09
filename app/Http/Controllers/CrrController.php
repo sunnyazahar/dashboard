@@ -6,6 +6,7 @@ use App\Models\Crr;
 use App\Models\CrrPackage;
 use App\Models\CrrCost;
 use App\Models\CrrDocument;
+use App\Services\CrrChangeLogService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -71,7 +72,7 @@ class CrrController extends Controller
         ));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CrrChangeLogService $changeLogService)
     {
         DB::beginTransaction();
         try {
@@ -183,6 +184,8 @@ class CrrController extends Controller
                 ]);
             }
 
+            $changeLogService->logCreated($crr);
+
             DB::commit();
 
             return redirect()->route('stocks')
@@ -196,7 +199,7 @@ class CrrController extends Controller
     }
     public function edit($id)
     {
-        $crr = Crr::with(['packages', 'costs', 'documents'])->findOrFail($id);
+        $crr = Crr::with(['packages', 'costs', 'documents', 'changeLogs.user'])->findOrFail($id);
         
         $vessels = \App\Models\CustomerVessel::with('customer')
             ->select('vessel', 'customer_id')
@@ -211,9 +214,11 @@ class CrrController extends Controller
         return view('Stock.edit', compact('crr', 'vessels', 'countries', 'currencies', 'hubs', 'agents', 'suppliers'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, CrrChangeLogService $changeLogService)
     {
         $crr = Crr::findOrFail($id);
+        $crr->load(['packages', 'costs']);
+        $changeLogSnapshot = $changeLogService->captureSnapshot($crr);
 
         DB::beginTransaction();
         try {
@@ -322,6 +327,9 @@ class CrrController extends Controller
 
             DB::commit();
 
+            $crr->load(['packages', 'costs']);
+            $changeLogService->logChangesFromSnapshot($crr, $changeLogSnapshot);
+
             return redirect()->route('stocks')
                 ->with('success', 'CRR updated successfully! Stock number: ' . $crr->stock_number);
 
@@ -383,7 +391,7 @@ class CrrController extends Controller
     /**
      * AJAX: Update the status of a CRR.
      */
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, $id, CrrChangeLogService $changeLogService)
     {
         try {
             $crr = Crr::findOrFail($id);
@@ -392,8 +400,15 @@ class CrrController extends Controller
                 'status' => ['required', 'integer', \Illuminate\Validation\Rule::in(array_keys(Crr::getStatusLabels()))],
             ]);
 
+            $previousStatus = (int) $crr->status;
             $status = (int) $validated['status'];
             $crr->update(Crr::statusUpdateAttributes($status));
+
+            if ($previousStatus !== (int) $crr->status) {
+                $oldLabel = Crr::getStatusLabels()[$previousStatus] ?? (string) $previousStatus;
+                $newLabel = Crr::getStatusLabels()[(int) $crr->status] ?? (string) $crr->status;
+                $changeLogService->log($crr, 'Status edited', 'From ' . $oldLabel . ' to ' . $newLabel);
+            }
 
             return response()->json([
                 'success' => true,
@@ -406,7 +421,7 @@ class CrrController extends Controller
         }
     }
 
-    public function updateFlags(Request $request, $id)
+    public function updateFlags(Request $request, $id, CrrChangeLogService $changeLogService)
     {
         try {
             $crr = Crr::findOrFail($id);
@@ -421,8 +436,16 @@ class CrrController extends Controller
                 'flags.*' => ['string', \Illuminate\Validation\Rule::in(Crr::availableFlags())],
             ]);
 
+            $previousFlags = $crr->flags ?? [];
             $flags = array_values(array_unique($validated['flags'] ?? []));
             $crr->update(['flags' => $flags]);
+
+            $oldLabel = $previousFlags !== [] ? implode(', ', $previousFlags) : 'empty';
+            $newLabel = $flags !== [] ? implode(', ', $flags) : 'empty';
+
+            if ($oldLabel !== $newLabel) {
+                $changeLogService->log($crr, 'Flags edited', 'From ' . $oldLabel . ' to ' . $newLabel);
+            }
 
             return response()->json(['success' => true, 'flags' => $crr->flags ?? []]);
         } catch (\Exception $e) {
@@ -430,14 +453,19 @@ class CrrController extends Controller
         }
     }
 
-    public function updateAccept(Request $request, $id)
+    public function updateAccept(Request $request, $id, CrrChangeLogService $changeLogService)
     {
         try {
             $crr = Crr::findOrFail($id);
+            $wasAccepted = (bool) $crr->accept;
             $crr->update([
                 'accept' => true,
                 'status' => Crr::STATUS_ACTIVE,
             ]);
+
+            if (! $wasAccepted) {
+                $changeLogService->logAccepted($crr);
+            }
 
             return response()->json([
                 'success' => true,
@@ -454,7 +482,7 @@ class CrrController extends Controller
     /**
      * AJAX: Upload a single document for a CRR.
      */
-    public function uploadDocument(Request $request, $id)
+    public function uploadDocument(Request $request, $id, CrrChangeLogService $changeLogService)
     {
         $crr = Crr::findOrFail($id);
 
@@ -472,6 +500,8 @@ class CrrController extends Controller
             'file_type' => 'unspecified',
         ]);
 
+        $changeLogService->log($crr, 'Document added', $doc->file_name);
+
         return response()->json([
             'id'        => $doc->id,
             'file_name' => $doc->file_name,
@@ -483,12 +513,18 @@ class CrrController extends Controller
     /**
      * AJAX: Delete a CRR document.
      */
-    public function deleteDocument($docId)
+    public function deleteDocument($docId, CrrChangeLogService $changeLogService)
     {
         try {
             $doc = CrrDocument::findOrFail($docId);
+            $crr = $doc->crr;
+            $fileName = $doc->file_name;
             \Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file_path);
             $doc->delete();
+
+            if ($crr) {
+                $changeLogService->log($crr, 'Document removed', $fileName);
+            }
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {

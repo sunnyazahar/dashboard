@@ -152,6 +152,11 @@ class Crr extends Model
         return $this->hasMany(CrrDocument::class);
     }
 
+    public function changeLogs()
+    {
+        return $this->hasMany(CrrChangeLog::class)->orderByDesc('created_at');
+    }
+
     /**
      * Get the hub associated with this CRR.
      * Tries to match by code first, then by name for legacy data.

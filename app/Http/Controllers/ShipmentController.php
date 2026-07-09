@@ -27,6 +27,7 @@ use App\Services\ManifestMailService;
 use App\Services\PreAlertMailService;
 use App\Services\PreAlertReminderMailService;
 use App\Services\ShipmentManifestPdfBuilder;
+use App\Services\ShipmentChangeLogService;
 use App\Services\ShipmentManifestService;
 use App\Services\ShipmentPdfFingerprintService;
 use App\Services\ShipmentPreAlertService;
@@ -347,7 +348,7 @@ class ShipmentController extends Controller
         ]);
     }
 
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, $id, ShipmentChangeLogService $changeLogService)
     {
         $shipment = Shipment::findOrFail($id);
 
@@ -355,7 +356,16 @@ class ShipmentController extends Controller
             'status' => ['required', Rule::in(['Draft', 'In process', 'In transit', 'Delivered', 'Completed', 'Pending'])],
         ]);
 
+        $previousStatus = $shipment->status;
         $shipment->update(['status' => $validated['status']]);
+
+        if ($previousStatus !== $shipment->status) {
+            $changeLogService->log(
+                $shipment,
+                'Status edited',
+                'From ' . ($previousStatus ?: 'empty') . ' to ' . $shipment->status
+            );
+        }
 
         return response()->json([
             'success' => true,
@@ -363,7 +373,7 @@ class ShipmentController extends Controller
         ]);
     }
 
-    public function updateFlags(Request $request, $id)
+    public function updateFlags(Request $request, $id, ShipmentChangeLogService $changeLogService)
     {
         $shipment = Shipment::findOrFail($id);
 
@@ -377,9 +387,17 @@ class ShipmentController extends Controller
             'flags.*' => ['string', Rule::in(Shipment::availableFlags())],
         ]);
 
+        $previousFlags = $shipment->flags ?? [];
         $flags = array_values(array_unique($validated['flags'] ?? []));
         $flags = array_slice($flags, 0, 1);
         $shipment->update(['flags' => $flags]);
+
+        $oldLabel = $previousFlags !== [] ? implode(', ', $previousFlags) : 'empty';
+        $newLabel = $flags !== [] ? implode(', ', $flags) : 'empty';
+
+        if ($oldLabel !== $newLabel) {
+            $changeLogService->log($shipment, 'Flags edited', 'From ' . $oldLabel . ' to ' . $newLabel);
+        }
 
         return response()->json([
             'success' => true,
@@ -387,7 +405,7 @@ class ShipmentController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ShipmentChangeLogService $changeLogService)
     {
         $validated = $this->validateShipmentRequest($request);
 
@@ -430,6 +448,8 @@ class ShipmentController extends Controller
 
             $this->syncOnBoardLegs($shipment, $validated['on_board_legs'] ?? [], $validated['service'] ?? null);
 
+            $changeLogService->logCreated($shipment);
+
             DB::commit();
 
             return redirect()
@@ -467,6 +487,7 @@ class ShipmentController extends Controller
             'onBoardLegs',
             'manifests',
             'preAlerts',
+            'changeLogs.user',
         ])->findOrFail($id);
 
         $stockSnapshotService->applyResolvedStockCrrs($shipment);
@@ -1132,7 +1153,7 @@ class ShipmentController extends Controller
         ]);
     }
 
-    public function uploadDocument(Request $request, $id)
+    public function uploadDocument(Request $request, $id, ShipmentChangeLogService $changeLogService)
     {
         $shipment = Shipment::findOrFail($id);
 
@@ -1150,6 +1171,8 @@ class ShipmentController extends Controller
             'file_type' => 'Unspecified',
         ]);
 
+        $changeLogService->log($shipment, 'Document added', $document->file_name);
+
         return response()->json([
             'id' => $document->id,
             'file_name' => $document->file_name,
@@ -1159,12 +1182,18 @@ class ShipmentController extends Controller
         ]);
     }
 
-    public function deleteDocument($docId)
+    public function deleteDocument($docId, ShipmentChangeLogService $changeLogService)
     {
         try {
             $document = ShipmentDocument::findOrFail($docId);
+            $shipment = $document->shipment;
+            $fileName = $document->file_name;
             Storage::disk('public')->delete($document->file_path);
             $document->delete();
+
+            if ($shipment) {
+                $changeLogService->log($shipment, 'Document removed', $fileName);
+            }
 
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
@@ -1174,7 +1203,7 @@ class ShipmentController extends Controller
         }
     }
 
-    public function updateDocumentType(Request $request, $docId)
+    public function updateDocumentType(Request $request, $docId, ShipmentChangeLogService $changeLogService)
     {
         $document = ShipmentDocument::findOrFail($docId);
 
@@ -1190,7 +1219,16 @@ class ShipmentController extends Controller
             ], 422);
         }
 
+        $previousType = $document->file_type;
         $document->update(['file_type' => $fileType]);
+
+        if ($previousType !== $fileType) {
+            $changeLogService->log(
+                $document->shipment,
+                'Document type edited',
+                'From ' . ($previousType ?: 'empty') . ' to ' . $fileType
+            );
+        }
 
         return response()->json([
             'success' => true,
@@ -1279,10 +1317,25 @@ class ShipmentController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id, ShipmentPdfFingerprintService $fingerprintService)
+    public function update(Request $request, $id, ShipmentPdfFingerprintService $fingerprintService, ShipmentChangeLogService $changeLogService)
     {
         $shipment = Shipment::findOrFail($id);
         $validated = $this->validateShipmentRequest($request);
+
+        $shipment->load([
+            'crrs',
+            'irregularities',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+            'releaseLegs',
+            'handCarryLegs',
+            'onBoardLegs',
+            'accountManager',
+        ]);
+        $partyNamesBefore = Shipment::batchResolvePartyNames(collect([$shipment]));
+        $changeLogSnapshot = $changeLogService->captureSnapshot($shipment);
 
         $fingerprintService->prepareForFingerprint($shipment);
         $manifestFingerprintBefore = $fingerprintService->manifestFingerprint($shipment);
@@ -1338,9 +1391,30 @@ class ShipmentController extends Controller
         $freshShipment = $shipment->fresh($fingerprintService->relations());
         $fingerprintService->prepareForFingerprint($freshShipment);
 
+        $freshShipment->load([
+            'crrs',
+            'irregularities',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+            'releaseLegs',
+            'handCarryLegs',
+            'onBoardLegs',
+            'accountManager',
+        ]);
+        $changeLogService->logChangesFromSnapshot($freshShipment, $changeLogSnapshot, $partyNamesBefore);
+
         if ($fingerprintService->manifestFingerprint($freshShipment) !== $manifestFingerprintBefore) {
             try {
-                app(ShipmentManifestService::class)->generate($freshShipment);
+                $manifest = app(ShipmentManifestService::class)->generate($freshShipment);
+                if ($manifest) {
+                    $changeLogService->log(
+                        $freshShipment,
+                        $manifest->version > 1 ? 'Revision created' : 'Manifest generated',
+                        $manifest->version > 1 ? 'Revision ' . $manifest->version : $manifest->file_name . '.pdf'
+                    );
+                }
             } catch (\Throwable $e) {
                 Log::warning('Manifest generation after shipment save failed: ' . $e->getMessage());
             }

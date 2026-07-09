@@ -132,6 +132,11 @@ class Shipment extends Model
         return $this->hasMany(ShipmentOnBoardLeg::class)->orderBy('sort_order');
     }
 
+    public function changeLogs(): HasMany
+    {
+        return $this->hasMany(ShipmentChangeLog::class)->orderByDesc('created_at');
+    }
+
     public function accountManager(): BelongsTo
     {
         return $this->belongsTo(Contact::class, 'account_manager_id');

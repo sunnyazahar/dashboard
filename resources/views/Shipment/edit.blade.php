@@ -2267,56 +2267,22 @@
                                                     <input type="file" id="shipment-doc-file-input" accept="application/pdf,.pdf" multiple style="display: none;">
                                                     </div>
                                                     <div id="doc-panel-log" class="doc-panel">
-                                                        <div class="log-item">
-                                                            <div class="log-left">
-                                                                <span class="log-title">Warehouse work status edited</span>
-                                                                <span class="log-desc">From Not started to In progress</span>
+                                                        @forelse ($shipment->changeLogs as $changeLog)
+                                                            <div class="log-item">
+                                                                <div class="log-left">
+                                                                    <span class="log-title">{{ $changeLog->title }}</span>
+                                                                    @if ($changeLog->description)
+                                                                        <span class="log-desc @if(str_starts_with($changeLog->title, 'Revision')) text-danger @endif" @if(str_starts_with($changeLog->title, 'Revision')) style="font-weight: 700;" @endif>{{ $changeLog->description }}</span>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="log-right">
+                                                                    <span class="log-user">{{ $changeLog->user?->name ?? 'System' }}</span>
+                                                                    <span class="log-timestamp">{{ $changeLog->created_at->format('d.m.Y H:i') }}</span>
+                                                                </div>
                                                             </div>
-                                                            <div class="log-right">
-                                                                <span class="log-user">Helena Kaya</span>
-                                                                <span class="log-timestamp">13.03.2026 21:57</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="log-item">
-                                                            <div class="log-left">
-                                                                <span class="log-title">Document added</span>
-                                                                <span class="log-desc">manifest-revision-2-PHI6378707-326.pdf</span>
-                                                            </div>
-                                                            <div class="log-right">
-                                                                <span class="log-user">Nikos Pappas</span>
-                                                                <span class="log-timestamp">13.03.2026 20:13</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="log-item">
-                                                            <div class="log-left">
-                                                                <span class="log-title">Manifest sent</span>
-                                                                <span class="log-desc">Sent to gts-amsair@aitworldwide.com</span>
-                                                            </div>
-                                                            <div class="log-right">
-                                                                <span class="log-user">Nikos Pappas</span>
-                                                                <span class="log-timestamp">13.03.2026 20:13</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="log-item">
-                                                            <div class="log-left">
-                                                                <span class="log-title">Revision created</span>
-                                                                <span class="log-desc text-danger" style="font-weight: 700;">Revision 2</span>
-                                                            </div>
-                                                            <div class="log-right">
-                                                                <span class="log-user">Nikos Pappas</span>
-                                                                <span class="log-timestamp">13.03.2026 20:13</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="log-item">
-                                                            <div class="log-left">
-                                                                <span class="log-title">Comments to departure hub edited</span>
-                                                                <span class="log-desc">From QR8208128-326, PLEASE</span>
-                                                            </div>
-                                                            <div class="log-right">
-                                                                <span class="log-user">Nikos Pappas</span>
-                                                                <span class="log-timestamp">13.03.2026 20:13</span>
-                                                            </div>
-                                                        </div>
+                                                        @empty
+                                                            <div class="text-center py-4 text-muted" style="font-size: 12px;">No changes recorded yet.</div>
+                                                        @endforelse
                                                     </div>
                                                     <div id="doc-panel-comments" class="doc-panel">
                                                         <div class="comment-item">

@@ -642,7 +642,7 @@
 
         /* 3. Right Panel Sidebar */
         .stock-right-panel {
-            width: 280px;
+            width: 350px;
             background: #f8fafc;
             border-left: 1px solid #e2e8f0;
             padding: 20px;
@@ -2261,40 +2261,32 @@
                                     <div id="panel-contents">
                                         <div id="change-log" class="panel-tab-content active"
                                             style="padding: 15px; max-height: 400px; overflow-y: auto;">
-                                            @php
-                                                $logs = [
-                                                    ['title' => 'Stock accepted', 'desc' => '', 'user' => 'Rahim', 'time' => '08.03.2026 12:58'],
-                                                    ['title' => 'Related shipment edited', 'desc' => 'From empty to MOH6375667-326', 'user' => 'Rahim', 'time' => '08.03.2026 12:53'],
-                                                    ['title' => 'Document added', 'desc' => 'DHL Waybill_3123751061 (1).pdf', 'user' => 'Rahim', 'time' => '08.03.2026 12:48'],
-                                                    ['title' => 'Document added', 'desc' => 'Commercial invoice_3123751061.pdf', 'user' => 'Rahim', 'time' => '08.03.2026 12:47'],
-                                                    ['title' => 'Document added', 'desc' => 'Delivery Note - Temp. gauge for Intermediate Bearing... Africa Bridge.pdf', 'user' => 'Rahim', 'time' => '08.03.2026 12:47'],
-                                                    ['title' => 'Stock item created', 'desc' => '', 'user' => 'Rahim', 'time' => '08.03.2026 12:47'],
-                                                ];
-                                            @endphp
-                                            @foreach($logs as $log)
-                                                <div
-                                                    style="margin-bottom: 20px; border-bottom: 1px solid #f8fafc; padding-bottom: 10px;">
-                                                    <div
-                                                        style="display: flex; justify-content: space-between; align-items: start;">
+                                            @forelse ($crr->changeLogs as $changeLog)
+                                                <div style="border-bottom: 1px solid #f8fafc; padding-bottom: 5px;">
+                                                    <div style="display: flex; justify-content: space-between; align-items: start;">
                                                         <div style="flex: 1;">
-                                                            <span
-                                                                style="font-size: 10px; font-weight: 600; color: #0ea5e9;">{{ $log['title'] }}</span>
-                                                            @if($log['desc'])
+                                                            <span style="font-size: 10px; font-weight: 600; color: #0ea5e9;">{{ $changeLog->title }}</span>
+                                                            @if ($changeLog->description)
                                                                 <div style="font-size: 9px; color: #64748b; margin-top: 2px;">
-                                                                    {{ $log['desc'] }}
+                                                                    {{ $changeLog->description }}
                                                                 </div>
                                                             @endif
                                                         </div>
                                                         <div style="text-align: right; min-width: 80px;">
                                                             <div style="font-size: 10px; color: #334155; font-weight: 500;">
-                                                                {{ $log['user'] }}
+                                                                {{ $changeLog->user?->name ?? 'System' }}
                                                             </div>
-                                                            <div style="font-size: 9px; color: #94a3b8;">{{ $log['time'] }}
+                                                            <div style="font-size: 9px; color: #94a3b8;">
+                                                                {{ $changeLog->created_at->format('d.m.Y H:i') }}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @endforeach
+                                            @empty
+                                                <div style="font-size: 11px; color: #64748b; text-align: center; padding: 20px 0;">
+                                                    No changes recorded yet.
+                                                </div>
+                                            @endforelse
                                         </div>
                                         <div id="location-history" class="panel-tab-content"
                                             style="display: none; padding: 15px;">
