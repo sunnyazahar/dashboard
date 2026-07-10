@@ -37,11 +37,11 @@
                             <span class="pcoded-mtext">Create CRR</span>
                         </a>
                     </li>
-                    <li class="{{ request()->routeIs('etl-stock-items') ? 'active' : '' }}">
+                    <!-- <li class="{{ request()->routeIs('etl-stock-items') ? 'active' : '' }}">
                         <a href="{{route('etl-stock-items')}}">
                             <span class="pcoded-mtext">ETL stock items</span>
                         </a>
-                    </li>
+                    </li> -->
                 </ul>
             </li>
 
