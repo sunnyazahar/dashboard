@@ -10,7 +10,8 @@
             </li>
 
             <li
-                class="pcoded-hasmenu {{ request()->is('stocks*') || request()->routeIs('stock-follow-up', 'pickup-work-list', 'create-crr', 'etl-stock-items') ? 'pcoded-trigger pcoded-item-open' : '' }}">
+                class="pcoded-hasmenu {{ request()->is('stocks*') || request()->routeIs('stock-follow-up', 'pickup-work-list', 'create-crr', 'etl-stock-items') ? 'pcoded-trigger' : '' }}"
+                data-menu-key="stocks">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-sidebar"></i></span>
                     <span class="pcoded-mtext">Stocks</span>
@@ -44,7 +45,7 @@
                 </ul>
             </li>
 
-            <li class="pcoded-hasmenu">
+            <li class="pcoded-hasmenu" data-menu-key="quotes">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
                     <span class="pcoded-mtext">Quotes</span>
@@ -71,7 +72,8 @@
         </ul>
         <ul class="pcoded-item pcoded-left-item">
             <li
-                class="pcoded-hasmenu {{ request()->routeIs('shipments', 'pre-alert-reminders', 'shipment-follow-up', 'cost-follow-up', 'create-shipment') ? 'pcoded-trigger pcoded-item-open' : '' }}">
+                class="pcoded-hasmenu {{ request()->routeIs('shipments', 'pre-alert-reminders', 'shipment-follow-up', 'cost-follow-up', 'create-shipment') ? 'pcoded-trigger' : '' }}"
+                data-menu-key="shipments">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="icofont icofont-ship" style="font-size: 24px;"></i></span>
                     <span class="pcoded-mtext">Shipments</span>
@@ -105,7 +107,8 @@
                 </ul>
             </li>
             <li
-                class="pcoded-hasmenu {{ request()->routeIs('billable-shipments', 'all-invoices', 'all-incoming-invoices', 'all-costs', 'accounting') ? 'pcoded-trigger pcoded-item-open' : '' }}">
+                class="pcoded-hasmenu {{ request()->routeIs('billable-shipments', 'all-invoices', 'all-incoming-invoices', 'all-costs', 'accounting') ? 'pcoded-trigger' : '' }}"
+                data-menu-key="billing">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="icofont icofont-calculator-alt-2"></i></span>
                     <span class="pcoded-mtext">Billing</span>
@@ -138,7 +141,7 @@
                     </li>
                 </ul>
             </li>
-            <li class="pcoded-hasmenu" style="display: none;">
+            <li class="pcoded-hasmenu" style="display: none;" data-menu-key="contacts">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-package"></i></span>
                     <span class="pcoded-mtext">Contacts</span>
@@ -163,7 +166,8 @@
                 </ul>
             </li>
             <li
-                class="pcoded-hasmenu {{ request()->routeIs('offices.*', 'hub.*', 'agents.*', 'other-companies.*', 'suppliers.*', 'customers.*', 'vessels.*', 'contacts.*') ? 'pcoded-trigger pcoded-item-open' : '' }}">
+                class="pcoded-hasmenu {{ request()->routeIs('offices.*', 'hub.*', 'agents.*', 'other-companies.*', 'suppliers.*', 'customers.*', 'vessels.*', 'contacts.*') ? 'pcoded-trigger' : '' }}"
+                data-menu-key="administration">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-command"></i></span>
                     <span class="pcoded-mtext">Administration</span>
@@ -210,3 +214,98 @@
 
     </div>
 </nav>
+
+<script>
+    (function () {
+        var storageKey = 'pcoded-manual-open-menus';
+
+        function getOpenMenus() {
+            try {
+                var raw = localStorage.getItem(storageKey);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveOpenMenus($) {
+            var openMenus = [];
+            $('.pcoded-navbar .pcoded-hasmenu.pcoded-trigger').each(function () {
+                var key = $(this).attr('data-menu-key');
+                if (key) {
+                    openMenus.push(key);
+                }
+            });
+            localStorage.setItem(storageKey, JSON.stringify(openMenus));
+        }
+
+        function restoreOpenMenus($) {
+            var saved = getOpenMenus();
+
+            if (Array.isArray(saved)) {
+                $('.pcoded-navbar .pcoded-hasmenu').removeClass('pcoded-trigger pcoded-item-open');
+                saved.forEach(function (key) {
+                    $('.pcoded-navbar .pcoded-hasmenu[data-menu-key="' + key + '"]')
+                        .addClass('pcoded-trigger pcoded-item-open');
+                });
+                return;
+            }
+
+            // First visit: keep any route-active parent open
+            $('.pcoded-navbar .pcoded-hasmenu').each(function () {
+                if ($(this).find('li.active').length) {
+                    $(this).addClass('pcoded-trigger pcoded-item-open');
+                }
+            });
+            saveOpenMenus($);
+        }
+
+        function enableManualCollapse($) {
+            var $menus = $('.pcoded-navbar .pcoded-hasmenu');
+
+            // Remove theme accordion handlers that auto-close sibling menus
+            $menus.off('click mouseenter mouseleave');
+            $menus.children('a').off('click mouseenter mouseleave');
+
+            $menus.children('a').on('click.pcodedManual', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                var $menu = $(this).closest('.pcoded-hasmenu');
+                $menu.toggleClass('pcoded-trigger pcoded-item-open');
+                saveOpenMenus($);
+
+                return false;
+            });
+        }
+
+        function initManualMenuCollapse($) {
+            restoreOpenMenus($);
+            enableManualCollapse($);
+
+            // Re-apply after theme menu scripts finish binding
+            setTimeout(function () {
+                restoreOpenMenus($);
+                enableManualCollapse($);
+            }, 500);
+        }
+
+        function waitForJQuery(attempt) {
+            if (window.jQuery) {
+                window.jQuery(function ($) {
+                    initManualMenuCollapse($);
+                });
+                return;
+            }
+
+            if (attempt < 60) {
+                setTimeout(function () {
+                    waitForJQuery(attempt + 1);
+                }, 100);
+            }
+        }
+
+        waitForJQuery(0);
+    })();
+</script>
