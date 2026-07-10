@@ -76,8 +76,27 @@ class OtherCompanyController extends Controller
 
     public function destroy(OtherCompany $otherCompany)
     {
-        $otherCompany->delete();
-        return redirect()->route('other-companies.index')->with('success', 'Company deleted.');
+        try {
+            $otherCompany->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Company deleted successfully.',
+                ]);
+            }
+
+            return redirect()->route('other-companies.index')->with('success', 'Company deleted.');
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error deleting company.',
+                ], 500);
+            }
+
+            return redirect()->route('other-companies.index')->with('error', 'Error deleting company.');
+        }
     }
 
     public function createContact($otherCompanyId)

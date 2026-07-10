@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OtherCompany extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'company_name', 'company_type', 'code', 'code_description', 'phone_number', 'email', 'remarks', 'special_considerations',
         'street_address', 'city', 'district_state', 'zip_code', 'country_id', 'port_code',

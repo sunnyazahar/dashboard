@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ asset('files/bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css') }}" />
     <!-- Select 2 css -->
     <link rel="stylesheet" href="{{ asset('files/bower_components/select2/dist/css/select2.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ asset('files/assets/css/sweetalert.css') }}" />
     <style>
         /* Table Styling */
         .table-other-companies {
@@ -375,7 +376,7 @@
                                                                     <td>{{ $isInactive ? 'Inactive' : 'Active' }}</td>
                                                                     <td class="text-right">
                                                                         <a href="{{ route('hub.show', $hub->id) }}" style="color: #ccc; margin-right: 8px;"><i class="ti-pencil"></i></a>
-                                                                        <a href="#" style="color: #ccc;"><i class="ti-trash"></i></a>
+                                                                        <a href="javascript:void(0)" class="delete-hub" data-id="{{ $hub->id }}" data-name="{{ $hub->hub_name }}" style="color: #ccc;" title="Delete hub"><i class="ti-trash"></i></a>
                                                                     </td>
                                                                 </tr>
                                                             @endforeach
@@ -439,6 +440,7 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/assets/js/sweetalert.js') }}"></script>
 
     <script>
         $(document).ready(function() {
@@ -540,6 +542,59 @@
                 $('#filter-hub-country').val(null).trigger('change');
                 $('#filter-hide-inactive').prop('checked', true);
                 table.search('').columns().search('').draw();
+            });
+
+            $(document).on('click', '.delete-hub', function() {
+                var id = $(this).data('id');
+                var name = $(this).data('name') || 'this hub';
+                var $row = $(this).closest('tr');
+
+                swal({
+                    title: 'Delete hub?',
+                    text: 'Are you sure you want to delete "' + name + '"? This can be restored later.',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete',
+                    cancelButtonText: 'Cancel',
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                    showLoaderOnConfirm: true
+                }, function(isConfirm) {
+                    if (!isConfirm) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '{{ url('/hubs') }}/' + id,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                swal({
+                                    title: 'Deleted',
+                                    text: response.message || 'Hub deleted successfully.',
+                                    type: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+
+                                $row.fadeOut(400, function() {
+                                    table.row($row).remove().draw(false);
+                                });
+                            } else {
+                                swal('Error', response.message || 'Error deleting hub.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                                ? xhr.responseJSON.message
+                                : 'An error occurred while deleting the hub.';
+                            swal('Error', message, 'error');
+                        }
+                    });
+                });
             });
         });
     </script>

@@ -572,6 +572,7 @@ Route::post('/hubs', [App\Http\Controllers\HubController::class, 'store'])->name
 
 Route::get('/hubs/{id}', [App\Http\Controllers\HubController::class, 'show'])->name('hub.show');
 Route::put('/hubs/{id}', [App\Http\Controllers\HubController::class, 'update'])->name('hub.update');
+Route::delete('/hubs/{id}', [App\Http\Controllers\HubController::class, 'destroy'])->name('hub.destroy');
 Route::post('/hubs/{id}/documents', [App\Http\Controllers\HubController::class, 'uploadDocument'])->name('hub.documents.upload');
 Route::delete('/hubs/documents/{docId}', [App\Http\Controllers\HubController::class, 'deleteDocument'])->name('hub.documents.delete');
 
@@ -636,6 +637,7 @@ Route::post('/Agents/store', [App\Http\Controllers\AgentController::class, 'stor
 
 Route::get('/Agents/edit/{id}', [App\Http\Controllers\AgentController::class, 'edit'])->name('agents.edit');
 Route::put('/Agents/update/{id}', [App\Http\Controllers\AgentController::class, 'update'])->name('agents.update');
+Route::delete('/Agents/{id}', [App\Http\Controllers\AgentController::class, 'destroy'])->name('agents.destroy');
 Route::delete('/Agents/documents/{id}', [App\Http\Controllers\AgentController::class, 'deleteDocument'])->name('agents.documents.delete');
 
 Route::get('/Agents/{id}/contacts/create', function ($id) {

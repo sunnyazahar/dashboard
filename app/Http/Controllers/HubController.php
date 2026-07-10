@@ -176,6 +176,24 @@ class HubController extends Controller
         return redirect()->route('hub.show', $id)->with('success', 'Hub updated successfully.');
     }
 
+    public function destroy($id)
+    {
+        try {
+            $hub = Hub::findOrFail($id);
+            $hub->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Hub deleted successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting hub.',
+            ], 500);
+        }
+    }
+
     public function uploadDocument(Request $request, $id)
     {
         $request->validate([

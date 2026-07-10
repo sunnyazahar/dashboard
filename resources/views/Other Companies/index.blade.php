@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ asset('files/bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css') }}" />
     <!-- Select 2 css -->
     <link rel="stylesheet" href="{{ asset('files/bower_components/select2/dist/css/select2.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ asset('files/assets/css/sweetalert.css') }}" />
     <style>
         /* Filter Bar Styling */
         .filter-row {
@@ -364,10 +365,9 @@
                                                             <td>
                                                                 <div class="action-icons">
                                                                     <a href="{{ route('other-companies.edit', $company->id) }}"><i class="ti-pencil"></i></a>
-                                                                    <form action="{{ route('other-companies.destroy', $company->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this company?')">
-                                                                        @csrf @method('DELETE')
-                                                                        <button type="submit" style="background:none;border:none;padding:0;cursor:pointer;"><i class="ti-trash"></i></button>
-                                                                    </form>
+                                                                    <a href="javascript:void(0)" class="delete-other-company" data-id="{{ $company->id }}" data-name="{{ $company->company_name }}" title="Delete company">
+                                                                        <i class="ti-trash"></i>
+                                                                    </a>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -431,6 +431,7 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/assets/js/sweetalert.js') }}"></script>
 
     <script>
         $(document).ready(function() {
@@ -532,6 +533,59 @@
                 $('#filter-company-country').val(null).trigger('change');
                 $('#filter-hide-inactive').prop('checked', true);
                 table.search('').columns().search('').draw();
+            });
+
+            $(document).on('click', '.delete-other-company', function() {
+                var id = $(this).data('id');
+                var name = $(this).data('name') || 'this company';
+                var $row = $(this).closest('tr');
+
+                swal({
+                    title: 'Delete company?',
+                    text: 'Are you sure you want to delete "' + name + '"? This can be restored later.',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete',
+                    cancelButtonText: 'Cancel',
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                    showLoaderOnConfirm: true
+                }, function(isConfirm) {
+                    if (!isConfirm) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '{{ url('/other-companies') }}/' + id,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                swal({
+                                    title: 'Deleted',
+                                    text: response.message || 'Company deleted successfully.',
+                                    type: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+
+                                $row.fadeOut(400, function() {
+                                    table.row($row).remove().draw(false);
+                                });
+                            } else {
+                                swal('Error', response.message || 'Error deleting company.', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                                ? xhr.responseJSON.message
+                                : 'An error occurred while deleting the company.';
+                            swal('Error', message, 'error');
+                        }
+                    });
+                });
             });
         });
     </script>

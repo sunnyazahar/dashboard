@@ -144,6 +144,29 @@
             font-size: 12px;
             border-radius: 4px;
             font-weight: 500;
+            cursor: pointer;
+        }
+
+        .remove-account-btn {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .remove-account-btn:hover {
+            color: #ef4444;
+        }
+
+        .remove-account-btn i {
+            font-size: 14px;
         }
 
         .edit-footer {
@@ -936,8 +959,9 @@
                                                                 <div class="form-section-header"
                                                                     style="border: none; margin-bottom: 0; font-size: 13px;">
                                                                     Account Detail #{{ $index + 1 }}</div>
-                                                                <i class="fa fa-times remove-account-btn"
-                                                                    style="cursor: pointer; color: #9ca3af;"></i>
+                                                                <button type="button" class="remove-account-btn" title="Delete account">
+                                                                    <i class="feather icon-trash-2"></i> Delete
+                                                                </button>
                                                             </div>
                                                             <div
                                                                 style="border-bottom: 1px solid #f3f4f6; margin-top: 8px; margin-bottom: 15px;">
@@ -1416,11 +1440,13 @@
                                                 @endforeach
                                             `;
 
-                var newAccount = `
+                var $newAccount = $(`
                                                 <div class="account-block">
                                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                                                         <div class="form-section-header" style="border: none; margin-bottom: 0; font-size: 13px;">Account Detail #${accountCount}</div>
-                                                        <i class="fa fa-times remove-account-btn" style="cursor: pointer; color: #9ca3af;"></i>
+                                                        <button type="button" class="remove-account-btn" title="Delete account">
+                                                            <i class="feather icon-trash-2"></i> Delete
+                                                        </button>
                                                     </div>
                                                     <div style="border-bottom: 1px solid #f3f4f6; margin-top: 8px; margin-bottom: 15px;"></div>
 
@@ -1452,7 +1478,10 @@
                                                         <label class="checkbox-label">Set as main account</label>
                                                     </div>
                                                 </div>
-                                            `;
+                                            `);
+
+                $('#accounts-container').append($newAccount);
+
                 $newAccount.find('.select-custom').select2({
                     width: '100%',
                     dropdownParent: $newAccount.find('.select-custom').parent()

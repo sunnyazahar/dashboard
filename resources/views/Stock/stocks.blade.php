@@ -16,21 +16,6 @@
             border-collapse: collapse;
             background: #fff;
         }
-        .office-table thead th {
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 100 !important;
-            background-color: #fdfdfd !important;
-            color: #374151;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 10px 8px;
-            border-bottom: 2px solid #dee2e6 !important;
-            border-top: 1px solid #e5e7eb !important;
-            white-space: nowrap;
-            text-transform: none;
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); 
-        }
         .office-table tbody td {
             padding: 6px 8px;
             font-size: 11px;
@@ -300,51 +285,168 @@
         .main-body .page-wrapper {
             padding: 5px !important;
         }
+        /* Stocks list: lock page scroll; only table body scrolls */
+        body.stocks-list-page {
+            overflow: hidden !important;
+            height: 100vh;
+        }
+        body.stocks-list-page .pcoded-content {
+            overflow: hidden !important;
+        }
+        body.stocks-list-page .pcoded-inner-content,
+        body.stocks-list-page .main-body,
+        body.stocks-list-page .page-wrapper,
+        body.stocks-list-page .page-body {
+            height: 100%;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .stocks-list-card {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 104px);
+            margin-bottom: 0 !important;
+            overflow: hidden;
+        }
+        body.stock-bulk-footer-visible .stocks-list-card {
+            height: calc(100vh - 160px);
+        }
+        .stocks-list-card > .card-block {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            padding-bottom: 8px !important;
+        }
+        .stocks-filters-fixed {
+            flex-shrink: 0;
+            background: #fff;
+            position: relative;
+            z-index: 40;
+            padding-bottom: 6px;
+        }
+        .stocks-table-area {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .stocks-table-area .dataTables_wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+            padding-bottom: 0 !important;
+        }
+        .stocks-table-area .table-scroll-wrapper {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .stocks-table-area .dataTables_scroll {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            height: 100% !important;
+        }
+        .stocks-table-area .dataTables_scrollHead {
+            flex-shrink: 0 !important;
+            position: relative !important;
+            overflow: hidden !important;
+            background: #fdfdfd;
+            border-bottom: 2px solid #dee2e6;
+            z-index: 5;
+        }
+        .stocks-table-area .dataTables_scrollBody {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-x: auto !important;
+            overflow-y: auto !important;
+        }
+
         /* Table visibility fixes */
         .dt-responsive {
             width: 100%;
         }
         .table-scroll-wrapper {
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: calc(100vh - 150px);
             width: 100%;
             position: relative;
         }
         .office-table {
-            min-width: 1500px; 
-            border-collapse: separate; /* Required for sticky borders */
+            min-width: 1500px;
+            border-collapse: separate;
             border-spacing: 0;
+            width: 100% !important;
         }
-        /* Hide sorting icons for checkbox column */
+        .dataTables_scroll {
+            width: 100%;
+        }
+        .dataTables_scrollHeadInner,
+        .dataTables_scrollHead table {
+            width: 100% !important;
+        }
+        .office-table thead th {
+            position: relative !important;
+            top: auto !important;
+            z-index: auto !important;
+            background-color: #fdfdfd !important;
+            color: #374151;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 10px 8px;
+            border-bottom: 2px solid #dee2e6 !important;
+            border-top: 1px solid #e5e7eb !important;
+            white-space: nowrap;
+            text-transform: none;
+            box-shadow: none;
+        }
         /* Hide sorting icons for checkbox column */
         .office-table thead th:first-child:after,
         .office-table thead th:first-child:before {
             display: none !important;
         }
         .office-table thead th:first-child {
-            padding-right: 10px !important; /* Reset padding usually reserved for arrows */
+            padding-right: 10px !important;
         }
 
         /* Pagination Styling */
         .pagination-sticky-footer {
-            position: sticky;
+            position: fixed !important;
+            left: 0;
+            right: 0;
             bottom: 0;
             padding: 10px 20px;
             background: #ffffff;
             border-top: 1px solid #e9ecef;
-            z-index: 10;
-            margin-top: 0 !important;
+            z-index: 1040;
+            margin: 0 !important;
             box-shadow: 0 -2px 5px rgba(0,0,0,0.03);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        body.stock-bulk-footer-visible .pagination-sticky-footer {
+            bottom: 56px;
         }
         .dataTables_wrapper .dataTables_paginate {
             margin-top: 0 !important;
             padding: 0;
             display: flex;
             justify-content: flex-end;
+            float: none !important;
+            width: 100%;
         }
-        tfoot tr th{
-            font-weight: 600;
+        .dataTables_wrapper {
+            padding-bottom: 0 !important;
         }
 
         .landed-badge {
@@ -429,12 +531,12 @@
             font-weight: 600;
         }
 
-        body.stock-bulk-footer-visible .table-scroll-wrapper {
-            max-height: calc(100vh - 210px);
+        body.stock-bulk-footer-visible {
+            padding-bottom: 104px;
         }
 
-        body.stock-bulk-footer-visible {
-            padding-bottom: 56px;
+        body:not(.stock-bulk-footer-visible) {
+            padding-bottom: 48px;
         }
 
         #bulk-create-shipment:disabled {
@@ -445,7 +547,7 @@
         .stock-copy-toast {
             position: fixed;
             right: 20px;
-            bottom: 20px;
+            bottom: 60px;
             z-index: 1100;
             display: flex;
             align-items: center;
@@ -469,7 +571,7 @@
         }
 
         body.stock-bulk-footer-visible .stock-copy-toast {
-            bottom: 68px;
+            bottom: 116px;
         }
     </style>
 @endsection
@@ -520,7 +622,6 @@
           @include('layouts.top-menu')
                 @include('layouts.left-menu')
                      <!-- Page-body start -->
-                      <br>
                       <div class="pcoded-content" >
                         <div class="pcoded-inner-content">
                         <!-- Main-body start -->
@@ -549,26 +650,27 @@
                                     <!-- Page-body start -->
                                     <div class="page-body">
                                         <!-- Base Style - Compact start -->
-                                        <div class="card">
+                                        <div class="card stocks-list-card">
                                             <div class="card-block">
+                                                <div class="stocks-filters-fixed">
                                                 <div class="d-flex justify-content-between align-items-start pt-2">
                                                     <div style="width: 100%;">
                                                         <!-- Row 1 -->
                                                         <div class="row custom-row filter-row">
                                                             <div class="custom-col" style="flex: 0 0 50px;">
                                                                 <select id="filter-multiselect" multiple="multiple">
-                                                                    <option value="Customer">Customer</option>
-                                                                    <option value="Vessel">Vessel</option>
-                                                                    <option value="Hub/Agent">Hub/Agent</option>
-                                                                    <option value="Status">Status</option>
-                                                                    <option value="PO number">PO number</option>
-                                                                    <option value="Supplier">Supplier</option>
-                                                                    <option value="Stock number">Stock number</option>
-                                                                    <option value="Service reference">Service reference</option>
-                                                                    <option value="Shipment no">Shipment no</option>
-                                                                    <option value="Transit id">Transit id</option>
-                                                                    <option value="Account manager">Account manager</option>
-                                                                    <option value="Office">Office</option>
+                                                                    <option value="Customer" selected>Customer</option>
+                                                                    <option value="Vessel" selected>Vessel</option>
+                                                                    <option value="Hub/Agent" selected>Hub/Agent</option>
+                                                                    <option value="Status" selected>Status</option>
+                                                                    <option value="PO number" selected>PO number</option>
+                                                                    <option value="Supplier" selected>Supplier</option>
+                                                                    <option value="Stock number" selected>Stock number</option>
+                                                                    <option value="Service reference" selected>Service reference</option>
+                                                                    <option value="Shipment no" selected>Shipment no</option>
+                                                                    <option value="Transit id" selected>Transit id</option>
+                                                                    <option value="Account manager" selected>Account manager</option>
+                                                                    <option value="Office" selected>Office</option>
                                                                 </select>
                                                             </div>
                                                             <div id="col-Hub-Agent" class="custom-col" style="flex: 0 0 200px;">
@@ -682,7 +784,9 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                </div>
 
+                                                <div class="stocks-table-area">
                                                 <table id="offices-table"
                                                         class="office-table">
                                                         <thead>
@@ -802,26 +906,8 @@
                                                             </tr>
                                                             @endforelse
                                                         </tbody>
-                                                        <tfoot>
-                                                             <tr>
-                                                                <th> </th>
-                                                                <th>Hub</th>
-                                                                <th>Stock no</th>
-                                                                <th>Customer</th>
-                                                                <th>Vessel</th>
-                                                                <th>Delivery</th>
-                                                                <th>PO numbers</th>
-                                                                <th>Supplier</th>
-                                                                <th>Items</th>
-                                                                <th>Weight</th>
-                                                                <th>Value</th>
-                                                                <th>Cur.</th>
-                                                                <th>Transit id</th>
-                                                                <th>Shipment</th>
-                                                                <th>Status</th>
-                                                            </tr>
-                                                        </tfoot>
                                                     </table>
+                                                </div>
                                             </div>
                                         </div>
                                         <!-- Base Style - Compact end -->
@@ -906,6 +992,8 @@
 
     <script>
         $(document).ready(function() {
+            $('body').addClass('stocks-list-page');
+
             // Initialize Select2 for standard filters
             $('.select2').select2({
                 placeholder: "Click here",
@@ -937,6 +1025,10 @@
                 }
             });
 
+            $('#filter-multiselect').multiselect('selectAll', false);
+            $('#filter-multiselect').multiselect('updateButtonText');
+            toggleFilterVisibility();
+
             function toggleFilterVisibility() {
                 var selectedOptions = $('#filter-multiselect option:selected');
                 var selectedValues = [];
@@ -966,9 +1058,11 @@
                         $('#' + filter.id).hide();
                     }
                 });
+
+                if (typeof table !== 'undefined' && table.columns) {
+                    setTimeout(adjustStockTableLayout, 50);
+                }
             }
-            
-            toggleFilterVisibility();
 
             var table = $('#offices-table').DataTable({
                 "dom": '<"table-scroll-wrapper"rt><"pagination-sticky-footer"p>',
@@ -978,11 +1072,52 @@
                 "searching": true,
                 "ordering": true,
                 "autoWidth": false,
+                "scrollY": '50vh',
+                "scrollX": true,
+                "scrollCollapse": true,
                 "columnDefs": [
                     { "orderable": false, "targets": [0] },
                     { "searchable": false, "targets": [0] }
                 ]
             });
+
+            function getStockTableScrollHeight() {
+                var $tableArea = $('.stocks-table-area');
+                var $scrollHead = $('.dataTables_scrollHead');
+                var areaHeight = $tableArea.length ? $tableArea.innerHeight() : 0;
+                var headHeight = $scrollHead.length ? $scrollHead.outerHeight() : 40;
+                var available = areaHeight - headHeight - 2;
+
+                if (available < 180) {
+                    var topOffset = $scrollHead.length ? $scrollHead.offset().top : 220;
+                    var paginationHeight = $('.pagination-sticky-footer').outerHeight() || 48;
+                    var bulkHeight = $('body').hasClass('stock-bulk-footer-visible')
+                        ? ($('#stock-bulk-footer').outerHeight() || 56)
+                        : 0;
+                    available = window.innerHeight - topOffset - paginationHeight - bulkHeight - 4;
+                }
+
+                return Math.max(180, available);
+            }
+
+            function adjustStockTableLayout() {
+                var height = getStockTableScrollHeight();
+                var $scrollBody = $('.dataTables_scrollBody');
+
+                $scrollBody.css({
+                    height: height + 'px',
+                    maxHeight: height + 'px'
+                });
+
+                table.columns.adjust();
+            }
+
+            $(window).on('resize', function() {
+                adjustStockTableLayout();
+            });
+
+            setTimeout(adjustStockTableLayout, 100);
+            setTimeout(adjustStockTableLayout, 400);
 
             function getFilterText(selector) {
                 return String($(selector).val() || '').toLowerCase().trim();
@@ -1096,9 +1231,10 @@
                 table.columns().search('').draw();
             });
 
-            $('#offices-table thead input[type="checkbox"]').on('change', function() {
+            $(document).on('change', '.dataTables_scrollHead thead input[type="checkbox"], #offices-table thead input[type="checkbox"]', function() {
                 var isChecked = $(this).prop('checked');
-                $('#offices-table tbody input[type="checkbox"]').prop('checked', isChecked);
+                $('.dataTables_scrollHead thead input[type="checkbox"], #offices-table thead input[type="checkbox"]').prop('checked', isChecked);
+                $('#offices-table tbody .row-checkbox').prop('checked', isChecked);
                 updateBulkFooter();
             });
 
@@ -1108,6 +1244,7 @@
 
             table.on('draw', function() {
                 updateBulkFooter();
+                adjustStockTableLayout();
             });
 
             function getSelectedRows() {
@@ -1270,7 +1407,8 @@
                 if (count === 0) {
                     $('#stock-bulk-footer').hide();
                     $('body').removeClass('stock-bulk-footer-visible');
-                    $('#offices-table thead input[type="checkbox"]').prop('checked', false);
+                    $('.dataTables_scrollHead thead input[type="checkbox"], #offices-table thead input[type="checkbox"]').prop('checked', false);
+                    setTimeout(adjustStockTableLayout, 50);
                     return;
                 }
 
@@ -1304,7 +1442,8 @@
 
                 var totalVisible = $('#offices-table tbody .row-checkbox').length;
                 var allChecked = totalVisible > 0 && $checked.length === totalVisible;
-                $('#offices-table thead input[type="checkbox"]').prop('checked', allChecked);
+                $('.dataTables_scrollHead thead input[type="checkbox"], #offices-table thead input[type="checkbox"]').prop('checked', allChecked);
+                setTimeout(adjustStockTableLayout, 50);
             }
 
             $('#bulk-create-shipment').on('click', function() {

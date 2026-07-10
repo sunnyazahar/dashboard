@@ -13,6 +13,7 @@
         href="{{ asset('files/bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css') }}" />
     <!-- Select 2 css -->
     <link rel="stylesheet" href="{{ asset('files/bower_components/select2/dist/css/select2.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ asset('files/assets/css/sweetalert.css') }}" />
     <style>
         /* Filter Bar Styling */
         .filter-row {
@@ -453,7 +454,9 @@
                                                         <a href="{{ route('agents.edit', ['id' => $agent->id]) }}">
                                                             <i class="ti-pencil"></i>
                                                         </a>
-                                                        <i class="ti-trash"></i>
+                                                        <a href="javascript:void(0)" class="delete-agent" data-id="{{ $agent->id }}" data-name="{{ $agent->agent_name }}" title="Delete agent">
+                                                            <i class="ti-trash"></i>
+                                                        </a>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -525,6 +528,7 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/assets/js/sweetalert.js') }}"></script>
 
     <script>
         $(document).ready(function () {
@@ -630,6 +634,59 @@
                 $('#filter-agent-country, #filter-agent-type').val(null).trigger('change');
                 $('#hide-inactive-check').prop('checked', true);
                 table.search('').columns().search('').draw();
+            });
+
+            $(document).on('click', '.delete-agent', function () {
+                var id = $(this).data('id');
+                var name = $(this).data('name') || 'this agent';
+                var $row = $(this).closest('tr');
+
+                swal({
+                    title: 'Delete agent?',
+                    text: 'Are you sure you want to delete "' + name + '"? This can be restored later.',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete',
+                    cancelButtonText: 'Cancel',
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                    showLoaderOnConfirm: true
+                }, function (isConfirm) {
+                    if (!isConfirm) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '{{ url('/Agents') }}/' + id,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                swal({
+                                    title: 'Deleted',
+                                    text: response.message || 'Agent deleted successfully.',
+                                    type: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+
+                                $row.fadeOut(400, function () {
+                                    table.row($row).remove().draw(false);
+                                });
+                            } else {
+                                swal('Error', response.message || 'Error deleting agent.', 'error');
+                            }
+                        },
+                        error: function (xhr) {
+                            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                                ? xhr.responseJSON.message
+                                : 'An error occurred while deleting the agent.';
+                            swal('Error', message, 'error');
+                        }
+                    });
+                });
             });
         });
     </script>

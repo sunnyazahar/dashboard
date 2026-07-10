@@ -207,6 +207,24 @@ class AgentController extends Controller
         return redirect()->route('agents.edit', $id)->with('success', 'Agent updated successfully.');
     }
 
+    public function destroy($id)
+    {
+        try {
+            $agent = Agent::findOrFail($id);
+            $agent->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Agent deleted successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting agent.',
+            ], 500);
+        }
+    }
+
     public function deleteDocument($id)
     {
         $document = \App\Models\AgentDocument::findOrFail($id);

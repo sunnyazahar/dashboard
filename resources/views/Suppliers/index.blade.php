@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ asset('files/bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css') }}" />
     <!-- Select 2 css -->
     <link rel="stylesheet" href="{{ asset('files/bower_components/select2/dist/css/select2.min.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ asset('files/assets/css/sweetalert.css') }}" />
     <style>
         .table-other-companies {
             width: 100%;
@@ -216,7 +217,7 @@
                                                                         <a href="{{ route('suppliers.edit', $supplier->id) }}" style="color: #666; font-size: 14px; margin-right: 5px;">
                                                                             <i class="ti-pencil"></i>
                                                                         </a>
-                                                                        <a href="javascript:void(0)" class="delete-supplier" data-id="{{ $supplier->id }}" style="font-size: 14px; color: #ff5252;">
+                                                                        <a href="javascript:void(0)" class="delete-supplier" data-id="{{ $supplier->id }}" data-name="{{ $supplier->supplier_name }}" style="font-size: 14px; color: #ff5252;" title="Delete supplier">
                                                                             <i class="ti-trash"></i>
                                                                         </a>
                                                                     </td>
@@ -277,6 +278,7 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/assets/js/sweetalert.js') }}"></script>
 
     <script>
         $(document).ready(function() {
@@ -304,29 +306,55 @@
             // Delete supplier AJAX
             $(document).on('click', '.delete-supplier', function() {
                 var id = $(this).data('id');
+                var name = $(this).data('name') || 'this supplier';
                 var $row = $(this).closest('tr');
-                
-                if (confirm('Are you sure you want to delete this supplier?')) {
+
+                swal({
+                    title: 'Delete supplier?',
+                    text: 'Are you sure you want to delete "' + name + '"? This can be restored later.',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete',
+                    cancelButtonText: 'Cancel',
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                    showLoaderOnConfirm: true
+                }, function(isConfirm) {
+                    if (!isConfirm) {
+                        return;
+                    }
+
                     $.ajax({
-                        url: '/Suppliers/' + id,
+                        url: '{{ url('/Suppliers') }}/' + id,
                         type: 'DELETE',
                         data: {
                             _token: '{{ csrf_token() }}'
                         },
                         success: function(response) {
                             if (response.success) {
+                                swal({
+                                    title: 'Deleted',
+                                    text: response.message || 'Supplier deleted successfully.',
+                                    type: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+
                                 $row.fadeOut(400, function() {
                                     table.row($row).remove().draw(false);
                                 });
                             } else {
-                                alert(response.message || 'Error deleting supplier.');
+                                swal('Error', response.message || 'Error deleting supplier.', 'error');
                             }
                         },
-                        error: function() {
-                            alert('An error occurred while deleting the supplier.');
+                        error: function(xhr) {
+                            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                                ? xhr.responseJSON.message
+                                : 'An error occurred while deleting the supplier.';
+                            swal('Error', message, 'error');
                         }
                     });
-                }
+                });
             });
         });
     </script>
