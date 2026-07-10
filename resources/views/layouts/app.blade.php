@@ -55,6 +55,38 @@
             font-weight: 600;
             margin-left: 10px;
         }
+
+        .app-breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-left: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgb(24, 100, 131);
+            line-height: 1.2;
+        }
+
+        .app-breadcrumb-sep {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .app-breadcrumb-link {
+            color: rgb(24, 100, 131) !important;
+            text-decoration: none;
+        }
+
+        .app-breadcrumb-link:hover {
+            text-decoration: underline;
+            color: #006666 !important;
+        }
+
+        .app-breadcrumb-current {
+            color: #1f2937;
+            font-weight: 700;
+        }
     </style>
     @yield('styles')
 </head>

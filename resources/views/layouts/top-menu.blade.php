@@ -19,7 +19,21 @@
                 <li class="header-search">
                     <div class="main-search morphsearch-search">
                         <div class="input-group m-l-10">
-                            <label class="heading-route">{{request()->path()}}</label>
+                            @php
+                                $breadcrumbItems = \App\Support\BreadcrumbBuilder::items();
+                            @endphp
+                            <nav class="app-breadcrumb mt-2" aria-label="Breadcrumb">
+                                @foreach ($breadcrumbItems as $index => $crumb)
+                                    @if ($index > 0)
+                                        <span class="app-breadcrumb-sep">/</span>
+                                    @endif
+                                    @if (!empty($crumb['url']) && !$loop->last)
+                                        <a href="{{ $crumb['url'] }}" class="app-breadcrumb-link">{{ $crumb['label'] }}</a>
+                                    @else
+                                        <span class="app-breadcrumb-current">{{ $crumb['label'] }}</span>
+                                    @endif
+                                @endforeach
+                            </nav>
                         </div>
                     </div>
                 </li>
