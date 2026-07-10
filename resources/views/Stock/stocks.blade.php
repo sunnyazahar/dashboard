@@ -650,7 +650,7 @@
                                     <!-- Page-body start -->
                                     <div class="page-body">
                                         <!-- Base Style - Compact start -->
-                                        <div class="card stocks-list-card">
+                                        <div class="card stocks-list-card mt-4">
                                             <div class="card-block">
                                                 <div class="stocks-filters-fixed">
                                                 <div class="d-flex justify-content-between align-items-start pt-2">
