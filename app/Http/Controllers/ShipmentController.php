@@ -223,6 +223,152 @@ class ShipmentController extends Controller
         ));
     }
 
+    public function costFollowUp()
+    {
+        $shipmentsForOptions = Shipment::with('crrs.customerVessel.customer')
+            ->where('status', '!=', 'Cancelled')
+            ->get(['id', 'account_manager_id', 'created_by']);
+
+        $vesselCustomerMap = Shipment::batchResolveVesselCustomerNames($shipmentsForOptions);
+
+        $customers = $shipmentsForOptions
+            ->flatMap(fn (Shipment $shipment) => $shipment->customerNamesFromVessels($vesselCustomerMap))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $vessels = $shipmentsForOptions
+            ->flatMap(fn (Shipment $shipment) => $shipment->crrs->pluck('vessel_name'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $accountManagers = Contact::query()
+            ->whereIn('id', $shipmentsForOptions->pluck('account_manager_id')->filter()->unique())
+            ->orderBy('name')
+            ->get();
+
+        $creators = User::query()
+            ->whereIn('id', $shipmentsForOptions->pluck('created_by')->filter()->unique())
+            ->orderBy('name')
+            ->get();
+
+        return view('Shipment.cost-follow-up', compact(
+            'customers',
+            'vessels',
+            'accountManagers',
+            'creators',
+        ));
+    }
+
+    public function costFollowUpSearch(Request $request)
+    {
+        $accountManagers = array_values(array_filter((array) $request->input('account_manager', [])));
+        $customers = array_values(array_filter((array) $request->input('customer', [])));
+        $vessels = array_values(array_filter((array) $request->input('vessel', [])));
+        $creators = array_values(array_filter((array) $request->input('created_by', [])));
+        $shipmentNo = trim((string) $request->input('shipment_no', ''));
+        $portDestination = trim((string) $request->input('port_destination', ''));
+
+        $hasFilter = $accountManagers || $customers || $vessels || $creators || $shipmentNo !== '' || $portDestination !== '';
+
+        if (! $hasFilter) {
+            return response()->json(['data' => []]);
+        }
+
+        $query = Shipment::with([
+            'crrs.packages',
+            'crrs.customerVessel.customer',
+            'accountManager.office',
+            'creator',
+            'irregularities',
+            'flights',
+            'seaLegs',
+            'truckLegs',
+            'courierLegs',
+            'releaseLegs',
+            'handCarryLegs',
+            'onBoardLegs',
+        ])
+            ->withMax('preAlertReminderSends as last_reminder_sent_at', 'created_at')
+            ->where('status', '!=', 'Cancelled');
+
+        if ($shipmentNo !== '') {
+            $query->where('shipment_number', 'like', '%' . $shipmentNo . '%');
+        }
+
+        if ($accountManagers) {
+            $query->whereHas('accountManager', fn ($q) => $q->whereIn('name', $accountManagers));
+        }
+
+        if ($creators) {
+            $query->whereHas('creator', fn ($q) => $q->whereIn('name', $creators));
+        }
+
+        if ($vessels) {
+            $query->whereHas('crrs', fn ($q) => $q->whereIn('vessel_name', $vessels));
+        }
+
+        if ($customers) {
+            $query->whereHas('crrs.customerVessel.customer', fn ($q) => $q->whereIn('customer_name', $customers));
+        }
+
+        if ($portDestination !== '') {
+            $like = '%' . $portDestination . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('consignee_port_code', 'like', $like)
+                    ->orWhere('consignee_city', 'like', $like)
+                    ->orWhere('consignee_country', 'like', $like);
+            });
+        }
+
+        $shipments = $query->latest()->get();
+        $partyNames = Shipment::batchResolvePartyNames($shipments);
+        $vesselCustomerMap = Shipment::batchResolveVesselCustomerNames($shipments);
+
+        $data = $shipments->map(function (Shipment $shipment) use ($partyNames, $vesselCustomerMap) {
+            $customerNames = $shipment->customerNamesFromVessels($vesselCustomerMap);
+            $departureDisplay = $shipment->departure_port_code ?: $shipment->partyDisplay($shipment->departure, $partyNames);
+            $consigneeDisplay = $shipment->partyDisplay($shipment->consignee, $partyNames);
+            $etd = $shipment->service_etd;
+            $eta = $shipment->service_eta;
+            $delDate = $shipment->deadline_arrival;
+            $delOverdue = $delDate && $delDate->copy()->startOfDay()->lte(now()->startOfDay());
+            $lastReminderSent = $shipment->last_reminder_sent_at
+                ? Carbon::parse($shipment->last_reminder_sent_at)->format('d.m.Y')
+                : '';
+
+            return [
+                'id' => $shipment->id,
+                'shipment_number' => $shipment->shipment_number,
+                'edit_url' => route('shipments.edit', $shipment->id),
+                'has_open_irregularities' => $shipment->hasOpenIrregularities(),
+                'customer' => $shipment->formatNamesDisplay($customerNames),
+                'vessel' => $shipment->vessel_display,
+                'service' => $shipment->service ?? '—',
+                'service_reference' => $shipment->service_reference_display,
+                'consignee' => $consigneeDisplay,
+                'departure' => $departureDisplay ?: '—',
+                'destination' => $shipment->destination_display,
+                'etd' => $etd?->format('d.m.Y') ?? '—',
+                'eta' => $eta?->format('d.m.Y') ?? '—',
+                'del_date' => $delDate?->format('d.m.Y') ?? '—',
+                'del_overdue' => $delOverdue,
+                'status' => $shipment->status ?? '—',
+                'status_badge_class' => $shipment->statusBadgeClass(),
+                'last_reminder_sent' => $lastReminderSent,
+                'preview_url' => route('shipments.pre-alert-reminder-mail.preview', $shipment->id),
+                'record_url' => route('shipments.pre-alert-reminder-mail.send', $shipment->id),
+                'eml_url' => route('shipments.pre-alert-reminder-mail', $shipment->id),
+                'eml_filename' => 'pre-alert-reminder-' . $shipment->shipment_number . '.eml',
+            ];
+        })->values();
+
+        return response()->json(['data' => $data]);
+    }
+
     public function preAlertReminderMailPreview($id, PreAlertReminderMailService $reminderMailService)
     {
         $shipment = Shipment::with([

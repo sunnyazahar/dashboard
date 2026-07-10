@@ -93,9 +93,8 @@ Route::get('/shipments/{id}/pre-alert-reminder-mail', [App\Http\Controllers\Ship
 
 Route::get('/shipment-follow-up', [App\Http\Controllers\ShipmentController::class, 'shipmentFollowUp'])->name('shipment-follow-up');
 
-Route::get('/cost-follow-up', function () {
-    return view('Shipment.cost-follow-up');
-})->name('cost-follow-up');
+Route::get('/cost-follow-up', [App\Http\Controllers\ShipmentController::class, 'costFollowUp'])->name('cost-follow-up');
+Route::get('/cost-follow-up/search', [App\Http\Controllers\ShipmentController::class, 'costFollowUpSearch'])->name('cost-follow-up.search');
 
 Route::get('/billable-shipments', function () {
     return view('Billing.billable-shipments');
