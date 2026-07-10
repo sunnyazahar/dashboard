@@ -292,7 +292,7 @@ class ShipmentController extends Controller
             'handCarryLegs',
             'onBoardLegs',
         ])
-            ->withMax('preAlertReminderSends as last_reminder_sent_at', 'created_at')
+            ->withCount('preAlertReminderSends as reminder_sent_count')
             ->where('status', '!=', 'Cancelled');
 
         if ($shipmentNo !== '') {
@@ -336,9 +336,6 @@ class ShipmentController extends Controller
             $eta = $shipment->service_eta;
             $delDate = $shipment->deadline_arrival;
             $delOverdue = $delDate && $delDate->copy()->startOfDay()->lte(now()->startOfDay());
-            $lastReminderSent = $shipment->last_reminder_sent_at
-                ? Carbon::parse($shipment->last_reminder_sent_at)->format('d.m.Y')
-                : '';
 
             return [
                 'id' => $shipment->id,
@@ -358,7 +355,7 @@ class ShipmentController extends Controller
                 'del_overdue' => $delOverdue,
                 'status' => $shipment->status ?? '—',
                 'status_badge_class' => $shipment->statusBadgeClass(),
-                'last_reminder_sent' => $lastReminderSent,
+                'reminder_sent_count' => (int) ($shipment->reminder_sent_count ?? 0),
                 'preview_url' => route('shipments.pre-alert-reminder-mail.preview', $shipment->id),
                 'record_url' => route('shipments.pre-alert-reminder-mail.send', $shipment->id),
                 'eml_url' => route('shipments.pre-alert-reminder-mail', $shipment->id),

@@ -15,9 +15,10 @@
     <style>
         #offices-table {
             width: 100% !important;
+            min-width: 1500px;
+            table-layout: fixed;
             border-collapse: separate !important;
             border-spacing: 0 !important;
-            min-width: 1500px;
             background: #fff;
         }
         #offices-table tbody td {
@@ -27,10 +28,41 @@
             border-bottom: 1px solid #f3f4f6;
             vertical-align: middle;
             white-space: nowrap !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         #offices-table th, #offices-table td {
             white-space: nowrap !important;
+            box-sizing: border-box !important;
         }
+        #offices-table th:nth-child(1),
+        #offices-table td:nth-child(1) { width: 120px; min-width: 120px; max-width: 120px; }
+        #offices-table th:nth-child(2),
+        #offices-table td:nth-child(2) { width: 160px; min-width: 160px; max-width: 160px; }
+        #offices-table th:nth-child(3),
+        #offices-table td:nth-child(3) { width: 130px; min-width: 130px; max-width: 130px; }
+        #offices-table th:nth-child(4),
+        #offices-table td:nth-child(4) { width: 100px; min-width: 100px; max-width: 100px; }
+        #offices-table th:nth-child(5),
+        #offices-table td:nth-child(5) { width: 130px; min-width: 130px; max-width: 130px; }
+        #offices-table th:nth-child(6),
+        #offices-table td:nth-child(6) { width: 120px; min-width: 120px; max-width: 120px; }
+        #offices-table th:nth-child(7),
+        #offices-table td:nth-child(7) { width: 70px; min-width: 70px; max-width: 70px; }
+        #offices-table th:nth-child(8),
+        #offices-table td:nth-child(8) { width: 70px; min-width: 70px; max-width: 70px; }
+        #offices-table th:nth-child(9),
+        #offices-table td:nth-child(9) { width: 90px; min-width: 90px; max-width: 90px; }
+        #offices-table th:nth-child(10),
+        #offices-table td:nth-child(10) { width: 90px; min-width: 90px; max-width: 90px; }
+        #offices-table th:nth-child(11),
+        #offices-table td:nth-child(11) { width: 90px; min-width: 90px; max-width: 90px; }
+        #offices-table th:nth-child(12),
+        #offices-table td:nth-child(12) { width: 100px; min-width: 100px; max-width: 100px; }
+        #offices-table th:nth-child(13),
+        #offices-table td:nth-child(13) { width: 90px; min-width: 90px; max-width: 90px; }
+        #offices-table th:nth-child(14),
+        #offices-table td:nth-child(14) { width: 120px; min-width: 120px; max-width: 120px; }
         .btn-teal {
             background-color: #008080;
             border-color: #008080;
@@ -309,69 +341,19 @@
             min-height: 0;
             height: 100%;
             padding-bottom: 0 !important;
+            width: 100%;
         }
         .cost-table-area .table-scroll-wrapper {
             flex: 1;
             min-height: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            overflow: auto !important;
             width: 100%;
             position: relative;
         }
-        .cost-table-area .dataTables_scroll {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-height: 0;
-            height: 100% !important;
-            width: 100%;
-        }
-        .cost-table-area .dataTables_scrollHead {
-            flex-shrink: 0 !important;
-            position: relative !important;
-            overflow: hidden !important;
-            background: #fdfdfd;
-            border-bottom: 2px solid #dee2e6;
-            z-index: 5;
-            margin-bottom: 0 !important;
-        }
-        .cost-table-area .dataTables_scrollBody {
-            flex: 1 1 auto !important;
-            min-height: 0 !important;
-            overflow-x: auto !important;
-            overflow-y: auto !important;
-            margin-top: 0 !important;
-            border-top: none !important;
-        }
-        .cost-table-area .dataTables_scrollBody > table > thead,
-        .cost-table-area .dataTables_scrollBody thead {
-            height: 0 !important;
-            line-height: 0 !important;
-            visibility: collapse !important;
-        }
-        .cost-table-area .dataTables_scrollBody thead tr,
-        .cost-table-area .dataTables_scrollBody thead th {
-            height: 0 !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            border: none !important;
-            line-height: 0 !important;
-            font-size: 0 !important;
-            overflow: hidden !important;
-        }
-        .cost-table-area .dataTables_scrollBody thead th:before,
-        .cost-table-area .dataTables_scrollBody thead th:after {
-            display: none !important;
-        }
-        .dataTables_scrollHeadInner,
-        .dataTables_scrollHead table {
-            width: 100% !important;
-        }
         #offices-table thead th {
-            position: relative !important;
-            top: auto !important;
-            z-index: auto !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 5 !important;
             background-color: #fdfdfd !important;
             color: #374151;
             font-size: 11px;
@@ -381,7 +363,10 @@
             border-top: 1px solid #e5e7eb !important;
             white-space: nowrap;
             text-transform: none;
-            box-shadow: none;
+            box-shadow: 0 1px 0 #dee2e6;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .pagination-sticky-footer {
             position: fixed !important;
@@ -561,7 +546,7 @@
 
                                                 <div class="cost-table-area">
                                                     <table id="offices-table"
-                                                        class="table">
+                                                        class="table office-table mb-0">
                                                         <thead>
                                                             <tr>
                                                                 <th>Shipment no.</th>
@@ -710,55 +695,51 @@
 
             toggleFilterVisibility();
 
-            var table = $('#offices-table').DataTable({
+            var table;
+
+            function adjustCostTableLayout() {
+                if (!table || !table.columns) {
+                    return;
+                }
+
+                table.columns.adjust();
+            }
+
+            table = $('#offices-table').DataTable({
                 "dom": '<"table-scroll-wrapper"rt><"pagination-sticky-footer"p>',
                 "lengthChange": false,
                 "pageLength": 100,
                 "responsive": false,
-                "searching": true,
+                "searching": false,
                 "ordering": true,
                 "autoWidth": false,
-                "scrollY": '50vh',
-                "scrollX": true,
-                "scrollCollapse": true,
                 "columnDefs": [
-                    { "targets": [13], "orderable": false }
+                    { "targets": 0, "width": "120px" },
+                    { "targets": 1, "width": "160px" },
+                    { "targets": 2, "width": "130px" },
+                    { "targets": 3, "width": "100px" },
+                    { "targets": 4, "width": "130px" },
+                    { "targets": 5, "width": "120px" },
+                    { "targets": 6, "width": "70px" },
+                    { "targets": 7, "width": "70px" },
+                    { "targets": 8, "width": "90px" },
+                    { "targets": 9, "width": "90px" },
+                    { "targets": 10, "width": "90px" },
+                    { "targets": 11, "width": "100px" },
+                    { "targets": 12, "width": "90px" },
+                    { "targets": 13, "width": "120px", "orderable": false }
                 ],
                 "language": {
                     "paginate": {
                         "previous": "<",
                         "next": ">"
-                    }
+                    },
+                    "emptyTable": "Use filters to search shipments"
+                },
+                "drawCallback": function() {
+                    this.api().columns.adjust();
                 }
             });
-
-            function getCostTableScrollHeight() {
-                var $tableArea = $('.cost-table-area');
-                var $scrollHead = $('.dataTables_scrollHead');
-                var areaHeight = $tableArea.length ? $tableArea.innerHeight() : 0;
-                var headHeight = $scrollHead.length ? $scrollHead.outerHeight() : 40;
-                var available = areaHeight - headHeight - 2;
-
-                if (available < 180) {
-                    var topOffset = $scrollHead.length ? $scrollHead.offset().top : 220;
-                    var paginationHeight = $('.pagination-sticky-footer').outerHeight() || 48;
-                    available = window.innerHeight - topOffset - paginationHeight - 4;
-                }
-
-                return Math.max(180, available);
-            }
-
-            function adjustCostTableLayout() {
-                var height = getCostTableScrollHeight();
-                var $scrollBody = $('.dataTables_scrollBody');
-
-                $scrollBody.css({
-                    height: height + 'px',
-                    maxHeight: height + 'px'
-                });
-
-                table.columns.adjust();
-            }
 
             $(window).on('resize', function() {
                 adjustCostTableLayout();
@@ -821,7 +802,7 @@
                     escapeHtml(row.eta),
                     '<span' + delDateStyle + '>' + escapeHtml(row.del_date) + '</span>',
                     '<span class="' + escapeHtml(row.status_badge_class) + '" style="padding: 4px 8px; font-weight: 500;">' + escapeHtml(row.status) + '</span>',
-                    '<span class="reminder-sent-date" data-shipment-id="' + escapeHtml(row.id) + '">' + escapeHtml(row.last_reminder_sent) + '</span>',
+                    '<span class="reminder-sent-count" data-shipment-id="' + escapeHtml(row.id) + '">' + escapeHtml(row.reminder_sent_count || 0) + '</span>',
                     '<button type="button" class="btn btn-outline-teal py-1 px-2 send-reminder-btn" style="font-size: 11px; height: 26px; border-color: #ddd; background: #fff;"'
                         + ' data-shipment-id="' + escapeHtml(row.id) + '"'
                         + ' data-preview-url="' + escapeHtml(row.preview_url) + '"'
@@ -855,6 +836,7 @@
                     url: searchUrl,
                     method: 'GET',
                     data: filters,
+                    traditional: true,
                     dataType: 'json'
                 }).done(function(response) {
                     var rows = (response && response.data) ? response.data : [];
@@ -866,6 +848,7 @@
 
                     table.draw(false);
                     setTimeout(adjustCostTableLayout, 50);
+                    setTimeout(adjustCostTableLayout, 200);
                 }).fail(function(xhr) {
                     if (xhr.statusText === 'abort') {
                         return;
@@ -879,7 +862,7 @@
                 searchTimer = setTimeout(fetchFilteredShipments, 300);
             }
 
-            $('#filter-shipment-no, #filter-port-destination').on('keyup', scheduleFetch);
+            $('#filter-shipment-no, #filter-port-destination').on('keyup input', scheduleFetch);
             $('#filter-customer, #filter-vessel, #filter-account-manager, #filter-created-by').on('change', scheduleFetch);
 
             $('.clear-filters').on('click', function(e) {
@@ -953,17 +936,19 @@
                                 _token: '{{ csrf_token() }}'
                             }
                         }).done(function(response) {
-                            var sentAt = response && response.sent_at ? response.sent_at : '';
-                            if (sentAt) {
-                                $('.reminder-sent-date[data-shipment-id="' + shipmentId + '"]').text(sentAt);
+                            if (response && typeof response.reminder_sent_count !== 'undefined') {
+                                $('.reminder-sent-count[data-shipment-id="' + shipmentId + '"]').text(response.reminder_sent_count);
                             }
                         }).always(function() {
                             $btn.prop('disabled', false);
                         });
                     })
-                    .fail(function() {
+                    .fail(function(xhr) {
                         $btn.prop('disabled', false);
-                        alert('Unable to prepare reminder email.');
+                        var message = (xhr.responseJSON && xhr.responseJSON.message)
+                            ? xhr.responseJSON.message
+                            : 'Unable to prepare reminder email.';
+                        alert(message);
                     });
             });
         });
