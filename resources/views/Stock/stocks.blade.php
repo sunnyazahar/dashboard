@@ -364,12 +364,36 @@
             background: #fdfdfd;
             border-bottom: 2px solid #dee2e6;
             z-index: 5;
+            margin-bottom: 0 !important;
         }
         .stocks-table-area .dataTables_scrollBody {
             flex: 1 1 auto !important;
             min-height: 0 !important;
             overflow-x: auto !important;
             overflow-y: auto !important;
+            margin-top: 0 !important;
+            border-top: none !important;
+        }
+        /* Collapse the cloned/hidden header inside the scroll body to remove the gap */
+        .stocks-table-area .dataTables_scrollBody > table > thead,
+        .stocks-table-area .dataTables_scrollBody thead {
+            height: 0 !important;
+            line-height: 0 !important;
+            visibility: collapse !important;
+        }
+        .stocks-table-area .dataTables_scrollBody thead tr,
+        .stocks-table-area .dataTables_scrollBody thead th {
+            height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border: none !important;
+            line-height: 0 !important;
+            font-size: 0 !important;
+            overflow: hidden !important;
+        }
+        .stocks-table-area .dataTables_scrollBody thead th:before,
+        .stocks-table-area .dataTables_scrollBody thead th:after {
+            display: none !important;
         }
 
         /* Table visibility fixes */

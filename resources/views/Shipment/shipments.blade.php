@@ -16,11 +16,12 @@
             width: 100% !important;
             border-collapse: separate !important;
             border-spacing: 0 !important;
+            min-width: 1400px;
         }
         #offices-table thead th {
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 100 !important;
+            position: relative !important;
+            top: auto !important;
+            z-index: auto !important;
             background-color: #fdfdfd !important;
             color: #374151;
             font-size: 11px;
@@ -30,7 +31,7 @@
             border-top: 1px solid #e5e7eb !important;
             white-space: nowrap;
             text-transform: none;
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); 
+            box-shadow: none;
         }
         #offices-table tbody td {
             padding: 6px 8px !important;
@@ -248,28 +249,123 @@
             border-color: #cbd5e1;
         }
         
-        .table-scroll-wrapper {
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: calc(100vh - 150px);
+        /* Shipments list: lock page scroll; only table body scrolls */
+        body.shipments-list-page {
+            overflow: hidden !important;
+            height: 100vh;
+        }
+        body.shipments-list-page .pcoded-content {
+            overflow: hidden !important;
+        }
+        body.shipments-list-page .pcoded-inner-content,
+        body.shipments-list-page .main-body,
+        body.shipments-list-page .page-wrapper,
+        body.shipments-list-page .page-body {
+            height: 100%;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .shipments-list-card {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 104px);
+            margin-bottom: 0 !important;
+            overflow: hidden;
+        }
+        .shipments-list-card > .card-block {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            padding-bottom: 8px !important;
+        }
+        .shipments-filters-fixed {
+            flex-shrink: 0;
+            background: #fff;
+            position: relative;
+            z-index: 40;
+            padding-bottom: 6px;
+        }
+        .shipments-table-area {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .shipments-table-area .dataTables_wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+            padding-bottom: 0 !important;
+        }
+        .shipments-table-area .table-scroll-wrapper {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             width: 100%;
             position: relative;
         }
+        .shipments-table-area .dataTables_scroll {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            height: 100% !important;
+            width: 100%;
+        }
+        .shipments-table-area .dataTables_scrollHead {
+            flex-shrink: 0 !important;
+            position: relative !important;
+            overflow: hidden !important;
+            background: #fdfdfd;
+            border-bottom: 2px solid #dee2e6;
+            z-index: 5;
+        }
+        .shipments-table-area .dataTables_scrollHeadInner,
+        .shipments-table-area .dataTables_scrollHead table {
+            width: 100% !important;
+        }
+        .shipments-table-area .dataTables_scrollBody {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-x: auto !important;
+            overflow-y: auto !important;
+        }
+
         .pagination-sticky-footer {
-            position: sticky;
+            position: fixed !important;
+            left: 0;
+            right: 0;
             bottom: 0;
             padding: 10px 20px;
             background: #ffffff;
             border-top: 1px solid #e9ecef;
-            z-index: 10;
-            margin-top: 0 !important;
+            z-index: 1040;
+            margin: 0 !important;
             box-shadow: 0 -2px 5px rgba(0,0,0,0.03);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
         }
         .dataTables_wrapper .dataTables_paginate {
             margin-top: 0 !important;
             padding: 0;
             display: flex;
             justify-content: flex-end;
+            float: none !important;
+            width: 100%;
+        }
+        body.shipments-list-page {
+            padding-bottom: 48px;
         }
         /* Reduce gap/margin between sidebar and content */
         .pcoded-inner-content {
@@ -420,7 +516,6 @@
           @include('layouts.top-menu')
                 @include('layouts.left-menu')
                      <!-- Page-body start -->
-                      <br>
                       <div class="pcoded-content">
                         <div class="pcoded-inner-content">
                         <!-- Main-body start -->
@@ -435,26 +530,27 @@
                                     <!-- Page-body start -->
                                     <div class="page-body">
                                         <!-- Base Style - Compact start -->
-                                        <div class="card">
+                                        <div class="card shipments-list-card mt-4">
                                             <div class="card-block">
+                                                <div class="shipments-filters-fixed">
                                                 <div class="d-flex justify-content-between align-items-start pt-2">
                                                     <div style="width: 80%;">
                                                         <div class="row no-gutters filter-row">
                                                             <div class="mr-2" style="margin-top: 2px;">
                                                                 <select id="filter-multiselect" multiple="multiple">
-                                                                    <option value="Customer">Customer</option>
-                                                                    <option value="Vessel">Vessel</option>
-                                                                    <option value="Shipment no">Shipment no</option>
-                                                                    <option value="Service reference number">Service reference number</option>
-                                                                    <option value="PO number">PO number</option>
-                                                                    <option value="Departure hub">Departure hub</option>
-                                                                    <option value="Consignee">Consignee</option>
-                                                                    <option value="Port of destination">Port of destination</option>
-                                                                    <option value="Account manager">Account manager</option>
-                                                                    <option value="Created by">Created by</option>
-                                                                    <option value="Office">Office</option>
-                                                                    <option value="Creation date">Creation date</option>
-                                                                    <option value="Service">Service</option>
+                                                                    <option value="Customer" selected>Customer</option>
+                                                                    <option value="Vessel" selected>Vessel</option>
+                                                                    <option value="Shipment no" selected>Shipment no</option>
+                                                                    <option value="Service reference number" selected>Service reference number</option>
+                                                                    <option value="PO number" selected>PO number</option>
+                                                                    <option value="Departure hub" selected>Departure hub</option>
+                                                                    <option value="Consignee" selected>Consignee</option>
+                                                                    <option value="Port of destination" selected>Port of destination</option>
+                                                                    <option value="Account manager" selected>Account manager</option>
+                                                                    <option value="Created by" selected>Created by</option>
+                                                                    <option value="Office" selected>Office</option>
+                                                                    <option value="Creation date" selected>Creation date</option>
+                                                                    <option value="Service" selected>Service</option>
                                                                 </select>
                                                             </div>
                                                             <div id="col-Customer" class="custom-col" style="flex: 0 0 250px;">
@@ -577,7 +673,9 @@
                                                      <a href="{{ route('create-shipment') }}" class="btn btn-teal ml-2">Create shipment</a>
                                                 </div>
                                             </div>
-                                                <div class="table-scroll-wrapper">
+                                                </div>
+
+                                                <div class="shipments-table-area">
                                                     <table id="offices-table"
                                                         class="office-table">
                                                         <thead>
@@ -660,21 +758,6 @@
                                                             </tr>
                                                             @endforelse
                                                         </tbody>
-                                                        <tfoot>
-                                                            <tr>
-                                                                <th>Shipment No</th>
-                                                                <th>Customer</th>
-                                                                <th>Vessel</th>
-                                                                <th>Service</th>
-                                                                <th>Service Reference</th>
-                                                                <th>Consignee</th>
-                                                                <th>Departure</th>
-                                                                <th>Destination</th>
-                                                                <th>Deadline</th>
-                                                                <th>PA Reminder</th>
-                                                                <th>Status</th>
-                                                            </tr>
-                                                        </tfoot>
                                                     </table>
                                                 </div>
                                             </div>
@@ -735,6 +818,8 @@
 
     <script>
         $(document).ready(function() {
+            $('body').addClass('shipments-list-page');
+
             // Initialize Select2 for standard filters
             $('.select2').select2({
                 placeholder: "Click here",
@@ -766,6 +851,10 @@
                     toggleFilterVisibility();
                 }
             });
+
+            $('#filter-multiselect').multiselect('selectAll', false);
+            $('#filter-multiselect').multiselect('updateButtonText');
+            toggleFilterVisibility();
 
             function toggleFilterVisibility() {
                 var selectedOptions = $('#filter-multiselect option:selected');
@@ -801,10 +890,11 @@
                         $('#' + filter.id).hide();
                     }
                 });
+
+                if (typeof table !== 'undefined' && table.columns) {
+                    setTimeout(adjustShipmentsTableLayout, 50);
+                }
             }
-            
-            // Initial call to set visibility state
-            toggleFilterVisibility();
 
             var table = $('#offices-table').DataTable({
                 "dom": '<"table-scroll-wrapper"rt><"pagination-sticky-footer"p>',
@@ -813,7 +903,49 @@
                 "responsive": false,
                 "searching": true,
                 "ordering": true,
-                "autoWidth": false
+                "autoWidth": false,
+                "scrollY": '50vh',
+                "scrollX": true,
+                "scrollCollapse": true
+            });
+
+            function getShipmentsTableScrollHeight() {
+                var $tableArea = $('.shipments-table-area');
+                var $scrollHead = $('.dataTables_scrollHead');
+                var areaHeight = $tableArea.length ? $tableArea.innerHeight() : 0;
+                var headHeight = $scrollHead.length ? $scrollHead.outerHeight() : 40;
+                var available = areaHeight - headHeight - 2;
+
+                if (available < 180) {
+                    var topOffset = $scrollHead.length ? $scrollHead.offset().top : 220;
+                    var paginationHeight = $('.pagination-sticky-footer').outerHeight() || 48;
+                    available = window.innerHeight - topOffset - paginationHeight - 4;
+                }
+
+                return Math.max(180, available);
+            }
+
+            function adjustShipmentsTableLayout() {
+                var height = getShipmentsTableScrollHeight();
+                var $scrollBody = $('.dataTables_scrollBody');
+
+                $scrollBody.css({
+                    height: height + 'px',
+                    maxHeight: height + 'px'
+                });
+
+                table.columns.adjust();
+            }
+
+            $(window).on('resize', function() {
+                adjustShipmentsTableLayout();
+            });
+
+            setTimeout(adjustShipmentsTableLayout, 100);
+            setTimeout(adjustShipmentsTableLayout, 400);
+
+            table.on('draw', function() {
+                adjustShipmentsTableLayout();
             });
 
             function rowData($row, key) {
