@@ -150,7 +150,7 @@
                         <div class="page-wrapper">
                             <div class="page-body">
                                 <div class="card mt-5" style="border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                                    <form
+                                    <form id="otherCompanyContactForm"
                                         action="{{ route('other-companies.contacts.update', [$otherCompany->id, $contact->id]) }}"
                                         method="POST">
                                         @csrf
@@ -217,4 +217,8 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/vartical-layout.min.js') }}"></script>
     <script type="text/javascript" src="{{ asset('files/assets/js/jquery.mCustomScrollbar.concat.min.js') }}"></script>
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
+@include('partials.unsaved-changes-guard', [
+    'formSelector' => '#otherCompanyContactForm',
+    'fallbackUrl' => route('other-companies.edit', $otherCompany->id),
+])
 @endsection

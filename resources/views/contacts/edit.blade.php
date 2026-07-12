@@ -540,4 +540,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#contactForm', 'fallbackUrl' => route('customers.edit', $contact->customer_id)])
 @endsection

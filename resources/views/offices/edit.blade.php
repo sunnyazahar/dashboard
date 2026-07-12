@@ -170,13 +170,18 @@
         }
 
         .edit-footer {
-            background: #fff;
-            padding: 20px 30px;
-            border-top: 1px solid #f3f4f6;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.98);
             display: flex;
             align-items: center;
             gap: 20px;
-            margin-top: -5px;
+            border-top: 1px solid #dee2e6;
+            position: fixed;
+            bottom: 0;
+            left: 185px;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
         }
 
         .btn-save-custom {
@@ -195,6 +200,14 @@
             text-decoration: none;
             font-size: 13px;
             font-weight: 500;
+        }
+
+        .btn-cancel-custom:hover {
+            text-decoration: underline;
+        }
+
+        #office-details.tab-pane.active {
+            padding-bottom: 72px;
         }
 
         /* Summary Header Styles */
@@ -253,18 +266,16 @@
             background: #fff;
         }
 
-        /* Audit Info Styles */
-        .audit-info {
-            position: absolute;
-            right: 30px;
-            bottom: 20px;
+        .edit-footer .audit-info {
+            margin-left: auto;
+            position: static;
             text-align: right;
             font-size: 11px;
             color: #9ca3af;
             line-height: 1.4;
         }
 
-        .audit-info b {
+        .edit-footer .audit-info b {
             color: #6b7280;
         }
 
@@ -727,7 +738,7 @@
 
                                 <!-- Tab Content -->
                                 <div id="office-details" class="tab-pane active">
-                                    <form action="{{ route('offices.update', $office->id) }}" method="POST">
+                                    <form id="officeEditForm" action="{{ route('offices.update', $office->id) }}" method="POST">
                                         @csrf
                                         @method('PUT')
                                         <!-- 4-Pillar Form Content -->
@@ -1009,16 +1020,15 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Audit Info -->
-                                            <div class="audit-info">
-                                                @include('partials.audit-info', ['record' => $office, 'bold' => true])
-                                            </div>
                                         </div>
 
                                         <!-- Footer Actions -->
                                         <div class="edit-footer">
                                             <button type="submit" class="btn-save-custom">Save office</button>
                                             <a href="{{ route('offices.index') }}" class="btn-cancel-custom">Cancel</a>
+                                            <div class="audit-info">
+                                                @include('partials.audit-info', ['record' => $office, 'bold' => true])
+                                            </div>
                                         </div>
                                     </form>
                                 </div>
@@ -1389,6 +1399,17 @@
 
     <script>
         $(document).ready(function () {
+            function fixedFooterOffset() {
+                var $navbar = $('.pcoded-navbar');
+                var sidebarWidth = $navbar.length ? $navbar.outerWidth() : 0;
+                $('.edit-footer').css('left', sidebarWidth + 'px');
+            }
+            fixedFooterOffset();
+            $(window).on('resize', fixedFooterOffset);
+            $(document).on('click', '.mobile-menu, .pcoded-navbar .pcoded-navigatio-lavel, .navbar-wrapper .menu-toggle', function () {
+                setTimeout(fixedFooterOffset, 300);
+            });
+
             // Select2 Flag Formatter
             function formatFlag(state) {
                 if (!state.id) return state.text;
@@ -1509,4 +1530,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#officeEditForm', 'fallbackUrl' => route('offices.index')])
 @endsection

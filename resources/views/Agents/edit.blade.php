@@ -1593,4 +1593,5 @@
             }
         }
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#agentEditForm', 'fallbackUrl' => route('agents.index')])
 @endsection

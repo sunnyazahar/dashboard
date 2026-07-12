@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 use App\Models\OtherCompany;
 use App\Models\Country;
@@ -37,14 +36,19 @@ class OtherCompanyController extends Controller
     {
         $request->validate([
             'company_name' => 'required|string|max:255',
-            'company_type' => ['nullable', 'string', Rule::in($this->companyTypeOptions())],
+            'company_type' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone_number' => 'nullable|string|max:255',
             'country_id' => 'nullable|exists:countries,id',
             'office_country_id' => 'nullable|exists:countries,id',
         ]);
 
-        OtherCompany::create($request->except('_token'));
+        OtherCompany::create($request->only([
+            'company_name', 'company_type', 'code', 'code_description', 'phone_number', 'email',
+            'remarks', 'special_considerations', 'street_address', 'city', 'district_state', 'zip_code',
+            'country_id', 'port_code', 'office_street_address', 'office_city', 'office_district_state',
+            'office_zip_code', 'office_country_id', 'vat_number', 'eori_number', 'currency', 'un_locode',
+        ]));
 
         return redirect()->route('other-companies.index')->with('success', 'Company created successfully.');
     }
@@ -63,16 +67,29 @@ class OtherCompanyController extends Controller
     {
         $request->validate([
             'company_name'      => 'required|string|max:255',
-            'company_type'      => ['nullable', 'string', Rule::in($this->companyTypeOptions())],
+            'company_type'      => 'nullable|string|max:255',
             'email'             => 'nullable|email|max:255',
             'phone_number'      => 'nullable|string|max:255',
             'country_id'        => 'nullable|exists:countries,id',
             'office_country_id' => 'nullable|exists:countries,id',
         ]);
 
-        $otherCompany->update($request->except(['_token', '_method']));
+        $otherCompany->fill($request->only([
+            'company_name', 'company_type', 'code', 'code_description', 'phone_number', 'email',
+            'remarks', 'special_considerations', 'street_address', 'city', 'district_state', 'zip_code',
+            'country_id', 'port_code', 'office_street_address', 'office_city', 'office_district_state',
+            'office_zip_code', 'office_country_id', 'vat_number', 'eori_number', 'currency', 'un_locode',
+        ]));
 
-        return redirect()->back()->with('success', 'Company updated successfully.');
+        if (blank($otherCompany->created_by)) {
+            $otherCompany->created_by = auth()->id();
+        }
+        $otherCompany->updated_by = auth()->id();
+        $otherCompany->save();
+
+        return redirect()
+            ->route('other-companies.edit', $otherCompany->id)
+            ->with('success', 'Company updated successfully.');
     }
 
     public function destroy(OtherCompany $otherCompany)

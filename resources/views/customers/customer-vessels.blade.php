@@ -258,12 +258,13 @@
 
         /* Metadata footer */
         .metadata-footer {
+            margin-left: auto;
             text-align: right;
-            margin-top: 50px;
-            font-size: 10px;
+            font-size: 11px;
             color: #999;
             line-height: 1.4;
-            padding-bottom: 20px;
+            margin-top: 0;
+            padding-bottom: 0;
         }
 
         /* Action Buttons footer */
@@ -271,13 +272,21 @@
             display: flex;
             align-items: center;
             gap: 20px;
-            padding: 20px 30px;
-            background: #fff;
-            border-top: 1px solid #eee;
-            position: sticky;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 1px solid #dee2e6;
+            position: fixed;
             bottom: 0;
-            z-index: 10;
+            left: 185px;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
         }
+
+        .page-body {
+            padding-bottom: 80px;
+        }
+
         .btn-save-vessel {
             background: #ddd;
             border: none;
@@ -689,9 +698,6 @@
                                             <div class="vessel-footer">
                                                 <button type="submit" class="btn-save-vessel">Save vessel</button>
                                                 <a href="{{ route('customers.edit', $vessel->customer_id) }}" class="btn-cancel-vessel">Cancel</a>
-                                                
-                                                <div style="flex-grow: 1;"></div>
-
                                                 <div class="metadata-footer">
                                                     @include('partials.audit-info', ['record' => $vessel])
                                                 </div>
@@ -756,6 +762,17 @@
 
     <script>
         $(document).ready(function() {
+            function fixedFooterOffset() {
+                var $navbar = $('.pcoded-navbar');
+                var sidebarWidth = $navbar.length ? $navbar.outerWidth() : 0;
+                $('.vessel-footer').css('left', sidebarWidth + 'px');
+            }
+            fixedFooterOffset();
+            $(window).on('resize', fixedFooterOffset);
+            $(document).on('click', '.mobile-menu, .pcoded-navbar .pcoded-navigatio-lavel, .navbar-wrapper .menu-toggle', function () {
+                setTimeout(fixedFooterOffset, 300);
+            });
+
             function formatAccountManager(item) {
                 if (!item.id) {
                     return item.text;
@@ -1004,4 +1021,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#vesselForm', 'fallbackUrl' => route('customers.edit', $vessel->customer_id)])
 @endsection

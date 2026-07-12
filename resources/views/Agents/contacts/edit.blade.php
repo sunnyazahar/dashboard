@@ -596,4 +596,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#contactForm', 'fallbackUrl' => route('agents.edit', $contact->agent_id)])
 @endsection

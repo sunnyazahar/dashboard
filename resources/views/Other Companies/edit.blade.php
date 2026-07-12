@@ -189,14 +189,28 @@
 
         /* Footer Styling */
         .form-footer {
-            padding: 20px 25px;
-            background: #fff;
-            border-top: 1px solid #eee;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.98);
             display: flex;
             align-items: center;
             gap: 20px;
-            margin-top: 20px;
+            border-top: 1px solid #dee2e6;
+            position: fixed;
+            bottom: 0;
+            left: 185px;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+            margin-top: 0;
         }
+        .form-footer .audit-meta {
+            margin-left: auto;
+            text-align: right;
+            font-size: 11px;
+            color: #999;
+            line-height: 1.6;
+        }
+        .btn-save-custom,
         .btn-saved-custom {
             background: #e9ecef;
             color: #a0aec0;
@@ -210,6 +224,12 @@
             color: #01a9ac;
             text-decoration: none;
             font-size: 13px;
+        }
+        .btn-cancel-custom:hover {
+            text-decoration: underline;
+        }
+        .page-body {
+            padding-bottom: 80px;
         }
 
         /* Metadata Footer */
@@ -381,6 +401,21 @@
                                         <div class="card" style="margin: 0; border: none; border-radius: 0;">
                                             <!-- Company Details Tab -->
                                             <div id="company-details" class="tab-content-custom active">
+                                                @if ($errors->any())
+                                                    <div style="margin: 12px 25px 0; padding: 10px 14px; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; border-radius: 4px; font-size: 13px;">
+                                                        <strong>Could not save:</strong>
+                                                        <ul style="margin: 6px 0 0 18px;">
+                                                            @foreach ($errors->all() as $error)
+                                                                <li>{{ $error }}</li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                @endif
+                                                @if (session('success'))
+                                                    <div style="margin: 12px 25px 0; padding: 10px 14px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; border-radius: 4px; font-size: 13px;">
+                                                        {{ session('success') }}
+                                                    </div>
+                                                @endif
                                                 <form action="{{ route('other-companies.update', $otherCompany->id) }}" method="POST" id="edit-company-form">
                                                     @csrf
                                                     @method('PUT')
@@ -555,7 +590,7 @@
                                                     <div class="form-footer">
                                                         <button type="submit" class="btn-save-custom" id="btn-save" style="background:#e9ecef;color:#a0aec0;cursor:default;" disabled>All changes saved</button>
                                                         <a href="{{ route('other-companies.index') }}" class="btn-cancel-custom">Cancel</a>
-                                                        <div style="margin-left:auto; text-align:right; font-size:11px; color:#999; line-height:1.6;">
+                                                        <div class="audit-meta">
                                                             @include('partials.audit-info', ['record' => $otherCompany])
                                                         </div>
                                                     </div>
@@ -666,6 +701,17 @@
 
     <script>
         $(document).ready(function() {
+            function fixedFooterOffset() {
+                var $navbar = $('.pcoded-navbar');
+                var sidebarWidth = $navbar.length ? $navbar.outerWidth() : 0;
+                $('.form-footer').css('left', sidebarWidth + 'px');
+            }
+            fixedFooterOffset();
+            $(window).on('resize', fixedFooterOffset);
+            $(document).on('click', '.mobile-menu, .pcoded-navbar .pcoded-navigatio-lavel, .navbar-wrapper .menu-toggle', function () {
+                setTimeout(fixedFooterOffset, 300);
+            });
+
             $('select.select2-company-type').select2({
                 placeholder: 'Select company type',
                 allowClear: true,
@@ -780,23 +826,7 @@
                 $('.tab-content-custom').removeClass('active');
                 $('#' + tabId).addClass('active');
             });
-
-            // Activate Save button when any field changes
-            $('#edit-company-form').on('input change', 'input, textarea, select', function() {
-                var btn = $('#btn-save');
-                btn.text('Save changes');
-                btn.css({ 'background': '#1b5e6f', 'color': '#fff', 'cursor': 'pointer' });
-                btn.prop('disabled', false);
-            });
-
-            @if(session('success'))
-                setTimeout(function() {
-                    var btn = $('#btn-save');
-                    btn.text('All changes saved');
-                    btn.css({ 'background': '#e9ecef', 'color': '#a0aec0', 'cursor': 'default' });
-                    btn.prop('disabled', true);
-                }, 100);
-            @endif
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#edit-company-form', 'fallbackUrl' => route('other-companies.index'), 'saveButtonSelector' => '#btn-save'])
 @endsection

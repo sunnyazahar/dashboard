@@ -326,4 +326,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#userForm', 'fallbackUrl' => route('hub.show', $hub->id)])
 @endsection

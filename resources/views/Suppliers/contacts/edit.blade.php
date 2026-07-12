@@ -347,4 +347,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#contactForm', 'fallbackUrl' => route('suppliers.edit', $supplier->id)])
 @endsection

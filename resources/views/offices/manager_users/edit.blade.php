@@ -853,4 +853,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#managerUserEditForm', 'fallbackUrl' => route('offices.edit', $office->id)])
 @endsection

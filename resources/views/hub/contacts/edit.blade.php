@@ -343,4 +343,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#contactForm', 'fallbackUrl' => route('hub.show', $hub->id)])
 @endsection

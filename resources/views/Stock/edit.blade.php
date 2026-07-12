@@ -3238,4 +3238,5 @@ function updatePackageSummary() {
             }
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#crrEditForm', 'fallbackUrl' => route('stocks'), 'includeSweetAlert' => false])
 @endsection

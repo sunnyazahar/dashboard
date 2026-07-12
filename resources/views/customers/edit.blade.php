@@ -110,11 +110,26 @@
         .page-footer-actions {
             position: fixed; bottom: 0; left: 185px; right: 0;
             background: rgba(255, 255, 255, 0.95);
-            padding: 15px 30px; display: flex; align-items: center; gap: 20px; z-index: 1000;
+            padding: 12px 30px; display: flex; align-items: center; gap: 20px; z-index: 1000;
+            border-top: 1px solid #dee2e6;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .page-footer-actions .audit-meta {
+            margin-left: auto;
+            text-align: right;
+            font-size: 11px;
+            color: #999;
+            line-height: 1.4;
         }
         .btn-update-customer {
             background-color: #1b5e6f; color: #fff; border: none; border-radius: 4px;
             padding: 6px 20px; font-size: 12px; font-weight: 500; cursor: pointer;
+        }
+        .btn-update-customer:disabled {
+            background-color: #e9ecef !important;
+            color: #a0aec0 !important;
+            cursor: default !important;
+            opacity: 1;
         }
         .link-cancel-customer { color: #01a9ac; font-size: 12px; text-decoration: none; }
 
@@ -618,10 +633,6 @@
                                                      <p id="logo_text" style="font-size: 11px; margin: 0;">Drag image file here or click to browse</p>
                                                      <i class="ti-camera" id="logo_icon"></i>
                                                  </div>
-
-                                                <div style="text-align: right; margin-top: 40px; font-size: 10px; color: #999; line-height: 1.4;">
-                                                    @include('partials.audit-info', ['record' => $customer])
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -855,8 +866,12 @@
 
                             <!-- Footer Actions -->
                             <div class="page-footer-actions">
-                                <button type="submit" class="btn-update-customer">Update</button>
+                                <button type="submit" id="customer-update-btn" class="btn-update-customer"
+                                    data-saved-label="Update" data-dirty-label="Update" disabled>Update</button>
                                 <a href="{{ route('customers.index') }}" class="link-cancel-customer">Cancel</a>
+                                <div class="audit-meta">
+                                    @include('partials.audit-info', ['record' => $customer])
+                                </div>
                             </div>
 
                             <input type="file" name="logo" id="logo_input" accept="image/*" style="display:none;" form="customerForm">
@@ -1273,4 +1288,9 @@
 
         });
     </script>
+@include('partials.unsaved-changes-guard', [
+    'formSelector' => '#customerForm',
+    'fallbackUrl' => route('customers.index'),
+    'saveButtonSelector' => '#customer-update-btn',
+])
 @endsection

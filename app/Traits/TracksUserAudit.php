@@ -16,19 +16,28 @@ trait TracksUserAudit
 
             $userId = auth()->id();
 
-            if (empty($model->created_by)) {
+            if (blank($model->created_by)) {
                 $model->created_by = $userId;
             }
 
-            if (empty($model->updated_by)) {
+            if (blank($model->updated_by)) {
                 $model->updated_by = $userId;
             }
         });
 
         static::updating(function ($model) {
-            if (auth()->check()) {
-                $model->updated_by = auth()->id();
+            if (! auth()->check()) {
+                return;
             }
+
+            $userId = auth()->id();
+
+            // Backfill creator on first edit for legacy rows.
+            if (blank($model->getOriginal('created_by')) && blank($model->created_by)) {
+                $model->created_by = $userId;
+            }
+
+            $model->updated_by = $userId;
         });
     }
 

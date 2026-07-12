@@ -757,4 +757,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#edit-supplier-form', 'fallbackUrl' => route('suppliers.index')])
 @endsection

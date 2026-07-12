@@ -180,19 +180,31 @@
                     flex: 1;
                 }
                 .form-footer {
-                    padding: 15px 30px;
-                    background: rgba(255, 255, 255, 0.95);
+                    padding: 12px 30px;
+                    background: rgba(255, 255, 255, 0.98);
                     display: flex;
                     align-items: center;
-                    justify-content: flex-end;
+                    justify-content: flex-start;
                     gap: 20px;
                     border-top: 1px solid #dee2e6;
                     position: fixed;
                     bottom: 0;
-                    left: 240px; /* Adjust based on sidebar width */
+                    left: 185px;
                     right: 0;
                     z-index: 1000;
-                    box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+                    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+                }
+                .form-footer .metadata-footer {
+                    margin-left: auto;
+                    padding: 0;
+                    background: transparent;
+                    text-align: right;
+                    font-size: 11px;
+                    color: #9ca3af;
+                    line-height: 1.4;
+                }
+                .page-body {
+                    padding-bottom: 80px;
                 }
                 .btn-saved-custom {
                     background: #10b981;
@@ -204,14 +216,16 @@
                     font-weight: 500;
                 }
                 .btn-cancel-custom {
-                    background: #fff;
-                    color: #374151;
-                    border: 1px solid #d1d5db;
-                    padding: 8px 16px;
-                    border-radius: 4px;
+                    color: #3b82f6;
+                    text-decoration: none;
                     font-size: 13px;
                     font-weight: 500;
-                    text-decoration: none;
+                    background: transparent;
+                    border: none;
+                    padding: 0;
+                }
+                .btn-cancel-custom:hover {
+                    text-decoration: underline;
                 }
                 
                 /* Custom table styles for tabs */
@@ -346,11 +360,10 @@
                 }
 
                 .metadata-footer {
-                    padding: 0 30px 20px 30px;
-                    background: #fff;
                     text-align: right;
                     font-size: 11px;
                     color: #9ca3af;
+                    line-height: 1.4;
                 }
 
                 /* Validation Styling */
@@ -1240,12 +1253,11 @@
                                                             <div class="form-footer">
                                                                 <button type="submit" class="btn btn-primary" style="background-color: #1b5e6f; border: none; padding: 6px 25px; border-radius: 2px;">Update Hub</button>
                                                                 <a href="{{ route('hub.index') }}" class="btn-cancel-custom">Cancel</a>
+                                                                <div class="metadata-footer">
+                                                                    @include('partials.audit-info', ['record' => $hub])
+                                                                </div>
                                                             </div>
                                                             </form>
-
-                                                            <div class="metadata-footer">
-                                                                @include('partials.audit-info', ['record' => $hub])
-                                                            </div>
                                                         </div>
                                                     </div>
                                                     <!-- Row end -->
@@ -1285,6 +1297,17 @@
 
     <script>
         $(document).ready(function() {
+            function fixedFooterOffset() {
+                var $navbar = $('.pcoded-navbar');
+                var sidebarWidth = $navbar.length ? $navbar.outerWidth() : 0;
+                $('.form-footer').css('left', sidebarWidth + 'px');
+            }
+            fixedFooterOffset();
+            $(window).on('resize', fixedFooterOffset);
+            $(document).on('click', '.mobile-menu, .pcoded-navbar .pcoded-navigatio-lavel, .navbar-wrapper .menu-toggle', function () {
+                setTimeout(fixedFooterOffset, 300);
+            });
+
             // Tab switching logic
             $('.tab-item').on('click', function() {
                 var tabId = $(this).data('tab');
@@ -1608,4 +1631,5 @@
             });
         });
     </script>
+@include('partials.unsaved-changes-guard', ['formSelector' => '#hubEditForm', 'fallbackUrl' => route('hub.index')])
 @endsection
