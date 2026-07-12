@@ -1,13 +1,11 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/', function () {
-    return view('welcome');
-});
 
 Auth::routes();
 
+Route::middleware('auth')->group(function () {
 Route::get('/dashboard', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard');
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard.home');
 Route::post('/customers', [App\Http\Controllers\CustomerController::class, 'store'])->name('customers.store');
@@ -659,3 +657,4 @@ Route::get('/Agents/company-agent/{id}', function ($id) {
     return view('Agents.company-agent', compact('id'));
 })->name('agents.company-agent');
 Route::get('/update-currency-rates', [App\Http\Controllers\CurrencyController::class, 'updateRates'])->name('currency.update');
+});

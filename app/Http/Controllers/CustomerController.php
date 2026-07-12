@@ -82,7 +82,6 @@ class CustomerController extends Controller
         $validatedData = $request->validate([
             'customer_name' => 'required|string|max:150',
             'email' => ['required', 'string', 'max:500', $this->multipleEmailsValidator()],
-            'customer_group' => 'required',
             'street_address' => 'required|string',
             'city' => 'required|string',
             'country' => 'required',
@@ -244,7 +243,6 @@ class CustomerController extends Controller
         $validatedData = $request->validate([
             'customer_name' => 'required|string|max:150',
             'email' => ['required', 'string', 'max:500', $this->multipleEmailsValidator()],
-            'customer_group' => 'required',
             'street_address' => 'required|string',
             'city' => 'required|string',
             'country' => 'required',
