@@ -47,10 +47,15 @@ class AdministrationChangeLogService
             ? $model->changeLogFieldLabels()
             : [];
 
+        $extraSkip = method_exists($model, 'changeLogSkipFields')
+            ? $model->changeLogSkipFields()
+            : [];
+
+        $skip = array_merge(self::SKIP_FIELDS, $extraSkip);
         $changed = array_keys($model->getChanges());
 
         foreach ($changed as $field) {
-            if (in_array($field, self::SKIP_FIELDS, true)) {
+            if (in_array($field, $skip, true)) {
                 continue;
             }
 
@@ -77,6 +82,48 @@ class AdministrationChangeLogService
 
             $this->log($model, $label . ' edited', $description, $field);
         }
+    }
+
+    /**
+     * Compare before/after attribute maps and write change logs against $model.
+     * Returns true when at least one log entry was created.
+     */
+    public function logMappedChanges(Model $model, array $before, array $after, array $labels = []): bool
+    {
+        $logged = false;
+        $fields = array_unique(array_merge(array_keys($before), array_keys($after)));
+
+        foreach ($fields as $field) {
+            if (in_array($field, self::SKIP_FIELDS, true)) {
+                continue;
+            }
+
+            if ($labels !== [] && ! array_key_exists($field, $labels)) {
+                continue;
+            }
+
+            $old = $before[$field] ?? null;
+            $new = $after[$field] ?? null;
+
+            if ($this->valuesEqual($old, $new)) {
+                continue;
+            }
+
+            $label = $labels[$field] ?? $this->humanize((string) $field);
+            $description = $this->fromToDescription(
+                $this->formatValue($old),
+                $this->formatValue($new)
+            );
+
+            if ($description === '') {
+                continue;
+            }
+
+            $this->log($model, $label . ' edited', $description, (string) $field);
+            $logged = true;
+        }
+
+        return $logged;
     }
 
     private function entityLabel(Model $model): string

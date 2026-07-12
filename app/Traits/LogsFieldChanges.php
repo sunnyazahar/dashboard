@@ -34,4 +34,12 @@ trait LogsFieldChanges
     {
         return [];
     }
+
+    /**
+     * Extra attributes to skip when logging field changes on this model.
+     */
+    public function changeLogSkipFields(): array
+    {
+        return [];
+    }
 }

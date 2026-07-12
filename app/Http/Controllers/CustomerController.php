@@ -18,6 +18,7 @@ use App\Models\CustomerNotificationSetting;
 use App\Models\CustomerDocument;
 use App\Models\CustomerVessel;
 use App\Models\Contact;
+use App\Services\AdministrationChangeLogService;
 
 class CustomerController extends Controller
 {
@@ -261,6 +262,9 @@ class CustomerController extends Controller
         DB::beginTransaction();
 
         try {
+            $changeLogService = app(AdministrationChangeLogService::class);
+            $beforeRelated = $this->customerRelatedChangeSnapshot($customer);
+
             // Handle customer_group_id
             $customerGroupId = ($request->customer_group === 'N/A') ? null : $request->customer_group;
 
@@ -304,7 +308,13 @@ class CustomerController extends Controller
             );
 
             // Postal Address
-            if ($request->filled('postal_street_address')) {
+            if (
+                $request->filled('postal_street_address')
+                || $request->filled('postal_city')
+                || $request->filled('postal_district_state')
+                || $request->filled('postal_zip_code')
+                || $request->filled('postal_country')
+            ) {
                 CustomerAddress::updateOrCreate(
                     ['customer_id' => $customer->id, 'type' => 'postal'],
                     [
@@ -346,43 +356,43 @@ class CustomerController extends Controller
             );
 
             // 4. Update Responsible
-        CustomerResponsible::updateOrCreate(
-            ['customer_id' => $customer->id],
-            [
-                'sales_manager_id' => $request->sales_manager,
-                'account_manager_id' => $request->main_account_manager,
-                'accounting_user_id' => $request->responsible_accounting_users,
-            ]
-        );
+            CustomerResponsible::updateOrCreate(
+                ['customer_id' => $customer->id],
+                [
+                    'sales_manager_id' => $request->sales_manager,
+                    'account_manager_id' => $request->main_account_manager,
+                    'accounting_user_id' => $request->responsible_accounting_users,
+                ]
+            );
 
-        // 5. Update SOP
-        CustomerSop::updateOrCreate(
-            ['customer_id' => $customer->id],
-            [
-                'send_stocklist' => $request->send_stocklist,
-                'onboard_delivery' => $request->onboard_delivery,
-                'quotes_prior_to_instructions' => $request->quotes_prior_to_instructions,
-                'agreed_rate' => $request->agreed_rate,
-                'invoicing_procedure' => $request->invoicing_procedure,
-                'pending_entry' => $request->pending_entry,
-                'special_pending_routines' => $request->special_pending_routines,
-                'other_procedures_comments' => $request->other_procedures_comments,
-            ]
-        );
+            // 5. Update SOP
+            CustomerSop::updateOrCreate(
+                ['customer_id' => $customer->id],
+                [
+                    'send_stocklist' => $request->send_stocklist,
+                    'onboard_delivery' => $request->onboard_delivery,
+                    'quotes_prior_to_instructions' => $request->quotes_prior_to_instructions,
+                    'agreed_rate' => $request->agreed_rate,
+                    'invoicing_procedure' => $request->invoicing_procedure,
+                    'pending_entry' => $request->pending_entry,
+                    'special_pending_routines' => $request->special_pending_routines,
+                    'other_procedures_comments' => $request->other_procedures_comments,
+                ]
+            );
 
-        // 6. Update Notification Settings
-        CustomerNotificationSetting::updateOrCreate(
-            ['customer_id' => $customer->id],
-            [
-                'notify_stock_items' => $request->notify_stock_items,
-                'send_automatic_first_mile_email' => $request->has('send_automatic_first_mile_email') ? 1 : 0,
-                'notify_first_mile_email_sent' => $request->notify_first_mile_email_sent,
-                'shipping_free_storage_days' => $request->shipping_free_storage_days,
-                'shipping_free_storage_weight' => $request->shipping_free_storage_weight,
-                'shipping_free_storage_volume' => $request->shipping_free_storage_volume,
-                'notify_free_storage_exceeded' => $request->notify_free_storage_exceeded,
-            ]
-        );
+            // 6. Update Notification Settings
+            CustomerNotificationSetting::updateOrCreate(
+                ['customer_id' => $customer->id],
+                [
+                    'notify_stock_items' => $request->notify_stock_items,
+                    'send_automatic_first_mile_email' => $request->has('send_automatic_first_mile_email') ? 1 : 0,
+                    'notify_first_mile_email_sent' => $request->notify_first_mile_email_sent,
+                    'shipping_free_storage_days' => $request->shipping_free_storage_days,
+                    'shipping_free_storage_weight' => $request->shipping_free_storage_weight,
+                    'shipping_free_storage_volume' => $request->shipping_free_storage_volume,
+                    'notify_free_storage_exceeded' => $request->notify_free_storage_exceeded,
+                ]
+            );
 
             // 7. Handle SOP Document Removals
             if ($request->filled('removed_documents')) {
@@ -390,8 +400,10 @@ class CustomerController extends Controller
                 foreach ($idsToRemove as $docId) {
                     $doc = CustomerDocument::find(trim($docId));
                     if ($doc && $doc->customer_id == $customer->id) {
+                        $fileName = $doc->file_name;
                         \Storage::disk('public')->delete($doc->file_path);
                         $doc->delete();
+                        $changeLogService->log($customer, 'SOP document removed', $fileName, 'sop_document');
                     }
                 }
             }
@@ -406,8 +418,23 @@ class CustomerController extends Controller
                         'file_path'   => $path,
                         'file_type'   => 'sop',
                     ]);
+                    $changeLogService->log(
+                        $customer,
+                        'SOP document added',
+                        $file->getClientOriginalName(),
+                        'sop_document'
+                    );
                 }
             }
+
+            $customer->unsetRelations();
+            $afterRelated = $this->customerRelatedChangeSnapshot($customer);
+            $changeLogService->logMappedChanges(
+                $customer,
+                $beforeRelated,
+                $afterRelated,
+                $this->customerRelatedChangeLogLabels()
+            );
 
             DB::commit();
 
@@ -418,6 +445,145 @@ class CustomerController extends Controller
             Log::error('Error updating customer: ' . $e->getMessage());
             return back()->withInput()->with('error', 'Failed to update customer. Error: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Snapshot related customer form fields for administration change logging.
+     * Customer table fields are logged automatically via LogsFieldChanges.
+     */
+    private function customerRelatedChangeSnapshot(Customer $customer): array
+    {
+        $customer->loadMissing([
+            'group',
+            'primaryAddress.country',
+            'postalAddress.country',
+            'invoiceAddress.country',
+            'invoiceDetail',
+            'responsible.salesManager',
+            'responsible.accountManager',
+            'responsible.accountingUser',
+            'sop',
+            'notificationSetting',
+        ]);
+
+        $primary = $customer->primaryAddress;
+        $postal = $customer->postalAddress;
+        $invoiceAddress = $customer->invoiceAddress;
+        $invoice = $customer->invoiceDetail;
+        $responsible = $customer->responsible;
+        $sop = $customer->sop;
+        $notify = $customer->notificationSetting;
+
+        return [
+            'customer_group' => $customer->group?->name ?? $customer->customer_group_id,
+
+            'primary_street' => $primary?->street,
+            'primary_city' => $primary?->city,
+            'primary_state' => $primary?->state,
+            'primary_zip_code' => $primary?->zip_code,
+            'primary_country' => $primary?->country?->name ?? $primary?->country_id,
+            'primary_port_code' => $primary?->port_code,
+
+            'postal_street' => $postal?->street,
+            'postal_city' => $postal?->city,
+            'postal_state' => $postal?->state,
+            'postal_zip_code' => $postal?->zip_code,
+            'postal_country' => $postal?->country?->name ?? $postal?->country_id,
+
+            'invoice_street' => $invoiceAddress?->street,
+            'invoice_city' => $invoiceAddress?->city,
+            'invoice_state' => $invoiceAddress?->state,
+            'invoice_zip_code' => $invoiceAddress?->zip_code,
+            'invoice_country' => $invoiceAddress?->country?->name ?? $invoiceAddress?->country_id,
+
+            'invoice_recipient_name' => $invoice?->invoice_recipient_name,
+            'invoice_email' => $invoice?->invoice_email,
+            'invoice_email_cc' => $invoice?->invoice_email_cc,
+            'currency_code' => $invoice?->currency_code,
+            'payment_terms_days' => $invoice?->payment_terms_days,
+            'invoice_frequency' => $invoice?->invoice_frequency,
+            'invoice_remarks' => $invoice?->invoice_remarks,
+            'vat_number' => $invoice?->vat_number,
+            'eori_number' => $invoice?->eori_number,
+
+            'sales_manager' => $responsible?->salesManager?->name ?? $responsible?->sales_manager_id,
+            'account_manager' => $responsible?->accountManager?->name ?? $responsible?->account_manager_id,
+            'accounting_user' => $responsible?->accountingUser?->name ?? $responsible?->accounting_user_id,
+
+            'send_stocklist' => $sop?->send_stocklist,
+            'onboard_delivery' => $sop?->onboard_delivery,
+            'quotes_prior_to_instructions' => $sop?->quotes_prior_to_instructions,
+            'agreed_rate' => $sop?->agreed_rate,
+            'invoicing_procedure' => $sop?->invoicing_procedure,
+            'pending_entry' => $sop?->pending_entry,
+            'special_pending_routines' => $sop?->special_pending_routines,
+            'other_procedures_comments' => $sop?->other_procedures_comments,
+
+            'notify_stock_items' => $notify?->notify_stock_items,
+            'send_automatic_first_mile_email' => $notify?->send_automatic_first_mile_email,
+            'notify_first_mile_email_sent' => $notify?->notify_first_mile_email_sent,
+            'shipping_free_storage_days' => $notify?->shipping_free_storage_days,
+            'shipping_free_storage_weight' => $notify?->shipping_free_storage_weight,
+            'shipping_free_storage_volume' => $notify?->shipping_free_storage_volume,
+            'notify_free_storage_exceeded' => $notify?->notify_free_storage_exceeded,
+        ];
+    }
+
+    private function customerRelatedChangeLogLabels(): array
+    {
+        return [
+            'customer_group' => 'Customer group',
+
+            'primary_street' => 'Primary street',
+            'primary_city' => 'Primary city',
+            'primary_state' => 'Primary state',
+            'primary_zip_code' => 'Primary zip code',
+            'primary_country' => 'Primary country',
+            'primary_port_code' => 'Primary port code',
+
+            'postal_street' => 'Postal street',
+            'postal_city' => 'Postal city',
+            'postal_state' => 'Postal state',
+            'postal_zip_code' => 'Postal zip code',
+            'postal_country' => 'Postal country',
+
+            'invoice_street' => 'Invoice street',
+            'invoice_city' => 'Invoice city',
+            'invoice_state' => 'Invoice state',
+            'invoice_zip_code' => 'Invoice zip code',
+            'invoice_country' => 'Invoice country',
+
+            'invoice_recipient_name' => 'Invoice recipient name',
+            'invoice_email' => 'Invoicing email',
+            'invoice_email_cc' => 'Invoicing email CC',
+            'currency_code' => 'Currency',
+            'payment_terms_days' => 'Payment terms',
+            'invoice_frequency' => 'Invoice frequency',
+            'invoice_remarks' => 'Invoicing remarks',
+            'vat_number' => 'VAT number',
+            'eori_number' => 'EORI number',
+
+            'sales_manager' => 'Sales manager',
+            'account_manager' => 'Account manager',
+            'accounting_user' => 'Accounting user',
+
+            'send_stocklist' => 'Send stocklist',
+            'onboard_delivery' => 'Onboard delivery',
+            'quotes_prior_to_instructions' => 'Quotes prior to instructions',
+            'agreed_rate' => 'Agreed rate',
+            'invoicing_procedure' => 'Invoicing procedure',
+            'pending_entry' => 'Pending entry',
+            'special_pending_routines' => 'Special pending routines',
+            'other_procedures_comments' => 'Other procedures comments',
+
+            'notify_stock_items' => 'Notify stock items',
+            'send_automatic_first_mile_email' => 'Send automatic first mile email',
+            'notify_first_mile_email_sent' => 'Notify first mile email sent',
+            'shipping_free_storage_days' => 'Shipping free storage days',
+            'shipping_free_storage_weight' => 'Shipping free storage weight',
+            'shipping_free_storage_volume' => 'Shipping free storage volume',
+            'notify_free_storage_exceeded' => 'Notify free storage exceeded',
+        ];
     }
 
     /**
@@ -441,6 +607,13 @@ class CustomerController extends Controller
             'file_type'   => 'sop',
         ]);
 
+        app(AdministrationChangeLogService::class)->log(
+            $customer,
+            'SOP document added',
+            $doc->file_name,
+            'sop_document'
+        );
+
         return response()->json([
             'id'        => $doc->id,
             'file_name' => $doc->file_name,
@@ -454,8 +627,20 @@ class CustomerController extends Controller
     public function deleteDocument(Request $request, $docId)
     {
         $doc = CustomerDocument::findOrFail($docId);
+        $customer = Customer::find($doc->customer_id);
+        $fileName = $doc->file_name;
+
         \Storage::disk('public')->delete($doc->file_path);
         $doc->delete();
+
+        if ($customer) {
+            app(AdministrationChangeLogService::class)->log(
+                $customer,
+                'SOP document removed',
+                $fileName,
+                'sop_document'
+            );
+        }
 
         return response()->json(['success' => true]);
     }
@@ -519,7 +704,20 @@ class CustomerController extends Controller
     public function deleteContact($id)
     {
         $contact = Contact::findOrFail($id);
+        $customer = $contact->customer_id ? Customer::find($contact->customer_id) : null;
+        $contactName = $contact->name;
+
         $contact->delete();
+
+        if ($customer) {
+            app(AdministrationChangeLogService::class)->log(
+                $customer,
+                'Contact removed',
+                $contactName,
+                'contact'
+            );
+        }
+
         return response()->json(['success' => true]);
     }
 
@@ -537,13 +735,20 @@ class CustomerController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $customer->contacts()->create([
+        $contact = $customer->contacts()->create([
             'name' => $request->name,
             'email' => $request->email,
             'phone_number' => $request->phone_number,
             'description' => $request->description,
             'is_main_contact' => $request->has('is_main_contact'),
         ]);
+
+        app(AdministrationChangeLogService::class)->log(
+            $customer,
+            'Contact added',
+            $contact->name,
+            'contact'
+        );
 
         return redirect()->route('customers.edit', $id)->with('success', 'Contact added successfully.');
     }
@@ -563,7 +768,7 @@ class CustomerController extends Controller
         // Extract contact data (expecting only one contact in the array based on form logic)
         $contactData = $request->input('contacts.1', []); // We use key 1 as per the JS implementation
 
-        CustomerVessel::create([
+        $vessel = CustomerVessel::create([
             'customer_id' => $customer->id,
             // Vessel information
             'vessel' => $request->vessel,
@@ -602,6 +807,13 @@ class CustomerController extends Controller
             'contact_offers' => isset($contactData['offers']) ? 1 : 0,
         ]);
 
+        app(AdministrationChangeLogService::class)->log(
+            $customer,
+            'Vessel added',
+            $vessel->vessel,
+            'vessel'
+        );
+
         return redirect()->route('customers.edit', $id)->with('success', 'Vessel added successfully.');
     }
 
@@ -621,7 +833,7 @@ class CustomerController extends Controller
      */
     public function updateVessel(Request $request, $id)
     {
-        $vessel = CustomerVessel::findOrFail($id);
+        $vessel = CustomerVessel::with('contact')->findOrFail($id);
 
         $request->validate([
             'vessel' => 'required|string|max:255',
@@ -630,6 +842,8 @@ class CustomerController extends Controller
 
         // Extract contact data
         $contactData = $request->input('contacts.1', []);
+        $changeLogService = app(AdministrationChangeLogService::class);
+        $beforeContactName = $vessel->contact?->name;
 
         $vessel->update([
             // Vessel information
@@ -668,6 +882,14 @@ class CustomerController extends Controller
             'contact_free_storage_notifications' => isset($contactData['free_storage_notifications']) ? 1 : 0,
             'contact_offers' => isset($contactData['offers']) ? 1 : 0,
         ]);
+
+        $vessel->load('contact');
+        $changeLogService->logMappedChanges(
+            $vessel,
+            ['contact' => $beforeContactName],
+            ['contact' => $vessel->contact?->name],
+            ['contact' => 'Notification contact']
+        );
 
         return redirect()->back()->with('success', 'Vessel updated successfully.');
     }

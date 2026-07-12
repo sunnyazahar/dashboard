@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('styles')
+    <link rel="stylesheet" type="text/css" href="{{ asset('files/bower_components/bootstrap-daterangepicker/daterangepicker.css') }}" />
     <style>
         .change-logs-card {
             background: #fff;
@@ -23,6 +24,9 @@
             flex-direction: column;
             gap: 4px;
             min-width: 160px;
+        }
+        .change-logs-filters .filter-group.date-range-group {
+            min-width: 220px;
         }
         .change-logs-filters label {
             font-size: 11px;
@@ -179,6 +183,10 @@
                                                 @endforeach
                                             </select>
                                         </div>
+                                        <div class="filter-group date-range-group">
+                                            <label>Date range</label>
+                                            <input type="text" id="filter-date-range" class="form-control" placeholder="Select date range" autocomplete="off" readonly>
+                                        </div>
                                         <button type="button" id="filter-reset" class="btn-reset">Reset</button>
                                     </div>
 
@@ -224,6 +232,8 @@
     <script type="text/javascript" src="{{ asset('files/bower_components/jquery-ui/jquery-ui.min.js') }}"></script>
     <script type="text/javascript" src="{{ asset('files/bower_components/popper.js/dist/umd/popper.min.js') }}"></script>
     <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/moment/moment.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
     <script src="{{ asset('files/assets/js/pcoded.min.js') }}"></script>
     <script src="{{ asset('files/assets/js/vartical-layout.min.js') }}"></script>
     <script src="{{ asset('files/assets/js/jquery.mCustomScrollbar.concat.min.js') }}"></script>
@@ -235,6 +245,9 @@
             var lastPage = 1;
             var searchTimer = null;
             var activeRequest = null;
+            var dateFrom = '';
+            var dateTo = '';
+            var $dateRange = $('#filter-date-range');
 
             function escapeHtml(value) {
                 return $('<div>').text(value == null ? '' : String(value)).html();
@@ -245,6 +258,8 @@
                     search: $.trim($('#filter-search').val() || ''),
                     entity_type: $('#filter-entity-type').val() || '',
                     user_id: $('#filter-user-id').val() || '',
+                    date_from: dateFrom,
+                    date_to: dateTo,
                     page: currentPage
                 };
             }
@@ -338,6 +353,48 @@
                 searchTimer = setTimeout(fetchLogs, 300);
             }
 
+            function clearDateRange() {
+                dateFrom = '';
+                dateTo = '';
+                $dateRange.val('');
+
+                var picker = $dateRange.data('daterangepicker');
+                if (picker) {
+                    picker.setStartDate(moment());
+                    picker.setEndDate(moment());
+                }
+            }
+
+            $dateRange.daterangepicker({
+                autoUpdateInput: false,
+                opens: 'left',
+                locale: {
+                    cancelLabel: 'Clear',
+                    applyLabel: 'Apply',
+                    format: 'DD.MM.YYYY'
+                },
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                }
+            });
+
+            $dateRange.on('apply.daterangepicker', function (ev, picker) {
+                dateFrom = picker.startDate.format('YYYY-MM-DD');
+                dateTo = picker.endDate.format('YYYY-MM-DD');
+                $(this).val(picker.startDate.format('DD.MM.YYYY') + ' - ' + picker.endDate.format('DD.MM.YYYY'));
+                queueFetch(true);
+            });
+
+            $dateRange.on('cancel.daterangepicker', function () {
+                clearDateRange();
+                queueFetch(true);
+            });
+
             $('#filter-entity-type, #filter-user-id').on('change', function () {
                 queueFetch(true);
             });
@@ -350,6 +407,7 @@
                 $('#filter-search').val('');
                 $('#filter-entity-type').val('');
                 $('#filter-user-id').val('');
+                clearDateRange();
                 queueFetch(true);
             });
 

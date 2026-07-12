@@ -49,4 +49,15 @@ class CustomerVessel extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function contact()
+    {
+        return $this->belongsTo(Contact::class, 'contact_id');
+    }
+
+    public function changeLogSkipFields(): array
+    {
+        // Logged with contact name in CustomerController::updateVessel.
+        return ['contact_id'];
+    }
 }

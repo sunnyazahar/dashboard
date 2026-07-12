@@ -76,4 +76,10 @@ class Customer extends Model
     {
         return $this->hasMany(Contact::class);
     }
+
+    public function changeLogSkipFields(): array
+    {
+        // Logged via related snapshot with human-readable group name.
+        return ['customer_group_id'];
+    }
 }

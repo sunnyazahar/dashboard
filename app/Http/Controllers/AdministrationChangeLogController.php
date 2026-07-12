@@ -14,6 +14,8 @@ use App\Models\Office;
 use App\Models\OtherCompany;
 use App\Models\Supplier;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
 
 class AdministrationChangeLogController extends Controller
@@ -26,9 +28,16 @@ class AdministrationChangeLogController extends Controller
         Supplier::class => 'Supplier',
         Customer::class => 'Customer',
         CustomerVessel::class => 'Vessel',
-        Contact::class => 'Contact',
+        Contact::class => 'Contact / user',
         HubUser::class => 'Hub user',
         AgentUser::class => 'Agent user',
+    ];
+
+    private const OFFICE_USER_CATEGORIES = [
+        'operations' => 'Operations user',
+        'account' => 'Account user',
+        'sales' => 'Sales user',
+        'manager' => 'Manager user',
     ];
 
     public function index()
@@ -42,7 +51,17 @@ class AdministrationChangeLogController extends Controller
     public function search(Request $request)
     {
         $query = AdministrationChangeLog::query()
-            ->with(['user', 'loggable'])
+            ->with([
+                'user',
+                'loggable' => function (MorphTo $morphTo) {
+                    $morphTo->morphWith([
+                        Contact::class => ['office', 'customer', 'hub', 'agent', 'supplier', 'otherCompany'],
+                        CustomerVessel::class => ['customer'],
+                        HubUser::class => ['hub'],
+                        AgentUser::class => ['agent'],
+                    ]);
+                },
+            ])
             ->orderByDesc('created_at')
             ->orderByDesc('id');
 
@@ -63,15 +82,33 @@ class AdministrationChangeLogController extends Controller
             });
         }
 
+        if ($request->filled('date_from')) {
+            try {
+                $from = Carbon::parse($request->date_from)->startOfDay();
+                $query->where('created_at', '>=', $from);
+            } catch (\Throwable) {
+                // Ignore invalid date_from.
+            }
+        }
+
+        if ($request->filled('date_to')) {
+            try {
+                $to = Carbon::parse($request->date_to)->endOfDay();
+                $query->where('created_at', '<=', $to);
+            } catch (\Throwable) {
+                // Ignore invalid date_to.
+            }
+        }
+
         $logs = $query->paginate(50);
 
         $rows = $logs->getCollection()->map(function (AdministrationChangeLog $log) {
             return [
                 'date' => optional($log->created_at)->format('d.m.Y H:i'),
-                'entity_label' => self::ENTITY_TYPES[$log->loggable_type] ?? class_basename($log->loggable_type),
+                'entity_label' => $this->resolveEntityLabel($log),
                 'record_name' => $this->resolveRecordName($log),
                 'record_url' => $this->resolveRecordUrl($log),
-                'title' => $log->title,
+                'title' => $this->resolveTitle($log),
                 'description' => $log->description,
                 'user_name' => $log->user?->name ?? 'System',
             ];
@@ -90,12 +127,164 @@ class AdministrationChangeLogController extends Controller
         ]);
     }
 
+    private function resolveEntityLabel(AdministrationChangeLog $log): string
+    {
+        $model = $log->loggable;
+
+        if (! $model) {
+            return self::ENTITY_TYPES[$log->loggable_type] ?? class_basename((string) $log->loggable_type);
+        }
+
+        $context = $this->resolveContext($model);
+
+        if ($context !== null) {
+            return $context['role'];
+        }
+
+        return self::ENTITY_TYPES[$log->loggable_type] ?? class_basename($model);
+    }
+
+    private function resolveTitle(AdministrationChangeLog $log): string
+    {
+        $title = (string) $log->title;
+        $model = $log->loggable;
+
+        if (! $model) {
+            return $title;
+        }
+
+        $context = $this->resolveContext($model);
+
+        if ($context === null) {
+            return $title;
+        }
+
+        $role = $context['role'];
+        $parent = $context['parent'];
+
+        if (str_ends_with($title, ' edited')) {
+            $field = substr($title, 0, -strlen(' edited'));
+
+            return $role . ' · ' . $field . ' edited';
+        }
+
+        if (preg_match('/^(Contact|Customer Vessel|Hub User|Agent User) created$/i', $title)) {
+            return $parent
+                ? $role . ' created · ' . $parent
+                : $role . ' created';
+        }
+
+        return $role . ' · ' . $title;
+    }
+
+    /**
+     * @return array{role: string, parent: ?string}|null
+     */
+    private function resolveContext(mixed $model): ?array
+    {
+        if ($model instanceof Contact) {
+            if ($model->office_id) {
+                return [
+                    'role' => self::OFFICE_USER_CATEGORIES[$model->category] ?? 'Office user',
+                    'parent' => $model->office?->office_name ?: ('Office #' . $model->office_id),
+                ];
+            }
+
+            if ($model->customer_id) {
+                return [
+                    'role' => 'Customer contact',
+                    'parent' => $model->customer?->customer_name ?: ('Customer #' . $model->customer_id),
+                ];
+            }
+
+            if ($model->hub_id) {
+                return [
+                    'role' => 'Hub contact',
+                    'parent' => $model->hub?->hub_name ?: ('Hub #' . $model->hub_id),
+                ];
+            }
+
+            if ($model->agent_id) {
+                return [
+                    'role' => 'Agent contact',
+                    'parent' => $model->agent?->agent_name ?: ('Agent #' . $model->agent_id),
+                ];
+            }
+
+            if ($model->supplier_id) {
+                return [
+                    'role' => 'Supplier contact',
+                    'parent' => $model->supplier?->supplier_name ?: ('Supplier #' . $model->supplier_id),
+                ];
+            }
+
+            if ($model->other_company_id) {
+                return [
+                    'role' => 'Other company contact',
+                    'parent' => $model->otherCompany?->company_name ?: ('Company #' . $model->other_company_id),
+                ];
+            }
+
+            return [
+                'role' => 'Contact',
+                'parent' => null,
+            ];
+        }
+
+        if ($model instanceof HubUser) {
+            return [
+                'role' => 'Hub user',
+                'parent' => $model->hub?->hub_name ?: ($model->hub_id ? 'Hub #' . $model->hub_id : null),
+            ];
+        }
+
+        if ($model instanceof AgentUser) {
+            return [
+                'role' => 'Agent user',
+                'parent' => $model->agent?->agent_name ?: ($model->agent_id ? 'Agent #' . $model->agent_id : null),
+            ];
+        }
+
+        if ($model instanceof CustomerVessel) {
+            return [
+                'role' => 'Vessel',
+                'parent' => $model->customer?->customer_name ?: ($model->customer_id ? 'Customer #' . $model->customer_id : null),
+            ];
+        }
+
+        return null;
+    }
+
     private function resolveRecordName(AdministrationChangeLog $log): string
     {
         $model = $log->loggable;
 
         if (! $model) {
             return '#' . $log->loggable_id . ' (deleted)';
+        }
+
+        $context = $this->resolveContext($model);
+
+        if ($context !== null) {
+            $name = match (true) {
+                $model instanceof CustomerVessel => (string) ($model->vessel ?: 'Vessel #' . $model->id),
+                default => (string) ($model->name ?: 'User #' . $model->id),
+            };
+
+            $parts = [$name];
+
+            if ($context['parent']) {
+                $parts[] = $context['parent'];
+            }
+
+            $label = implode(' · ', $parts);
+
+            // Keep role visible on child records (except plain top-level vessel label already in entity).
+            if (! in_array($context['role'], ['Vessel'], true)) {
+                $label .= ' (' . $context['role'] . ')';
+            }
+
+            return $label;
         }
 
         return match (true) {
@@ -105,10 +294,6 @@ class AdministrationChangeLogController extends Controller
             $model instanceof OtherCompany => (string) ($model->company_name ?: 'Company #' . $model->id),
             $model instanceof Supplier => (string) ($model->supplier_name ?: 'Supplier #' . $model->id),
             $model instanceof Customer => (string) ($model->customer_name ?: 'Customer #' . $model->id),
-            $model instanceof CustomerVessel => (string) ($model->vessel ?: 'Vessel #' . $model->id),
-            $model instanceof Contact,
-            $model instanceof HubUser,
-            $model instanceof AgentUser => (string) ($model->name ?: 'User #' . $model->id),
             default => class_basename($model) . ' #' . $model->getKey(),
         };
     }
@@ -130,6 +315,16 @@ class AdministrationChangeLogController extends Controller
                 $model instanceof Supplier => route('suppliers.edit', $model->id),
                 $model instanceof Customer => route('customers.edit', $model->id),
                 $model instanceof CustomerVessel => route('customers.vessels.edit', $model->id),
+                $model instanceof Contact && $model->office_id && $model->category === 'operations'
+                    => route('offices.operations_users.edit', [$model->office_id, $model->id]),
+                $model instanceof Contact && $model->office_id && $model->category === 'account'
+                    => route('offices.account_users.edit', [$model->office_id, $model->id]),
+                $model instanceof Contact && $model->office_id && $model->category === 'sales'
+                    => route('offices.sales_users.edit', [$model->office_id, $model->id]),
+                $model instanceof Contact && $model->office_id && $model->category === 'manager'
+                    => route('offices.manager_users.edit', [$model->office_id, $model->id]),
+                $model instanceof Contact && $model->office_id
+                    => route('offices.edit', $model->office_id),
                 $model instanceof Contact && $model->customer_id => route('contacts.edit', $model->id),
                 $model instanceof Contact && $model->hub_id => route('hub.contacts.edit', [$model->hub_id, $model->id]),
                 $model instanceof Contact && $model->agent_id => route('agents.contacts.edit', $model->id),
