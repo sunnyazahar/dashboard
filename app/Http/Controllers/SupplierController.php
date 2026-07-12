@@ -37,7 +37,7 @@ class SupplierController extends Controller
 
     public function edit($id)
     {
-        $supplier = Supplier::findOrFail($id);
+        $supplier = Supplier::with(['creator', 'updater'])->findOrFail($id);
         $countries = Country::all();
         $currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'AED', 'SGD'];
         return view('Suppliers.edit', compact('supplier', 'countries', 'currencies'));

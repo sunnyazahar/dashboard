@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Supplier extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, TracksUserAudit;
 
     protected $fillable = [
         'supplier_name', 'phone_number', 'email', 'remarks', 'special_considerations',
         'supplier_address', 'city', 'district_state', 'zip_code', 'country_id', 'port_code',
         'office_address', 'office_city', 'office_district_state', 'office_zip_code', 'office_country_id',
-        'vat_number', 'eori_number', 'currency', 'un_locode'
+        'vat_number', 'eori_number', 'currency', 'un_locode',
+        'created_by', 'updated_by',
     ];
 
     public function country()

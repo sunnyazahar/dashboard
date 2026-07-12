@@ -828,12 +828,7 @@
                                                                         class="btn-cancel-custom">Cancel</a>
                                                                 </div>
 
-                                                                <div class="metadata-footer">
-                                                                    <span>Created by Luwin on 04.04.2022 12:46</span><br>
-                                                                    <span>Last changed by Mitchell Levoleger on 02.01.2024
-                                                                        12:17</span>
-                                                                </div>
-                                                            </div>
+                                                                <div class="metadata-footer"></div>
                                                         </div>
                                                         <!-- Row end -->
                                                     </div>

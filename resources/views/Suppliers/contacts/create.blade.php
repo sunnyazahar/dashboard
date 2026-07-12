@@ -290,10 +290,7 @@
                                                 <a href="{{ route('suppliers.edit', $supplier->id) }}" class="btn-cancel-link">Cancel</a>
                                             </div>
                                             
-                                            <div class="footer-metadata">
-                                                Created by Mitchell Levoleger on 22.01.2024 10:45<br>
-                                                Last changed by Mitchell Levoleger on 23.01.2024 14:30
-                                            </div>
+                                            <div class="footer-metadata"></div>
                                         </div>
                                     </form>
                                 </div>

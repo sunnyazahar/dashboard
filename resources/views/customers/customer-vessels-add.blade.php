@@ -739,10 +739,7 @@
 
                                             <div style="flex-grow: 1;"></div>
 
-                                            <div class="metadata-footer">
-                                                Created by Administrator on 20.01.2022 02:55<br>
-                                                Last changed by Administrator on 04.03.2022 17:24
-                                            </div>
+                                            <div class="metadata-footer"></div>
                                         </div>
                                     </div>
                                 </form>

@@ -556,8 +556,7 @@
                                                         <button type="submit" class="btn-save-custom" id="btn-save" style="background:#e9ecef;color:#a0aec0;cursor:default;" disabled>All changes saved</button>
                                                         <a href="{{ route('other-companies.index') }}" class="btn-cancel-custom">Cancel</a>
                                                         <div style="margin-left:auto; text-align:right; font-size:11px; color:#999; line-height:1.6;">
-                                                            Created by {{ $otherCompany->created_at ? $otherCompany->created_at->format('d.m.Y H:i') : '-' }}<br>
-                                                            Last changed by {{ $otherCompany->updated_at ? $otherCompany->updated_at->format('d.m.Y H:i') : '-' }}
+                                                            @include('partials.audit-info', ['record' => $otherCompany])
                                                         </div>
                                                     </div>
                                                 </form>

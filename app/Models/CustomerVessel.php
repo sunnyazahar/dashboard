@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 
 class CustomerVessel extends Model
 {
+    use TracksUserAudit;
+
     protected $fillable = [
         'customer_id',
         // Vessel information
@@ -24,6 +27,7 @@ class CustomerVessel extends Model
         // Contact details
         'contact_id', 'contact_stocklists', 'contact_pre_alerts',
         'contact_stock_notifications', 'contact_free_storage_notifications', 'contact_offers',
+        'created_by', 'updated_by',
     ];
 
     protected $casts = [

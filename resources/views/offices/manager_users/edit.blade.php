@@ -756,8 +756,7 @@
             user</button>
         <a href="{{ route('offices.edit', $office) }}" class="btn-cancel-custom">Cancel</a>
         <div class="audit-info">
-            Created by <b>Thomas de Boer</b> on 10.10.2025 16:14<br>
-            Last changed by <b>Thomas de Boer</b> on 10.10.2025 16:14
+            @include('partials.audit-info', ['record' => $contact, 'bold' => true])
         </div>
     </div>
     <!-- Required Jquery -->

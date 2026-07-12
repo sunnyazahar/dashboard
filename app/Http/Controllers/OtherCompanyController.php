@@ -51,6 +51,7 @@ class OtherCompanyController extends Controller
 
     public function edit(OtherCompany $otherCompany)
     {
+        $otherCompany->load(['creator', 'updater']);
         $countries = Country::all();
         $currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'AED', 'SGD', 'INR', 'AUD', 'CAD'];
         $companyTypes = $this->companyTypeOptions();

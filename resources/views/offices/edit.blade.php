@@ -1011,8 +1011,7 @@
 
                                             <!-- Audit Info -->
                                             <div class="audit-info">
-                                                Created at <b>{{ $office->created_at->format('d.m.Y H:i') }}</b><br>
-                                                Last changed at <b>{{ $office->updated_at->format('d.m.Y H:i') }}</b>
+                                                @include('partials.audit-info', ['record' => $office, 'bold' => true])
                                             </div>
                                         </div>
 

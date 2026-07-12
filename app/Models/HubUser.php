@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class HubUser extends Model
 {
-    use HasFactory;
+    use HasFactory, TracksUserAudit;
 
     protected $fillable = [
         'hub_id',
@@ -15,6 +16,8 @@ class HubUser extends Model
         'email',
         'phone_number',
         'show_in_scan_gun',
+        'created_by',
+        'updated_by',
     ];
 
     public function hub()

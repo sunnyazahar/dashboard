@@ -377,10 +377,7 @@ VIA DELL'AZOTO 6</textarea>
                                                 <a href="{{ route('agents.edit', ['id' => 1]) }}" class="btn-cancel-custom">Cancel</a>
                                             </div>
 
-                                            <div class="metadata-footer">
-                                                <div>Created by Momo Shahrul Bin Jani on 21.09.2022 12:11</div>
-                                                <div>Last changed by Momo Shahrul Bin Jani on 21.09.2022 12:11</div>
-                                            </div>
+                                            <div class="metadata-footer"></div>
                                         </div>
                                     </div>
                                     <!-- Page-body end -->

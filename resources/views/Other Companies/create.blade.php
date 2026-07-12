@@ -395,10 +395,7 @@
                                                 <div class="form-footer">
                                                     <button type="submit" class="btn-save-custom">Save</button>
                                                     <a href="{{ route('other-companies.index') }}" class="btn-cancel-custom">Cancel</a>
-                                                    <div class="footer-metadata" style="margin-left: auto; text-align: right; font-size: 11px; color: #999; line-height: 1.4;">
-                                                        Created by Mitchell Levoleger on 22.01.2024 10:45<br>
-                                                        Last changed by Mitchell Levoleger on 23.01.2024 14:30
-                                                    </div>
+                                                    <div class="footer-metadata" style="margin-left: auto; text-align: right; font-size: 11px; color: #999; line-height: 1.4;"></div>
                                                 </div>
                                             </form>
                                         </div>

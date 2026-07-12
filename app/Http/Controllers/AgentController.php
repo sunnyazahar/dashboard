@@ -72,7 +72,7 @@ class AgentController extends Controller
 
     public function edit($id)
     {
-        $agent = Agent::findOrFail($id);
+        $agent = Agent::with(['creator', 'updater'])->findOrFail($id);
         $countries = Country::where('is_active', true)->orderBy('name')->get();
         return view('Agents.edit', compact('agent', 'countries'));
     }
@@ -259,7 +259,7 @@ class AgentController extends Controller
 
     public function editContact($id)
     {
-        $contact = \App\Models\Contact::findOrFail($id);
+        $contact = \App\Models\Contact::with(['creator', 'updater'])->findOrFail($id);
         return view('Agents.contacts.edit', compact('contact'));
     }
 
@@ -312,7 +312,7 @@ class AgentController extends Controller
 
     public function editUser($id)
     {
-        $user = \App\Models\AgentUser::findOrFail($id);
+        $user = \App\Models\AgentUser::with(['creator', 'updater'])->findOrFail($id);
         return view('Agents.Users.edit', compact('user'));
     }
 

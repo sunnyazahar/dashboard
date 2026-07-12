@@ -1593,9 +1593,7 @@ class ShipmentController extends Controller
             return redirect($redirectTo)->with('success', $message);
         }
 
-        return redirect()
-            ->route('shipments.edit', $shipment->id)
-            ->with('success', $message);
+        return redirect()->back()->with('success', $message);
     }
 
     private function isSafeAppRedirect(string $url): bool

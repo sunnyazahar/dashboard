@@ -373,6 +373,9 @@
                                                 <div class="form-footer">
                                                     <button type="submit" class="btn-save-contact">Update</button>
                                                     <a href="{{ route('customers.edit', $contact->customer_id) }}" class="btn-cancel-contact">Cancel</a>
+                                                    <div style="margin-left:auto; text-align:right; font-size:11px; color:#999; line-height:1.6;">
+                                                        @include('partials.audit-info', ['record' => $contact])
+                                                    </div>
                                                 </div>
                                             </div>
                                             </form>

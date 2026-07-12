@@ -330,7 +330,7 @@ class CrrController extends Controller
             $crr->load(['packages', 'costs']);
             $changeLogService->logChangesFromSnapshot($crr, $changeLogSnapshot);
 
-            return redirect()->route('stocks')
+            return redirect()->back()
                 ->with('success', 'CRR updated successfully! Stock number: ' . $crr->stock_number);
 
         } catch (\Exception $e) {

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Agent extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, TracksUserAudit;
 
     protected $fillable = [
         'agent_name',
@@ -45,7 +46,8 @@ class Agent extends Model
         // Email Settings
         'export_email_services', 'import_email_services', 'status_changed_emails', 'stock_item_changed_emails', 'quote_requests_emails',
         // Scan gun
-        'scangun_login', 'scangun_password', 'scangun_enable_picture', 'scangun_enable_detailed_shipment'
+        'scangun_login', 'scangun_password', 'scangun_enable_picture', 'scangun_enable_detailed_shipment',
+        'created_by', 'updated_by',
     ];
 
     protected $casts = [

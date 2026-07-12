@@ -65,7 +65,7 @@ class HubController extends Controller
 
     public function show($id)
     {
-        $hub = Hub::with(['documents', 'pricingDocuments'])->findOrFail($id);
+        $hub = Hub::with(['documents', 'pricingDocuments', 'creator', 'updater'])->findOrFail($id);
         $countries = DB::table('countries')->where('is_active', 1)->orderBy('name')->get();
         return view('hub.show', compact('hub', 'countries'));
     }

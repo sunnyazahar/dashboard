@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Hub extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, TracksUserAudit;
 
     protected $fillable = [
         'hub_name',
@@ -74,6 +75,8 @@ class Hub extends Model
         'cbm_charge_usd',
         'scangun_photo_taking',
         'scangun_detailed_shipment_out',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

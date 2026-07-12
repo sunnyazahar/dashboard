@@ -75,6 +75,7 @@
             flex-direction: column;
             overflow: hidden;
             padding: 0 10px;
+            padding-bottom: 72px;
         }
 
         /* Summary Header */
@@ -176,6 +177,50 @@
             overflow-y: auto;
             background: #fff;
             padding: 20px;
+            padding-bottom: 30px;
+        }
+
+        /* Fixed Footer Section */
+        .edit-footer {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.98);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-top: 1px solid #dee2e6;
+            position: fixed;
+            bottom: 0;
+            left: 185px;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .edit-footer .btn-save-custom {
+            background-color: #008080;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .edit-footer .btn-save-custom:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .edit-footer .btn-cancel-custom {
+            color: #008080;
+            font-size: 12px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .edit-footer .btn-cancel-custom:hover {
+            text-decoration: underline;
         }
         .form-grid-3 {
             display: grid;
@@ -2084,6 +2129,11 @@
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <div class="edit-footer">
+                                                <button type="submit" form="shipment-edit-form" id="shipment-save-changes-btn" class="btn-save-custom" disabled>Save changes</button>
+                                                <a href="{{ route('shipments') }}" class="btn-cancel-custom">Cancel</a>
+                                            </div>
                                         </div>
 
                                         <!-- Right Sidebar -->
@@ -2420,6 +2470,14 @@
 
 <script>
     $(document).ready(function() {
+        function fixedFooterOffset() {
+            var $navbar = $('.pcoded-navbar');
+            var sidebarWidth = $navbar.length ? $navbar.outerWidth() : 0;
+            $('.edit-footer').css('left', sidebarWidth + 'px');
+        }
+        fixedFooterOffset();
+        $(window).on('resize', fixedFooterOffset);
+
         var serverErrors = @json($errors->all());
         var serverErrorMessage = @json(session('error'));
 

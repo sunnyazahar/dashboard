@@ -226,7 +226,9 @@ class CustomerController extends Controller
             'notificationSetting',
             'documents',
             'vessels',
-            'contacts'
+            'contacts',
+            'creator',
+            'updater',
         ])->findOrFail($id);
         $countries = Country::all();
         $salesManagers = Contact::where('category', 'sales')->get();
@@ -608,7 +610,7 @@ class CustomerController extends Controller
      */
     public function editVessel($id)
     {
-        $vessel = CustomerVessel::with('customer.contacts')->findOrFail($id);
+        $vessel = CustomerVessel::with(['customer.contacts', 'creator', 'updater'])->findOrFail($id);
         $customerContacts = $vessel->customer->contacts;
 
         return view('customers.customer-vessels', compact('vessel', 'customerContacts'));

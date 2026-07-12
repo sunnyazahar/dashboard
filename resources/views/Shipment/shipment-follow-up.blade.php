@@ -390,13 +390,12 @@
                                                         <div class="row no-gutters">
                                                             <div class="mr-2" style="margin-top: 2px;">
                                                                 <select id="filter-multiselect" multiple="multiple">
-                                                                    <option value="Account manager">Account manager</option>
-                                                                    <option value="Show ETL shipments">Show ETL shipments</option>
-                                                                    <option value="Shipment no">Shipment no</option>
-                                                                    <option value="Customer">Customer</option>
-                                                                    <option value="Vessel">Vessel</option>
-                                                                    <option value="Port of destination">Port of destination</option>
-                                                                    <option value="Created by">Created by</option>
+                                                                    <option value="Account manager" selected>Account manager</option>
+                                                                    <option value="Shipment no" selected>Shipment no</option>
+                                                                    <option value="Customer" selected>Customer</option>
+                                                                    <option value="Vessel" selected>Vessel</option>
+                                                                    <option value="Port of destination" selected>Port of destination</option>
+                                                                    <option value="Created by" selected>Created by</option>
                                                                 </select>
                                                             </div>
 
@@ -408,15 +407,6 @@
                                                                             <option value="{{ $manager->name }}">{{ $manager->name }}</option>
                                                                         @endforeach
                                                                     </select>
-                                                                </div>
-                                                            </div>
-
-                                                            <div id="col-Show-ETL-shipments" class="custom-col" style="flex: 0 0 160px;">
-                                                                <div class="filter-group" style="border: none; background: transparent;">
-                                                                    <div class="d-flex align-items-center" style="font-size: 11px; color: #64748b; font-weight: 500;">
-                                                                        <span>Show ETL shipments</span>
-                                                                        <input type="checkbox" id="filter-show-etl" class="ml-2" style="width: 14px; height: 14px; margin-top: 0;">
-                                                                    </div>
                                                                 </div>
                                                             </div>
 
@@ -525,7 +515,6 @@
                                                                 data-destination="{{ $shipment->destination_display }}"
                                                                 data-account-manager="{{ $shipment->accountManager?->name ?? '' }}"
                                                                 data-created-by="{{ $shipment->creator?->name ?? '' }}"
-                                                                data-has-etl="{{ $shipment->hasEtlStock() ? '1' : '0' }}"
                                                             >
                                                                 <td>
                                                                     <div class="d-flex align-items-center">
@@ -668,6 +657,9 @@
                 }
             });
 
+            $('#filter-multiselect').multiselect('selectAll', false);
+            $('#filter-multiselect').multiselect('updateButtonText');
+
             function toggleFilterVisibility() {
                 var selectedOptions = $('#filter-multiselect option:selected');
                 var selectedValues = [];
@@ -677,7 +669,6 @@
 
                 var allFilters = [
                     {val: 'Account manager', id: 'col-Account-manager'},
-                    {val: 'Show ETL shipments', id: 'col-Show-ETL-shipments'},
                     {val: 'Shipment no', id: 'col-Shipment-no'},
                     {val: 'Customer', id: 'col-Customer'},
                     {val: 'Vessel', id: 'col-Vessel'},
@@ -761,7 +752,7 @@
                 return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
             }
 
-            $('#filter-shipment-no, #filter-port-destination, #filter-customer, #filter-vessel, #filter-account-manager, #filter-created-by, #filter-show-etl').on('change keyup', function() {
+            $('#filter-shipment-no, #filter-port-destination, #filter-customer, #filter-vessel, #filter-account-manager, #filter-created-by').on('change keyup', function() {
                 table.draw();
             });
 
@@ -776,10 +767,6 @@
                 }
 
                 var $row = $(row);
-
-                if ($('#filter-show-etl').is(':checked') && rowData($row, 'has-etl') !== '1') {
-                    return false;
-                }
 
                 if (!matchesAnySelectedValues($('#filter-customer').val() || [], rowData($row, 'customers'))) {
                     return false;
@@ -812,7 +799,6 @@
                 e.preventDefault();
                 $('.select2').val(null).trigger('change');
                 $('.filter-input:not(select)').val('').trigger('keyup');
-                $('#filter-show-etl').prop('checked', false);
                 table.columns().search('').draw();
             });
 

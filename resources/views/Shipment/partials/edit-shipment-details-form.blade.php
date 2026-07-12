@@ -554,8 +554,3 @@
         </div>
     </div>
 </div>
-
-<div class="d-flex align-items-center gap-4 mt-4 mb-4">
-    <button type="submit" id="shipment-save-changes-btn" class="btn btn-premium btn-teal" style="background: #008080; padding: 10px 30px;" disabled>Save changes</button>
-    <a href="{{ route('shipments') }}" class="text-primary" style="font-size: 11px; font-weight: 600;">Cancel</a>
-</div>

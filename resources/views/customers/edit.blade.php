@@ -620,8 +620,7 @@
                                                  </div>
 
                                                 <div style="text-align: right; margin-top: 40px; font-size: 10px; color: #999; line-height: 1.4;">
-                                                    Created by Mashdie Bin Jumaat on 16.05.2023 07:10<br>
-                                                    Last changed by Thomas de Boer on 02.12.2025 14:08
+                                                    @include('partials.audit-info', ['record' => $customer])
                                                 </div>
                                             </div>
                                         </div>

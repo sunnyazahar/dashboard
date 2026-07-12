@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    public $timestamps = false;
+    use TracksUserAudit;
+
     protected $fillable = [
-        'customer_name', 'customer_number', 'customer_group_id', 'phone', 'email', 
-        'internal_shipment', 'remarks', 'special_considerations', 'un_locode', 
-        'show_transport_details', 'esea_store_stock_only', 'logo'
+        'customer_name', 'customer_number', 'customer_group_id', 'phone', 'email',
+        'internal_shipment', 'remarks', 'special_considerations', 'un_locode',
+        'show_transport_details', 'esea_store_stock_only', 'logo',
+        'created_by', 'updated_by',
     ];
 
     public function documents()

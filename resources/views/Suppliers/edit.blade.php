@@ -663,8 +663,7 @@
                                                     <button type="submit" class="btn btn-primary" style="background: #1b5e6f; border-color: #1b5e6f; padding: 8px 25px;">Update supplier</button>
                                                     <a href="{{ route('suppliers.index') }}" class="btn-cancel-custom">Cancel</a>
                                                     <div class="footer-metadata">
-                                                        Created on {{ $supplier->created_at->format('d.m.Y H:i') }}<br>
-                                                        Last changed on {{ $supplier->updated_at->format('d.m.Y H:i') }}
+                                                        @include('partials.audit-info', ['record' => $supplier])
                                                     </div>
                                                 </div>
                                             </div>

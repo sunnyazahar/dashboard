@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 
 class Contact extends Model
 {
+    use TracksUserAudit;
+
     protected $fillable = [
         'name',
         'email',
@@ -22,6 +25,8 @@ class Contact extends Model
         'is_cc_enabled',
         'status',
         'category',
+        'created_by',
+        'updated_by',
     ];
 
     public function office()

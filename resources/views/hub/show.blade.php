@@ -1244,8 +1244,7 @@
                                                             </form>
 
                                                             <div class="metadata-footer">
-                                                                <span>Created by Luwin on 04.04.2022 12:46</span><br>
-                                                                <span>Last changed by Mitchell Levoleger on 02.01.2024 12:17</span>
+                                                                @include('partials.audit-info', ['record' => $hub])
                                                             </div>
                                                         </div>
                                                     </div>

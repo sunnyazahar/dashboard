@@ -288,8 +288,7 @@
                                             </div>
                                             
                                             <div class="footer-metadata">
-                                                Created by Mitchell Levoleger on 22.01.2024 10:45<br>
-                                                Last changed by Mitchell Levoleger on 23.01.2024 14:30
+                                                @include('partials.audit-info', ['record' => $contact])
                                             </div>
                                         </div>
                                     </form>

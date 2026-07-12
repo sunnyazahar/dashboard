@@ -111,7 +111,7 @@ class OfficeController extends Controller
 
     public function edit($id)
     {
-        $office = Office::with(['bankAccounts', 'contacts'])->findOrFail($id);
+        $office = Office::with(['bankAccounts', 'contacts', 'creator', 'updater'])->findOrFail($id);
         $companies = OtherCompany::all();
         $countries = Country::all();
         return view('offices.edit', compact('office', 'companies', 'countries'));

@@ -2,19 +2,21 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OtherCompany extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, TracksUserAudit;
 
     protected $fillable = [
         'company_name', 'company_type', 'code', 'code_description', 'phone_number', 'email', 'remarks', 'special_considerations',
         'street_address', 'city', 'district_state', 'zip_code', 'country_id', 'port_code',
         'office_street_address', 'office_city', 'office_district_state', 'office_zip_code', 'office_country_id',
-        'vat_number', 'eori_number', 'currency', 'un_locode'
+        'vat_number', 'eori_number', 'currency', 'un_locode',
+        'created_by', 'updated_by',
     ];
 
     public function country()

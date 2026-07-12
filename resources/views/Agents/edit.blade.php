@@ -1294,8 +1294,7 @@
                                                 <a href="{{ route('agents.index') }}" class="btn-cancel-custom">Cancel</a>
                                             </div>
                                             <div class="metadata-footer">
-                                                Created by Zamir Mohammed on 26.05.2022 20:04<br>
-                                                Last changed by Mitchell Leveleger on 24.09.2024 12:13
+                                                @include('partials.audit-info', ['record' => $agent])
                                             </div>
                                         </div>
                                     </div>

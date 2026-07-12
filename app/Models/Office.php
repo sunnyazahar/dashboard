@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Office extends Model
 {
-    use HasFactory;
+    use HasFactory, TracksUserAudit;
 
     protected $fillable = [
         'office_name', 'office_short_name', 'phone_number', 'email', 'eori_number',
@@ -15,7 +16,8 @@ class Office extends Model
         'postal_address', 'postal_city', 'postal_district_state', 'postal_zip_code', 'office_country_id',
         'invoicing_currency', 'reporting_currency', 'vat_rates', 'vat_country_specific_name', 'vat_number',
         'invoicing_emails', 'heading_invoice', 'information_invoice',
-        'use_vat_check', 'show_imo', 'enable_reader', 'status'
+        'use_vat_check', 'show_imo', 'enable_reader', 'status',
+        'created_by', 'updated_by',
     ];
 
     public function bankAccounts()
