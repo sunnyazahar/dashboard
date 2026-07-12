@@ -204,7 +204,7 @@ class AgentController extends Controller
             }
         }
 
-        return redirect()->route('agents.edit', $id)->with('success', 'Agent updated successfully.');
+        return redirect()->back()->with('success', 'Agent updated successfully.');
     }
 
     public function destroy($id)
@@ -280,7 +280,7 @@ class AgentController extends Controller
             'is_main_contact' => $request->has('is_main_contact') ? 1 : 0,
         ]);
 
-        return redirect()->route('agents.edit', $contact->agent_id)->with('success', 'Contact updated successfully.');
+        return redirect()->back()->with('success', 'Contact updated successfully.');
     }
 
     public function destroyContact($id)
@@ -332,7 +332,7 @@ class AgentController extends Controller
             'description' => $request->description,
         ]);
 
-        return redirect()->route('agents.edit', $user->agent_id)->with('success', 'User updated successfully.');
+        return redirect()->back()->with('success', 'User updated successfully.');
     }
 
     public function destroyUser($id)

@@ -55,7 +55,7 @@ class SupplierController extends Controller
 
         $supplier->update($request->all());
 
-        return redirect()->route('suppliers.index')->with('success', 'Supplier updated successfully.');
+        return redirect()->back()->with('success', 'Supplier updated successfully.');
     }
 
     public function destroy($id)
@@ -126,7 +126,7 @@ class SupplierController extends Controller
             'is_main_contact' => $request->has('is_main_contact'),
         ]);
 
-        return redirect()->route('suppliers.edit', $supplierId)->with('success', 'Contact updated successfully.');
+        return redirect()->back()->with('success', 'Contact updated successfully.');
     }
 
     private function multipleEmailsValidator(): \Closure

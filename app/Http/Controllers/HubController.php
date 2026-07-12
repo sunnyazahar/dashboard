@@ -173,7 +173,7 @@ class HubController extends Controller
 
         $hub->update($validated);
 
-        return redirect()->route('hub.show', $id)->with('success', 'Hub updated successfully.');
+        return redirect()->back()->with('success', 'Hub updated successfully.');
     }
 
     public function destroy($id)
@@ -309,7 +309,7 @@ class HubController extends Controller
             'is_main_contact' => $request->has('is_main_contact'),
         ]);
 
-        return redirect()->route('hub.show', $hubId)->with('success', 'Contact updated successfully.');
+        return redirect()->back()->with('success', 'Contact updated successfully.');
     }
 
     // Hub User Methods
@@ -365,7 +365,7 @@ class HubController extends Controller
             'show_in_scan_gun' => $request->has('show_in_scan_gun'),
         ]);
 
-        return redirect()->route('hub.show', $hubId)->with('success', 'Hub User updated successfully.');
+        return redirect()->back()->with('success', 'Hub User updated successfully.');
     }
 
     private function multipleEmailsValidator(): \Closure

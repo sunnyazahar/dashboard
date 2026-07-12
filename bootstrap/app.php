@@ -11,6 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'otp.verified' => \App\Http\Middleware\EnsureOtpIsVerified::class,
+        ]);
+
         $middleware->redirectTo(
             guests: '/login',
             users: '/dashboard'

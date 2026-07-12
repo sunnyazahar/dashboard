@@ -409,7 +409,7 @@ class CustomerController extends Controller
 
             DB::commit();
 
-            return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
+            return redirect()->back()->with('success', 'Customer updated successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -508,7 +508,7 @@ class CustomerController extends Controller
             'is_main_contact' => $request->has('is_main_contact'),
         ]);
 
-        return redirect()->route('customers.edit', $contact->customer_id)->with('success', 'Contact updated successfully.');
+        return redirect()->back()->with('success', 'Contact updated successfully.');
     }
 
     /**
@@ -667,7 +667,7 @@ class CustomerController extends Controller
             'contact_offers' => isset($contactData['offers']) ? 1 : 0,
         ]);
 
-        return redirect()->route('customers.edit', $vessel->customer_id)->with('success', 'Vessel updated successfully.');
+        return redirect()->back()->with('success', 'Vessel updated successfully.');
     }
 
     private function multipleEmailsValidator(): \Closure

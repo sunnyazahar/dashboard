@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Route;
 Auth::routes();
 
 Route::middleware('auth')->group(function () {
+    Route::get('/otp', [App\Http\Controllers\Auth\OtpController::class, 'show'])->name('otp.show');
+    Route::post('/otp/verify', [App\Http\Controllers\Auth\OtpController::class, 'verify'])->name('otp.verify');
+    Route::post('/otp/resend', [App\Http\Controllers\Auth\OtpController::class, 'resend'])->name('otp.resend');
+
+    Route::middleware('otp.verified')->group(function () {
 Route::get('/dashboard', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard');
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('dashboard.home');
 Route::post('/customers', [App\Http\Controllers\CustomerController::class, 'store'])->name('customers.store');
@@ -657,4 +662,5 @@ Route::get('/Agents/company-agent/{id}', function ($id) {
     return view('Agents.company-agent', compact('id'));
 })->name('agents.company-agent');
 Route::get('/update-currency-rates', [App\Http\Controllers\CurrencyController::class, 'updateRates'])->name('currency.update');
+    });
 });

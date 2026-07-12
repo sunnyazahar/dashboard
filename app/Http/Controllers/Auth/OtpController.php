@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
+
+class OtpController extends Controller
+{
+    private const OTP_LENGTH = 6;
+    private const OTP_TTL_MINUTES = 10;
+    private const RESEND_COOLDOWN_SECONDS = 60;
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    public function show(Request $request)
+    {
+        if ($request->session()->get('otp_verified') === true) {
+            return redirect()->intended('/dashboard');
+        }
+
+        if (! $request->session()->has('login_otp_hash')) {
+            $this->issueOtp($request);
+        }
+
+        $user = $request->user();
+
+        return view('auth.otp', [
+            'maskedEmail' => $this->maskEmail((string) $user->email),
+            'resendAvailableIn' => $this->resendAvailableIn($request),
+        ]);
+    }
+
+    public function verify(Request $request)
+    {
+        $request->validate([
+            'otp' => ['required', 'string', 'size:' . self::OTP_LENGTH, 'regex:/^\d+$/'],
+        ], [
+            'otp.required' => 'Please enter the verification code.',
+            'otp.size' => 'The verification code must be ' . self::OTP_LENGTH . ' digits.',
+            'otp.regex' => 'The verification code must contain only numbers.',
+        ]);
+
+        $hash = $request->session()->get('login_otp_hash');
+        $expiresAt = $request->session()->get('login_otp_expires_at');
+
+        if (! $hash || ! $expiresAt || now()->greaterThan($expiresAt)) {
+            throw ValidationException::withMessages([
+                'otp' => 'This code has expired. Please request a new one.',
+            ]);
+        }
+
+        if (! hash_equals($hash, hash('sha256', $request->input('otp')))) {
+            throw ValidationException::withMessages([
+                'otp' => 'Invalid verification code. Please try again.',
+            ]);
+        }
+
+        $request->session()->forget(['login_otp_hash', 'login_otp_expires_at', 'login_otp_last_sent_at']);
+        $request->session()->put('otp_verified', true);
+
+        return redirect()->intended('/dashboard');
+    }
+
+    public function resend(Request $request)
+    {
+        $key = $this->resendRateLimitKey($request);
+
+        if (RateLimiter::tooManyAttempts($key, 1)) {
+            $seconds = RateLimiter::availableIn($key);
+
+            throw ValidationException::withMessages([
+                'otp' => "Please wait {$seconds} seconds before requesting another code.",
+            ]);
+        }
+
+        $this->issueOtp($request);
+        RateLimiter::hit($key, self::RESEND_COOLDOWN_SECONDS);
+
+        return back()->with('status', 'A new verification code has been sent.');
+    }
+
+    public function issueOtp(Request $request): string
+    {
+        $otp = str_pad((string) random_int(0, 999999), self::OTP_LENGTH, '0', STR_PAD_LEFT);
+        $user = $request->user();
+
+        $request->session()->put('login_otp_hash', hash('sha256', $otp));
+        $request->session()->put('login_otp_expires_at', now()->addMinutes(self::OTP_TTL_MINUTES));
+        $request->session()->put('login_otp_last_sent_at', now()->timestamp);
+        $request->session()->forget('otp_verified');
+
+        $this->deliverOtp($user?->email, $otp);
+
+        if (config('app.debug')) {
+            $request->session()->flash('debug_otp', $otp);
+        }
+
+        return $otp;
+    }
+
+    private function deliverOtp(?string $email, string $otp): void
+    {
+        if (! $email) {
+            return;
+        }
+
+        try {
+            Mail::raw(
+                "Your MarineCaddie verification code is: {$otp}\n\nThis code expires in " . self::OTP_TTL_MINUTES . " minutes.",
+                function ($message) use ($email) {
+                    $message->to($email)->subject('Your MarineCaddie verification code');
+                }
+            );
+        } catch (\Throwable $e) {
+            Log::warning('OTP email failed to send: ' . $e->getMessage(), [
+                'email' => $email,
+            ]);
+        }
+
+        if (config('app.debug')) {
+            Log::info('Login OTP generated', [
+                'email' => $email,
+                'otp' => $otp,
+            ]);
+        }
+    }
+
+    private function maskEmail(string $email): string
+    {
+        if (! str_contains($email, '@')) {
+            return $email;
+        }
+
+        [$local, $domain] = explode('@', $email, 2);
+        $visible = substr($local, 0, min(2, strlen($local)));
+        $maskedLocal = $visible . str_repeat('*', max(strlen($local) - strlen($visible), 3));
+
+        return $maskedLocal . '@' . $domain;
+    }
+
+    private function resendAvailableIn(Request $request): int
+    {
+        $lastSent = (int) $request->session()->get('login_otp_last_sent_at', 0);
+        if ($lastSent <= 0) {
+            return 0;
+        }
+
+        $elapsed = time() - $lastSent;
+
+        return max(0, self::RESEND_COOLDOWN_SECONDS - $elapsed);
+    }
+
+    private function resendRateLimitKey(Request $request): string
+    {
+        return 'otp-resend:' . ($request->user()?->id ?? $request->ip());
+    }
+}

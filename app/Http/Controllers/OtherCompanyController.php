@@ -71,7 +71,7 @@ class OtherCompanyController extends Controller
 
         $otherCompany->update($request->except(['_token', '_method']));
 
-        return redirect()->route('other-companies.edit', $otherCompany->id)->with('success', 'Company updated successfully.');
+        return redirect()->back()->with('success', 'Company updated successfully.');
     }
 
     public function destroy(OtherCompany $otherCompany)
@@ -155,7 +155,7 @@ class OtherCompanyController extends Controller
             'is_main_contact' => $request->has('is_main_contact'),
         ]);
 
-        return redirect()->route('other-companies.edit', $otherCompanyId)->with('success', 'Contact updated successfully.');
+        return redirect()->back()->with('success', 'Contact updated successfully.');
     }
 
     public function destroyContact($otherCompanyId, $contactId)

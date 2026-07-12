@@ -4,20 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
     use AuthenticatesUsers;
 
     /**
@@ -25,27 +15,30 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/dashboard';
+    protected $redirectTo = '/otp';
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
         $this->middleware('auth')->only('logout');
     }
 
-    /**
-     * The user has been logged out of the application.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return mixed
-     */
-    protected function loggedOut(\Illuminate\Http\Request $request)
+    protected function authenticated(Request $request, $user)
     {
+        app(OtpController::class)->issueOtp($request);
+
+        return redirect()->route('otp.show');
+    }
+
+    protected function loggedOut(Request $request)
+    {
+        $request->session()->forget([
+            'otp_verified',
+            'login_otp_hash',
+            'login_otp_expires_at',
+            'login_otp_last_sent_at',
+        ]);
+
         return redirect()->route('login');
     }
 }
