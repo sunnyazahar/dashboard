@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\LogsFieldChanges;
 use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 
 class CustomerVessel extends Model
 {
-    use TracksUserAudit;
+    use TracksUserAudit, LogsFieldChanges;
 
     protected $fillable = [
         'customer_id',

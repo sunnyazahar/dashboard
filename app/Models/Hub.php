@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsFieldChanges;
 use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Hub extends Model
 {
-    use SoftDeletes, TracksUserAudit;
+    use SoftDeletes, TracksUserAudit, LogsFieldChanges;
 
     protected $fillable = [
         'hub_name',

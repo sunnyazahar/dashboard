@@ -226,6 +226,10 @@ class BreadcrumbBuilder
             ],
 
             // Administration - Offices
+            'administration.change-logs' => [
+                ['label' => 'Administration', 'url' => null],
+                ['label' => 'Change logs', 'url' => null],
+            ],
             'offices.index' => [
                 ['label' => 'Administration', 'url' => null],
                 ['label' => 'Offices', 'url' => null],
@@ -385,7 +389,7 @@ class BreadcrumbBuilder
             'stocks', 'stock-follow-up', 'pickup-work-list', 'create-crr', 'etl-stock-items' => 'Stocks',
             'shipments', 'create-shipment', 'pre-alert-reminders', 'shipment-follow-up', 'cost-follow-up' => 'Shipments',
             'billable-shipments', 'all-invoices', 'all-incoming-invoices', 'all-costs', 'accounting' => 'Billing',
-            'offices', 'hub', 'agents', 'other-companies', 'suppliers', 'customers', 'vessels', 'contacts' => 'Administration',
+            'offices', 'hub', 'agents', 'other-companies', 'suppliers', 'customers', 'vessels', 'contacts', 'administration' => 'Administration',
             default => $section !== '' ? self::humanize($section) : null,
         };
     }

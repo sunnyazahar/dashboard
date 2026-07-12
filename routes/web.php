@@ -604,6 +604,11 @@ Route::delete('/other-companies/{other_company}/contacts/{contact}', [App\Http\C
 
 Route::get('/Vessels', [App\Http\Controllers\VesselController::class, 'index'])->name('vessels.index');
 
+Route::get('/administration/change-logs', [App\Http\Controllers\AdministrationChangeLogController::class, 'index'])
+    ->name('administration.change-logs');
+Route::get('/administration/change-logs/search', [App\Http\Controllers\AdministrationChangeLogController::class, 'search'])
+    ->name('administration.change-logs.search');
+
 
 Route::get('/Vessels/create', function () {
     return view('vessels.create');

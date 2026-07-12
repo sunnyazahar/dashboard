@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\LogsFieldChanges;
 use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Office extends Model
 {
-    use HasFactory, TracksUserAudit;
+    use HasFactory, TracksUserAudit, LogsFieldChanges;
 
     protected $fillable = [
         'office_name', 'office_short_name', 'phone_number', 'email', 'eori_number',

@@ -687,10 +687,9 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- Change Log Tab Content placeholder -->
                                                 <div class="vessel-tab-pane" id="change-log">
                                                     <div style="padding: 30px; font-size: 14px; color: #666;">
-                                                        Change log content goes here...
+                                                        View all administration change logs from the Administration menu.
                                                     </div>
                                                 </div>
                                             </div>

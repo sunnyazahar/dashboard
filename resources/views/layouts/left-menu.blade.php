@@ -166,7 +166,7 @@
                 </ul>
             </li>
             <li
-                class="pcoded-hasmenu {{ request()->routeIs('offices.*', 'hub.*', 'agents.*', 'other-companies.*', 'suppliers.*', 'customers.*', 'vessels.*', 'contacts.*') ? 'pcoded-trigger' : '' }}"
+                class="pcoded-hasmenu {{ request()->routeIs('offices.*', 'hub.*', 'agents.*', 'other-companies.*', 'suppliers.*', 'customers.*', 'vessels.*', 'contacts.*', 'administration.change-logs') ? 'pcoded-trigger' : '' }}"
                 data-menu-key="administration">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-command"></i></span>
@@ -206,6 +206,11 @@
                     <li class="{{ request()->routeIs('vessels.*') ? 'active' : '' }}">
                         <a href="{{ route('vessels.index') }}">
                             <span class="pcoded-mtext">Vessels</span>
+                        </a>
+                    </li>
+                    <li class="{{ request()->routeIs('administration.change-logs') ? 'active' : '' }}">
+                        <a href="{{ route('administration.change-logs') }}">
+                            <span class="pcoded-mtext">Change logs</span>
                         </a>
                     </li>
                 </ul>

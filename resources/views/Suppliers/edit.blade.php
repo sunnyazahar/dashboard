@@ -658,7 +658,6 @@
                                                         </table>
                                                     </div>
                                                 </div>
-                                                
                                                 <div class="form-footer-custom">
                                                     <button type="submit" class="btn btn-primary" style="background: #1b5e6f; border-color: #1b5e6f; padding: 8px 25px;">Update supplier</button>
                                                     <a href="{{ route('suppliers.index') }}" class="btn-cancel-custom">Cancel</a>

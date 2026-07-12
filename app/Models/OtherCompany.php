@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\LogsFieldChanges;
 use App\Traits\TracksUserAudit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OtherCompany extends Model
 {
-    use SoftDeletes, TracksUserAudit;
+    use SoftDeletes, TracksUserAudit, LogsFieldChanges;
 
     protected $fillable = [
         'company_name', 'company_type', 'code', 'code_description', 'phone_number', 'email', 'remarks', 'special_considerations',
