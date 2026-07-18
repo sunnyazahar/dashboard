@@ -532,13 +532,23 @@ Route::get('/stocks', [App\Http\Controllers\CrrController::class, 'index'])->nam
 
 Route::get('/stocks/create-crr', function () {
     $vessels = \App\Models\CustomerVessel::with('customer')
+        ->where(function ($query) {
+            $query->where('inactive_vessel', false)
+                ->orWhereNull('inactive_vessel');
+        })
         ->select('vessel', 'customer_id')
         ->groupBy('vessel', 'customer_id')
         ->get();
     $countries = \App\Models\Country::where('is_active', true)->orderBy('name')->get();
     $currencies = \App\Models\Country::where('is_active', true)->whereNotNull('currency')->distinct()->pluck('currency')->sort();
-    $hubs = \App\Models\Hub::orderBy('hub_name')->get();
-    $agents = \App\Models\Agent::with('country')->orderBy('agent_name')->get();
+    $hubs = \App\Models\Hub::where(function ($query) {
+        $query->where('hide_in_portal', false)
+            ->orWhereNull('hide_in_portal');
+    })->orderBy('hub_name')->get();
+    $agents = \App\Models\Agent::with('country')
+        ->where('is_active', true)
+        ->orderBy('agent_name')
+        ->get();
     $suppliers = \App\Models\Supplier::with('country')->orderBy('supplier_name')->get();
     return view('Stock.Create-CRR', compact('vessels', 'countries', 'currencies', 'hubs', 'agents', 'suppliers'));
 })->name('create-crr');
@@ -574,6 +584,7 @@ Route::post('/hubs', [App\Http\Controllers\HubController::class, 'store'])->name
 
 Route::get('/hubs/{id}', [App\Http\Controllers\HubController::class, 'show'])->name('hub.show');
 Route::put('/hubs/{id}', [App\Http\Controllers\HubController::class, 'update'])->name('hub.update');
+Route::patch('/hubs/{id}/status', [App\Http\Controllers\HubController::class, 'updateStatus'])->name('hub.status.update');
 Route::delete('/hubs/{id}', [App\Http\Controllers\HubController::class, 'destroy'])->name('hub.destroy');
 Route::post('/hubs/{id}/documents', [App\Http\Controllers\HubController::class, 'uploadDocument'])->name('hub.documents.upload');
 Route::delete('/hubs/documents/{docId}', [App\Http\Controllers\HubController::class, 'deleteDocument'])->name('hub.documents.delete');
@@ -644,6 +655,7 @@ Route::post('/Agents/store', [App\Http\Controllers\AgentController::class, 'stor
 
 Route::get('/Agents/edit/{id}', [App\Http\Controllers\AgentController::class, 'edit'])->name('agents.edit');
 Route::put('/Agents/update/{id}', [App\Http\Controllers\AgentController::class, 'update'])->name('agents.update');
+Route::patch('/Agents/{id}/status', [App\Http\Controllers\AgentController::class, 'updateStatus'])->name('agents.status.update');
 Route::delete('/Agents/{id}', [App\Http\Controllers\AgentController::class, 'destroy'])->name('agents.destroy');
 Route::delete('/Agents/documents/{id}', [App\Http\Controllers\AgentController::class, 'deleteDocument'])->name('agents.documents.delete');
 

@@ -39,6 +39,30 @@
         .table-other-companies tr:hover td {
             background-color: #f9fafb;
         }
+        .hub-status-toggle {
+            border: 1px solid transparent;
+            padding: 3px 10px;
+            border-radius: 12px;
+            min-width: 66px;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.2;
+            text-align: center;
+            cursor: pointer;
+        }
+        .hub-status-toggle.is-active {
+            color: #166534;
+            background: #dcfce7;
+            border-color: #bbf7d0;
+        }
+        .hub-status-toggle.is-inactive {
+            color: #991b1b;
+            background: #fee2e2;
+            border-color: #fecaca;
+        }
+        .hub-status-toggle:hover {
+            filter: brightness(0.97);
+        }
         .btn-teal {
             background-color: #008080;
             border-color: #008080;
@@ -373,7 +397,17 @@
                                                                     <td>{{ $hub->country }}</td>
                                                                     <td>{{ $hub->phone_number }}</td>
                                                                     <td>{{ $hub->email }}</td>
-                                                                    <td>{{ $isInactive ? 'Inactive' : 'Active' }}</td>
+                                                                    <td>
+                                                                        <button type="button"
+                                                                            class="hub-status-toggle {{ $isInactive ? 'is-inactive' : 'is-active' }}"
+                                                                            data-id="{{ $hub->id }}"
+                                                                            data-name="{{ $hub->hub_name }}"
+                                                                            data-status="{{ $isInactive ? 'inactive' : 'active' }}"
+                                                                            data-url="{{ route('hub.status.update', $hub->id) }}"
+                                                                            title="Click to change status">
+                                                                            {{ $isInactive ? 'Inactive' : 'Active' }}
+                                                                        </button>
+                                                                    </td>
                                                                     <td class="text-right">
                                                                         <a href="{{ route('hub.show', $hub->id) }}" style="color: #ccc; margin-right: 8px;"><i class="ti-pencil"></i></a>
                                                                         <a href="javascript:void(0)" class="delete-hub" data-id="{{ $hub->id }}" data-name="{{ $hub->hub_name }}" style="color: #ccc;" title="Delete hub"><i class="ti-trash"></i></a>
@@ -542,6 +576,75 @@
                 $('#filter-hub-country').val(null).trigger('change');
                 $('#filter-hide-inactive').prop('checked', true);
                 table.search('').columns().search('').draw();
+            });
+
+            $(document).on('click', '.hub-status-toggle', function() {
+                var $button = $(this);
+                var $row = $button.closest('tr');
+                var currentStatus = String($button.data('status') || 'active').toLowerCase();
+                var nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
+                var nextStatusLabel = nextStatus === 'active' ? 'Active' : 'Inactive';
+                var hubName = $button.data('name') || 'this hub';
+
+                swal({
+                    title: nextStatus === 'active' ? 'Activate hub?' : 'Deactivate hub?',
+                    text: 'Are you sure you want to mark "' + hubName + '" as ' + nextStatusLabel.toLowerCase() + '?',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: nextStatus === 'active' ? 'Yes, activate' : 'Yes, deactivate',
+                    cancelButtonText: 'Cancel',
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                    showLoaderOnConfirm: true
+                }, function(isConfirm) {
+                    if (!isConfirm) {
+                        return;
+                    }
+
+                    $button.prop('disabled', true);
+
+                    $.ajax({
+                        url: $button.data('url'),
+                        type: 'PATCH',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            status: nextStatus
+                        },
+                        success: function(response) {
+                            if (!response.success) {
+                                $button.prop('disabled', false);
+                                swal('Error', response.message || 'Unable to update hub status.', 'error');
+                                return;
+                            }
+
+                            $button
+                                .data('status', nextStatus)
+                                .attr('data-status', nextStatus)
+                                .toggleClass('is-active', !response.is_inactive)
+                                .toggleClass('is-inactive', response.is_inactive)
+                                .text(response.status)
+                                .prop('disabled', false);
+
+                            $row.attr('data-is-inactive', response.is_inactive ? '1' : '0');
+                            table.row($row).invalidate('dom').draw(false);
+
+                            swal({
+                                title: 'Status updated',
+                                text: response.message,
+                                type: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        },
+                        error: function(xhr) {
+                            $button.prop('disabled', false);
+                            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                                ? xhr.responseJSON.message
+                                : 'An error occurred while updating the hub status.';
+                            swal('Error', message, 'error');
+                        }
+                    });
+                });
             });
 
             $(document).on('click', '.delete-hub', function() {

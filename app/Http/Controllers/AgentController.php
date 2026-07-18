@@ -207,6 +207,27 @@ class AgentController extends Controller
         return redirect()->back()->with('success', 'Agent updated successfully.');
     }
 
+    public function updateStatus(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'in:active,inactive'],
+        ]);
+
+        $agent = Agent::findOrFail($id);
+        $isActive = $validated['status'] === 'active';
+
+        $agent->update([
+            'is_active' => $isActive,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'status' => $isActive ? 'Active' : 'Inactive',
+            'is_inactive' => ! $isActive,
+            'message' => $agent->agent_name . ' is now ' . ($isActive ? 'active.' : 'inactive.'),
+        ]);
+    }
+
     public function destroy($id)
     {
         try {

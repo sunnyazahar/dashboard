@@ -209,6 +209,34 @@
             text-decoration: underline;
         }
 
+        .agent-status-toggle {
+            border: 1px solid transparent;
+            padding: 3px 10px;
+            border-radius: 12px;
+            min-width: 66px;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.2;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .agent-status-toggle.is-active {
+            color: #166534;
+            background: #dcfce7;
+            border-color: #bbf7d0;
+        }
+
+        .agent-status-toggle.is-inactive {
+            color: #991b1b;
+            background: #fee2e2;
+            border-color: #fecaca;
+        }
+
+        .agent-status-toggle:hover {
+            filter: brightness(0.97);
+        }
+
         .action-icons {
             display: flex;
             gap: 8px;
@@ -417,6 +445,7 @@
                                                 ])));
                                                 $countryName = $agent->country->name ?? '';
                                                 $typeLabel = $agent->agent_type ? ucfirst(str_replace('_', ' ', $agent->agent_type)) : '';
+                                                $isInactive = ! ($agent->is_active ?? true);
                                             @endphp
                                             <tr
                                                 data-agent-name="{{ $agent->agent_name }}"
@@ -425,7 +454,7 @@
                                                 data-city="{{ $agent->city }}"
                                                 data-country="{{ $countryName }}"
                                                 data-agent-type="{{ $agent->agent_type }}"
-                                                data-is-inactive="0"
+                                                data-is-inactive="{{ $isInactive ? '1' : '0' }}"
                                             >
                                                 <td>
                                                     <a href="{{ route('agents.edit', ['id' => $agent->id]) }}" class="agent-link">
@@ -445,9 +474,15 @@
                                                 </td>
                                                 <td>{{ $typeLabel ?: '—' }}</td>
                                                 <td>
-                                                    <span style="font-size:10px; padding:2px 8px; border-radius:10px; background:#d1fae5; color:#065f46; font-weight:600;">
-                                                        Active
-                                                    </span>
+                                                    <button type="button"
+                                                        class="agent-status-toggle {{ $isInactive ? 'is-inactive' : 'is-active' }}"
+                                                        data-id="{{ $agent->id }}"
+                                                        data-name="{{ $agent->agent_name }}"
+                                                        data-status="{{ $isInactive ? 'inactive' : 'active' }}"
+                                                        data-url="{{ route('agents.status.update', $agent->id) }}"
+                                                        title="Click to change status">
+                                                        {{ $isInactive ? 'Inactive' : 'Active' }}
+                                                    </button>
                                                 </td>
                                                 <td>
                                                     <div class="action-icons">
@@ -634,6 +669,75 @@
                 $('#filter-agent-country, #filter-agent-type').val(null).trigger('change');
                 $('#hide-inactive-check').prop('checked', true);
                 table.search('').columns().search('').draw();
+            });
+
+            $(document).on('click', '.agent-status-toggle', function () {
+                var $button = $(this);
+                var $row = $button.closest('tr');
+                var currentStatus = String($button.data('status') || 'active').toLowerCase();
+                var nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
+                var nextStatusLabel = nextStatus === 'active' ? 'Active' : 'Inactive';
+                var agentName = $button.data('name') || 'this agent';
+
+                swal({
+                    title: nextStatus === 'active' ? 'Activate agent?' : 'Deactivate agent?',
+                    text: 'Are you sure you want to mark "' + agentName + '" as ' + nextStatusLabel.toLowerCase() + '?',
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: nextStatus === 'active' ? 'Yes, activate' : 'Yes, deactivate',
+                    cancelButtonText: 'Cancel',
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                    showLoaderOnConfirm: true
+                }, function (isConfirm) {
+                    if (!isConfirm) {
+                        return;
+                    }
+
+                    $button.prop('disabled', true);
+
+                    $.ajax({
+                        url: $button.data('url'),
+                        type: 'PATCH',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            status: nextStatus
+                        },
+                        success: function (response) {
+                            if (!response.success) {
+                                $button.prop('disabled', false);
+                                swal('Error', response.message || 'Unable to update agent status.', 'error');
+                                return;
+                            }
+
+                            $button
+                                .data('status', nextStatus)
+                                .attr('data-status', nextStatus)
+                                .toggleClass('is-active', !response.is_inactive)
+                                .toggleClass('is-inactive', response.is_inactive)
+                                .text(response.status)
+                                .prop('disabled', false);
+
+                            $row.attr('data-is-inactive', response.is_inactive ? '1' : '0');
+                            table.row($row).invalidate('dom').draw(false);
+
+                            swal({
+                                title: 'Status updated',
+                                text: response.message,
+                                type: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        },
+                        error: function (xhr) {
+                            $button.prop('disabled', false);
+                            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                                ? xhr.responseJSON.message
+                                : 'An error occurred while updating the agent status.';
+                            swal('Error', message, 'error');
+                        }
+                    });
+                });
             });
 
             $(document).on('click', '.delete-agent', function () {

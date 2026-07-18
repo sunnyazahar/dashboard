@@ -176,6 +176,27 @@ class HubController extends Controller
         return redirect()->back()->with('success', 'Hub updated successfully.');
     }
 
+    public function updateStatus(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'in:active,inactive'],
+        ]);
+
+        $hub = Hub::findOrFail($id);
+        $isInactive = $validated['status'] === 'inactive';
+
+        $hub->update([
+            'hide_in_portal' => $isInactive,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'status' => $isInactive ? 'Inactive' : 'Active',
+            'is_inactive' => $isInactive,
+            'message' => $hub->hub_name . ' is now ' . ($isInactive ? 'inactive.' : 'active.'),
+        ]);
+    }
+
     public function destroy($id)
     {
         try {

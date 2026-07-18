@@ -74,11 +74,20 @@ class CrrController extends Controller
 
     public function store(Request $request, CrrChangeLogService $changeLogService)
     {
+        $validated = $request->validate([
+            'hub_agent' => ['required', 'string', 'max:50', 'regex:/[A-Za-z0-9]/'],
+        ]);
+
         DB::beginTransaction();
         try {
-            // --- Generate a unique stock number: SIN1-XXXXXXXX (8 random digits) ---
+            // Generate a unique stock number using the selected Hub/Agent code.
+            $stockPrefix = strtoupper(trim($validated['hub_agent']));
+            $stockPrefix = preg_replace('/[^A-Z0-9]+/', '-', $stockPrefix);
+            $stockPrefix = trim((string) $stockPrefix, '-');
+
             do {
-                $stockNumber = 'SIN1-' . str_pad(random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+                $randomNumber = str_pad(random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+                $stockNumber = $stockPrefix . '-' . $randomNumber;
             } while (Crr::where('stock_number', $stockNumber)->exists());
 
             // --- Build main CRR data explicitly ---
@@ -104,7 +113,7 @@ class CrrController extends Controller
                 'internal_shipment'       => $request->input('internal_shipment'),
                 'delivery_irregularities' => $request->input('delivery_irregularities') ?: null,
                 'incoterm'                => $request->input('incoterm') ?: null,
-                'hub_agent'               => $request->input('hub_agent'),
+                'hub_agent'               => $validated['hub_agent'],
                 'location'                => $request->input('location'),
                 'transit_type'            => $request->input('transit_type'),
                 'transit_id'              => $request->input('transit_id'),

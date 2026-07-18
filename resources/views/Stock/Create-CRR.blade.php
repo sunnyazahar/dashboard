@@ -786,13 +786,14 @@
                                                 <div class="crr-col">
                                                     <div class="crr-field-group">
                                                         <label class="crr-label">Hub/agent</label>
-                                                        <select class="form-control select2-hub" name="hub_agent">
+                                                        <select class="form-control select2-hub" name="hub_agent" required>
                                                             <option></option>
                                                             <optgroup label="Hubs">
                                                                 @foreach($hubs as $hub)
                                                                     <option value="{{ $hub->code }}"
                                                                         data-city="{{ $hub->city }}"
-                                                                        data-country="{{ $hub->country }}">
+                                                                        data-country="{{ $hub->country }}"
+                                                                        {{ old('hub_agent') === $hub->code ? 'selected' : '' }}>
                                                                         {{ $hub->code }} - {{ $hub->hub_name }}
                                                                     </option>
                                                                 @endforeach
@@ -801,7 +802,8 @@
                                                                 @foreach($agents as $agent)
                                                                     <option value="{{ $agent->code }}"
                                                                         data-city="{{ $agent->city }}"
-                                                                        data-country="{{ optional($agent->country)->name }}">
+                                                                        data-country="{{ optional($agent->country)->name }}"
+                                                                        {{ old('hub_agent') === $agent->code ? 'selected' : '' }}>
                                                                         {{ $agent->code }} - {{ $agent->agent_name }}
                                                                     </option>
                                                                 @endforeach

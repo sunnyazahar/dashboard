@@ -36,6 +36,7 @@ class Agent extends Model
         'eori_number',
         'un_locode',
         'agent_type',
+        'is_active',
         // Billing
         'invoicing_name', 'billing_address', 'billing_city', 'billing_district_state', 'billing_zip_code', 'billing_country_id',
         'invoicing_emails', 'invoicing_emails_cc', 'vat_number', 'invoicing_frequency', 'applies_to_rebate', 'rebate_percentage',
@@ -52,6 +53,7 @@ class Agent extends Model
     ];
 
     protected $casts = [
+        'is_active' => 'boolean',
         'show_pre_alert' => 'boolean',
         'applies_to_rebate' => 'boolean',
         'coc_signed' => 'boolean',
