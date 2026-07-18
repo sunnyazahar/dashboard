@@ -151,8 +151,11 @@ class ShipmentManifestPdfBuilder
             'consigneeContactPhone' => $shipment->location ?? '',
             'agentName' => $consigneeParty['name'] ?: '—',
             'vesselLine' => $vesselLine,
-            'departurePort' => $this->formatPortLabel($shipment->departure_port_code, $shipment->location, $departureParty),
-            'destinationPort' => $this->formatPortLabel($shipment->consignee_port_code, $shipment->consignee_city, null, $shipment->consignee_country),
+            'departurePort' => $this->joinParts([
+                $shipment->departure_port_code,
+                $departureParty['name'] ?? null,
+            ], ' - ') ?: '—',
+            'destinationPort' => $this->formatPortLabel($shipment->consignee_port_code, $shipment->location),
             'documentHandledBy' => $handledBy,
             'serviceLabel' => $shipment->service ?? '—',
             'pcsSummary' => $totalPackages . ' / ' . $totalPackages . ' / ' . $totalWeight . ' kg',

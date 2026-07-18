@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agent;
 use App\Models\Crr;
 use App\Models\CrrPackage;
 use App\Models\CrrCost;
 use App\Models\CrrDocument;
+use App\Models\Hub;
 use App\Services\CrrChangeLogService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -381,11 +383,32 @@ class CrrController extends Controller
     public function showPrintCrr($id)
     {
         $crr = Crr::with(['packages', 'documents', 'customerVessel.customer'])->findOrFail($id);
+        $hubAgent = Hub::query()
+            ->where('code', $crr->hub_agent)
+            ->orWhere('hub_name', $crr->hub_agent)
+            ->first();
+
+        if (! $hubAgent) {
+            $hubAgent = Agent::query()
+                ->where('code', $crr->hub_agent)
+                ->orWhere('agent_name', $crr->hub_agent)
+                ->first();
+        }
+
+        $hubAgentCode = $hubAgent?->code ?: $crr->hub_code;
+        $hubAgentName = $hubAgent instanceof Hub
+            ? $hubAgent->hub_name
+            : ($hubAgent instanceof Agent ? $hubAgent->agent_name : null);
         
         // MT Manager name from user if available, using placeholder like screenshot
         $mt_manager = "Clarence Ng Yao Wei, SIN"; 
         
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Stock.print-crr', compact('crr', 'mt_manager'))
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Stock.print-crr', compact(
+            'crr',
+            'mt_manager',
+            'hubAgentCode',
+            'hubAgentName'
+        ))
                   ->setPaper('a4', 'portrait');
         return $pdf->stream('CRR-' . $crr->stock_number . '.pdf');
     }

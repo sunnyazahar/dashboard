@@ -184,8 +184,15 @@
     <div class="main-container">
         <table>
             <tr>
-                <td class="label-col">Received Station: </td>
-                <td colspan="1"><b>{{ $crr->hub_code }}</b></td>
+                <td class="label-col">Received Station / Location</td>
+                <td colspan="1">
+                    <b>
+                        {{ collect([$hubAgentCode, $hubAgentName])->filter()->join(' - ') ?: '—' }}
+                        @if ($crr->location)
+                            / {{ $crr->location }}
+                        @endif
+                    </b>
+                </td>
             </tr>
             <tr>
                 <td class="label-col">Stock No: </td>
