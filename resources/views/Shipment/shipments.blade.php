@@ -134,6 +134,21 @@
             background: transparent !important;
             height: 30px !important;
         }
+        #col-Status .select2-container--default .select2-selection--single,
+        #col-Status .select2-container--default.select2-container--focus .select2-selection--single,
+        #col-Status .select2-container--default.select2-container--open .select2-selection--single {
+            background-color: transparent !important;
+        }
+        #col-Status .select2-selection--single .select2-selection__rendered {
+            background-color: transparent !important;
+            color: #1e293b !important;
+        }
+        #col-Status .select2-selection--single .select2-selection__arrow b {
+            border-color: #64748b transparent transparent transparent !important;
+        }
+        #col-Status .select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent #64748b transparent !important;
+        }
         .filter-group .select2-container--default .select2-selection--single .select2-selection__rendered {
             padding-left: 10px !important;
             font-size: 11px !important;
@@ -551,6 +566,7 @@
                                                                     <option value="Office" selected>Office</option>
                                                                     <option value="Creation date" selected>Creation date</option>
                                                                     <option value="Service" selected>Service</option>
+                                                                    <option value="Status" selected>Status</option>
                                                                 </select>
                                                             </div>
                                                             <div id="col-Customer" class="custom-col" style="flex: 0 0 250px;">
@@ -665,6 +681,17 @@
                                                                     </select>
                                                                 </div>
                                                             </div>
+                                                            <div id="col-Status" class="custom-col" style="flex: 0 0 180px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Status</span>
+                                                                    <select class="form-control filter-input select2">
+                                                                        <option value=""></option>
+                                                                        @foreach ($statuses as $status)
+                                                                            <option value="{{ $status }}">{{ $status }}</option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </div>
+                                                            </div>
                                                             <a class="clear-filters">Clear filters</a>
                                                         </div>
                                                 </div>
@@ -716,6 +743,7 @@
                                                                 data-created-by="{{ $shipment->creator?->name ?? '' }}"
                                                                 data-office="{{ $shipment->accountManager?->office?->office_name ?? '' }}"
                                                                 data-creation-date="{{ $shipment->created_at?->format('Y-m-d') ?? '' }}"
+                                                                data-status="{{ $shipment->status ?? '' }}"
                                                             >
                                                                 <td>
                                                                     <a href="{{ route('shipments.edit', $shipment->id) }}" class="text-primary">{{ $shipment->shipment_number }}</a>
@@ -880,7 +908,8 @@
                     {val: 'Created by', id: 'col-Created-by'},
                     {val: 'Office', id: 'col-Office'},
                     {val: 'Creation date', id: 'col-Creation-date'},
-                    {val: 'Service', id: 'col-Service'}
+                    {val: 'Service', id: 'col-Service'},
+                    {val: 'Status', id: 'col-Status'}
                 ];
 
                 allFilters.forEach(function(filter) {
@@ -986,7 +1015,7 @@
                 return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
             }
 
-            $('#col-Customer select, #col-Vessel select, #col-Shipment-no input, #col-Service-reference-number input, #col-PO-number input, #col-Departure-hub select, #col-Consignee input, #col-Port-of-destination input, #col-Account-manager select, #col-Created-by select, #col-Office select, #col-Creation-date input, #col-Service select').on('change keyup', function() {
+            $('#col-Customer select, #col-Vessel select, #col-Shipment-no input, #col-Service-reference-number input, #col-PO-number input, #col-Departure-hub select, #col-Consignee input, #col-Port-of-destination input, #col-Account-manager select, #col-Created-by select, #col-Office select, #col-Creation-date input, #col-Service select, #col-Status select').on('change keyup', function() {
                 table.draw();
             });
 
@@ -1052,6 +1081,11 @@
                 }
 
                 if (!matchesSelectedValues($('#col-Service select').val() || [], rowData($row, 'service'))) {
+                    return false;
+                }
+
+                var selectedStatus = $('#col-Status select').val();
+                if (!matchesSelectedValues(selectedStatus ? [selectedStatus] : [], rowData($row, 'status'))) {
                     return false;
                 }
 

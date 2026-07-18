@@ -134,6 +134,21 @@
             background: transparent !important;
             height: 30px !important;
         }
+        #col-Status .select2-container--default .select2-selection--single,
+        #col-Status .select2-container--default.select2-container--focus .select2-selection--single,
+        #col-Status .select2-container--default.select2-container--open .select2-selection--single {
+            background-color: transparent !important;
+        }
+        #col-Status .select2-selection--single .select2-selection__rendered {
+            background-color: transparent !important;
+            color: #1e293b !important;
+        }
+        #col-Status .select2-selection--single .select2-selection__arrow b {
+            border-color: #64748b transparent transparent transparent !important;
+        }
+        #col-Status .select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent #64748b transparent !important;
+        }
         .filter-group .select2-container--default .select2-selection--single .select2-selection__rendered {
             padding-left: 10px !important;
             font-size: 11px !important;
@@ -474,6 +489,7 @@
                                                                     <option value="Customer" selected>Customer</option>
                                                                     <option value="Vessel" selected>Vessel</option>
                                                                     <option value="Port of destination" selected>Port of destination</option>
+                                                                    <option value="Status" selected>Status</option>
                                                                     <option value="Created by" selected>Created by</option>
                                                                 </select>
                                                             </div>
@@ -522,6 +538,18 @@
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Port of destination</span>
                                                                     <input type="text" id="filter-port-destination" class="form-control filter-input" placeholder="type here">
+                                                                </div>
+                                                            </div>
+
+                                                            <div id="col-Status" class="custom-col" style="flex: 0 0 180px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Status</span>
+                                                                    <select id="filter-status" class="form-control filter-input select2">
+                                                                        <option value=""></option>
+                                                                        @foreach ($statuses as $status)
+                                                                            <option value="{{ $status }}">{{ $status }}</option>
+                                                                        @endforeach
+                                                                    </select>
                                                                 </div>
                                                             </div>
 
@@ -677,6 +705,7 @@
                     {val: 'Customer', id: 'col-Customer'},
                     {val: 'Vessel', id: 'col-Vessel'},
                     {val: 'Port of destination', id: 'col-Port-of-destination'},
+                    {val: 'Status', id: 'col-Status'},
                     {val: 'Created by', id: 'col-Created-by'}
                 ];
 
@@ -766,6 +795,7 @@
                     account_manager: $('#filter-account-manager').val() || [],
                     customer: $('#filter-customer').val() || [],
                     vessel: $('#filter-vessel').val() || [],
+                    status: $('#filter-status').val() ? [$('#filter-status').val()] : [],
                     created_by: $('#filter-created-by').val() || [],
                     shipment_no: String($('#filter-shipment-no').val() || '').trim(),
                     port_destination: String($('#filter-port-destination').val() || '').trim()
@@ -776,6 +806,7 @@
                 return (filters.account_manager && filters.account_manager.length)
                     || (filters.customer && filters.customer.length)
                     || (filters.vessel && filters.vessel.length)
+                    || (filters.status && filters.status.length)
                     || (filters.created_by && filters.created_by.length)
                     || filters.shipment_no !== ''
                     || filters.port_destination !== '';
@@ -863,7 +894,7 @@
             }
 
             $('#filter-shipment-no, #filter-port-destination').on('keyup input', scheduleFetch);
-            $('#filter-customer, #filter-vessel, #filter-account-manager, #filter-created-by').on('change', scheduleFetch);
+            $('#filter-customer, #filter-vessel, #filter-account-manager, #filter-status, #filter-created-by').on('change', scheduleFetch);
 
             $('.clear-filters').on('click', function(e) {
                 e.preventDefault();

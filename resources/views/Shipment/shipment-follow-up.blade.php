@@ -146,6 +146,21 @@
             border: none !important;
             background: transparent !important;
         }
+        #col-Status .select2-container--default .select2-selection--single,
+        #col-Status .select2-container--default.select2-container--focus .select2-selection--single,
+        #col-Status .select2-container--default.select2-container--open .select2-selection--single {
+            background-color: transparent !important;
+        }
+        #col-Status .select2-selection--single .select2-selection__rendered {
+            background-color: transparent !important;
+            color: #1e293b !important;
+        }
+        #col-Status .select2-selection--single .select2-selection__arrow b {
+            border-color: #64748b transparent transparent transparent !important;
+        }
+        #col-Status .select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent #64748b transparent !important;
+        }
         .filter-group .select2-container--default .select2-selection--single .select2-selection__rendered {
             padding-left: 0 !important;
         }
@@ -395,6 +410,7 @@
                                                                     <option value="Customer" selected>Customer</option>
                                                                     <option value="Vessel" selected>Vessel</option>
                                                                     <option value="Port of destination" selected>Port of destination</option>
+                                                                    <option value="Status" selected>Status</option>
                                                                     <option value="Created by" selected>Created by</option>
                                                                 </select>
                                                             </div>
@@ -443,6 +459,18 @@
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Port of destination</span>
                                                                     <input type="text" id="filter-port-destination" class="form-control filter-input" placeholder="type here">
+                                                                </div>
+                                                            </div>
+
+                                                            <div id="col-Status" class="custom-col" style="flex: 0 0 180px;">
+                                                                <div class="filter-group">
+                                                                    <span class="filter-label">Status</span>
+                                                                    <select id="filter-status" class="form-control filter-input select2">
+                                                                        <option value=""></option>
+                                                                        @foreach ($statuses as $status)
+                                                                            <option value="{{ $status }}">{{ $status }}</option>
+                                                                        @endforeach
+                                                                    </select>
                                                                 </div>
                                                             </div>
 
@@ -515,6 +543,7 @@
                                                                 data-destination="{{ $shipment->destination_display }}"
                                                                 data-account-manager="{{ $shipment->accountManager?->name ?? '' }}"
                                                                 data-created-by="{{ $shipment->creator?->name ?? '' }}"
+                                                                data-status="{{ $shipment->status ?? '' }}"
                                                             >
                                                                 <td>
                                                                     <div class="d-flex align-items-center">
@@ -673,6 +702,7 @@
                     {val: 'Customer', id: 'col-Customer'},
                     {val: 'Vessel', id: 'col-Vessel'},
                     {val: 'Port of destination', id: 'col-Port-of-destination'},
+                    {val: 'Status', id: 'col-Status'},
                     {val: 'Created by', id: 'col-Created-by'}
                 ];
 
@@ -752,7 +782,7 @@
                 return String(rowValue || '').toLowerCase().indexOf(filterValue) !== -1;
             }
 
-            $('#filter-shipment-no, #filter-port-destination, #filter-customer, #filter-vessel, #filter-account-manager, #filter-created-by').on('change keyup', function() {
+            $('#filter-shipment-no, #filter-port-destination, #filter-customer, #filter-vessel, #filter-account-manager, #filter-status, #filter-created-by').on('change keyup', function() {
                 table.draw();
             });
 
@@ -781,6 +811,11 @@
                 }
 
                 if (!matchesSelectedValues($('#filter-created-by').val() || [], rowData($row, 'created-by'))) {
+                    return false;
+                }
+
+                var selectedStatus = $('#filter-status').val();
+                if (!matchesSelectedValues(selectedStatus ? [selectedStatus] : [], rowData($row, 'status'))) {
                     return false;
                 }
 

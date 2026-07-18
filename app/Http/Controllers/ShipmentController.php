@@ -75,6 +75,7 @@ class ShipmentController extends Controller
             ->values();
 
         $services = $shipments->pluck('service')->filter()->unique()->sort()->values();
+        $statuses = $shipments->pluck('status')->filter()->unique()->sort()->values();
 
         $departureOptions = $shipments
             ->pluck('departure_port_code')
@@ -105,6 +106,7 @@ class ShipmentController extends Controller
             'customers',
             'vessels',
             'services',
+            'statuses',
             'departureOptions',
             'accountManagers',
             'creators',
@@ -143,6 +145,7 @@ class ShipmentController extends Controller
             ->unique()
             ->sort()
             ->values();
+        $statuses = $shipments->pluck('status')->filter()->unique()->sort()->values();
 
         $accountManagers = Contact::query()
             ->whereIn('id', $shipments->pluck('account_manager_id')->filter()->unique())
@@ -159,6 +162,7 @@ class ShipmentController extends Controller
             'partyNames',
             'customers',
             'vessels',
+            'statuses',
             'accountManagers',
             'creators',
         ));
@@ -202,6 +206,7 @@ class ShipmentController extends Controller
             ->unique()
             ->sort()
             ->values();
+        $statuses = $shipments->pluck('status')->filter()->unique()->sort()->values();
 
         $accountManagers = Contact::query()
             ->whereIn('id', $shipments->pluck('account_manager_id')->filter()->unique())
@@ -218,6 +223,7 @@ class ShipmentController extends Controller
             'partyNames',
             'customers',
             'vessels',
+            'statuses',
             'accountManagers',
             'creators',
         ));
@@ -227,7 +233,7 @@ class ShipmentController extends Controller
     {
         $shipmentsForOptions = Shipment::with('crrs.customerVessel.customer')
             ->where('status', '!=', 'Cancelled')
-            ->get(['id', 'account_manager_id', 'created_by']);
+            ->get(['id', 'account_manager_id', 'created_by', 'status']);
 
         $vesselCustomerMap = Shipment::batchResolveVesselCustomerNames($shipmentsForOptions);
 
@@ -244,6 +250,7 @@ class ShipmentController extends Controller
             ->unique()
             ->sort()
             ->values();
+        $statuses = $shipmentsForOptions->pluck('status')->filter()->unique()->sort()->values();
 
         $accountManagers = Contact::query()
             ->whereIn('id', $shipmentsForOptions->pluck('account_manager_id')->filter()->unique())
@@ -258,6 +265,7 @@ class ShipmentController extends Controller
         return view('Shipment.cost-follow-up', compact(
             'customers',
             'vessels',
+            'statuses',
             'accountManagers',
             'creators',
         ));
@@ -269,10 +277,11 @@ class ShipmentController extends Controller
         $customers = array_values(array_filter((array) $request->input('customer', [])));
         $vessels = array_values(array_filter((array) $request->input('vessel', [])));
         $creators = array_values(array_filter((array) $request->input('created_by', [])));
+        $statuses = array_values(array_filter((array) $request->input('status', [])));
         $shipmentNo = trim((string) $request->input('shipment_no', ''));
         $portDestination = trim((string) $request->input('port_destination', ''));
 
-        $hasFilter = $accountManagers || $customers || $vessels || $creators || $shipmentNo !== '' || $portDestination !== '';
+        $hasFilter = $accountManagers || $customers || $vessels || $creators || $statuses || $shipmentNo !== '' || $portDestination !== '';
 
         if (! $hasFilter) {
             return response()->json(['data' => []]);
@@ -305,6 +314,10 @@ class ShipmentController extends Controller
 
         if ($creators) {
             $query->whereHas('creator', fn ($q) => $q->whereIn('name', $creators));
+        }
+
+        if ($statuses) {
+            $query->whereIn('status', $statuses);
         }
 
         if ($vessels) {
