@@ -1165,6 +1165,12 @@
                                                         </select>
                                                     </div>
 
+                                                    <div class="field-group" id="vessels-customer-name-group" style="display: none;">
+                                                        <label class="field-label">Vessel customer name</label>
+                                                        <input type="text" id="vessels_customer_name"
+                                                            name="vessels_customer_name" readonly class="field-input">
+                                                    </div>
+
                                                     <div class="field-group">
                                                         <label class="field-label">PO numbers (Separate by commas or
                                                             spaces)</label>
@@ -2416,6 +2422,20 @@
                     return state.text;
                 }
             });
+
+            var $mainVesselSelect = $('select[name="vessel_name"]');
+            var $vesselCustomerGroup = $('#vessels-customer-name-group');
+            var $vesselCustomerName = $('#vessels_customer_name');
+
+            function updateVesselCustomerName() {
+                var customerName = $mainVesselSelect.find('option:selected').data('customer') || '';
+
+                $vesselCustomerName.val(customerName);
+                $vesselCustomerGroup.toggle(Boolean(customerName));
+            }
+
+            $mainVesselSelect.on('change', updateVesselCustomerName);
+            updateVesselCustomerName();
 
             $('.select2-po').select2({
                 placeholder: "Type PO and press Enter",

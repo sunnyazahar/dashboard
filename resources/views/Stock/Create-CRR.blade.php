@@ -598,11 +598,18 @@
                                                             <option value=""></option>
                                                             @foreach($vessels as $vessel)
                                                                 <option value="{{ $vessel->vessel }}"
-                                                                    data-customer="{{ optional($vessel->customer)->customer_name }}">
+                                                                    data-customer="{{ optional($vessel->customer)->customer_name }}"
+                                                                    {{ old('vessel_name') === $vessel->vessel ? 'selected' : '' }}>
                                                                     {{ $vessel->vessel }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
+                                                    </div>
+
+                                                    <div class="crr-field-group" id="vessels-customer-name-group" style="display: none;">
+                                                        <label class="crr-label">Vessel customer name</label>
+                                                        <input type="text" id="vessels_customer_name"
+                                                            name="vessels_customer_name" readonly class="crr-input">
                                                     </div>
                                                     <div class="crr-field-group">
                                                         <label class="crr-label">PO numbers (Separate by commas or
@@ -1334,6 +1341,20 @@
                     return state.text;
                 }
             });
+
+            var $mainVesselSelect = $('select[name="vessel_name"]');
+            var $vesselCustomerGroup = $('#vessels-customer-name-group');
+            var $vesselCustomerName = $('#vessels_customer_name');
+
+            function updateVesselCustomerName() {
+                var customerName = $mainVesselSelect.find('option:selected').data('customer') || '';
+
+                $vesselCustomerName.val(customerName);
+                $vesselCustomerGroup.toggle(Boolean(customerName));
+            }
+
+            $mainVesselSelect.on('change', updateVesselCustomerName);
+            updateVesselCustomerName();
 
             // Template for Vessel rows
             function formatVessel(state) {
