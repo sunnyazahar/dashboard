@@ -447,6 +447,7 @@
                                                                 <th>Destination</th>
                                                                 <th>Weight</th>
                                                                 <th>Deadline arrival</th>
+                                                                <th>Status</th>
                                                                 <th>PA reminder</th>
                                                                 <th>Handled by</th>
                                                                 <th>Rem. sent</th>
@@ -486,6 +487,11 @@
                                                                 <td>{{ $shipment->destination_display }}</td>
                                                                 <td>{{ $shipment->total_weight_display }}</td>
                                                                 <td>{{ $shipment->deadline_arrival?->format('d.m.Y') ?? '—' }}</td>
+                                                                <td>
+                                                                    <span class="{{ $shipment->statusBadgeClass() }}" style="padding: 4px 8px; font-weight: 500;">
+                                                                        {{ $shipment->status ?? '—' }}
+                                                                    </span>
+                                                                </td>
                                                                 <td @if($paReminderOverdue) style="color: #ff5252;" @endif>{{ $paReminder?->format('d.m.Y') ?? '—' }}</td>
                                                                 <td>{{ $shipment->accountManager?->name ?? '—' }}</td>
                                                                 <td class="reminder-sent-count" data-shipment-id="{{ $shipment->id }}">{{ $shipment->reminder_sent_count }}</td>
@@ -502,7 +508,7 @@
                                                             </tr>
                                                             @empty
                                                             <tr>
-                                                                <td colspan="13" class="text-center py-4 text-muted">No shipments found.</td>
+                                                                <td colspan="14" class="text-center py-4 text-muted">No shipments found.</td>
                                                             </tr>
                                                             @endforelse
                                                         </tbody>

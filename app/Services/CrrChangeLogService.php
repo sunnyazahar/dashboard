@@ -26,6 +26,7 @@ class CrrChangeLogService
         'delivery_irregularities' => 'Delivery irregularities',
         'incoterm' => 'Incoterm',
         'hub_agent' => 'Hub/Agent',
+        'location' => 'Location',
         'transit_type' => 'Transit type',
         'transit_id' => 'Transit id',
         'is_bonded_goods' => 'Bonded goods',

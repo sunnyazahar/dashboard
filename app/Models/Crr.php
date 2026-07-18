@@ -26,6 +26,7 @@ class Crr extends Model
         'delivery_irregularities',
         'incoterm',
         'hub_agent',
+        'location',
         'transit_type',
         'transit_id',
         'is_bonded_goods',

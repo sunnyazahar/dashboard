@@ -801,6 +801,11 @@
                                                             </optgroup>
                                                         </select>
                                                     </div>
+                                                    <div class="crr-field-group">
+                                                        <label class="crr-label">Location</label>
+                                                        <input type="text" class="form-control" name="location"
+                                                            value="{{ old('location') }}">
+                                                    </div>
                                                     <div class="row">
                                                         <div class="col-sm-6">
                                                             <div class="crr-field-group">

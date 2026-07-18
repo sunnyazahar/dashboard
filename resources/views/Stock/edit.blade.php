@@ -1415,6 +1415,12 @@
                                                         </select>
                                                     </div>
 
+                                                    <div class="field-group">
+                                                        <label class="field-label">Location</label>
+                                                        <input type="text" class="field-input" name="location"
+                                                            value="{{ old('location', $crr->location) }}">
+                                                    </div>
+
                                                     <div class="row">
                                                         <div class="col-sm-6">
                                                             <div class="field-group">
