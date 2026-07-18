@@ -130,6 +130,30 @@
             color: #856404 !important;
             border: 1px solid #ffeeba;
         }
+        .label-danger {
+            background-color: #f8d7da !important;
+            color: #721c24 !important;
+            border: 1px solid #f5c6cb;
+        }
+        .label-inverse {
+            background-color: #e2e3e5 !important;
+            color: #383d41 !important;
+            border: 1px solid #d6d8db;
+        }
+        .landed-badge {
+            background: #dcf0fa;
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            padding: 1px 6px;
+            border-radius: 2px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        .text-pending {
+            color: #f59e0b !important;
+        }
         .table-link {
             color: #0ea5e9;
             text-decoration: none;
@@ -525,6 +549,7 @@
                                                                 <th>Expected del. date</th>
                                                                 <th>Deadline warehouse</th>
                                                                 <th>Comment</th>
+                                                                <th>Status</th>
                                                                 <th>Handled by</th>
                                                                 <th>Pick up date</th>
                                                             </tr>
@@ -537,6 +562,8 @@
                                                                 $poNumbers = is_array($crr->po_numbers) ? $crr->po_numbers : [];
                                                                 $hasDocs = $crr->documents->isNotEmpty();
                                                                 $hasDgr = $crr->packages->where('is_dgr', true)->isNotEmpty();
+                                                                $hasMedicine = $crr->packages->where('is_medicine', true)->isNotEmpty();
+                                                                $isNotStackable = $crr->packages->where('is_not_stackable', true)->isNotEmpty();
                                                                 $hasDeliveryIrreg = is_array($crr->delivery_irregularities) && in_array('Yes', $crr->delivery_irregularities, true);
                                                                 $hasCustomsValue = (float) ($crr->customs_value ?? 0) > 0;
 
@@ -560,6 +587,15 @@
                                                                 $deadlineWarehouse = $formatDate($crr->deadline_warehouse);
                                                                 $pickupDate = $formatDate($crr->actual_delivery_date);
                                                                 $comment = trim(($crr->first_mile_comment ?: '') . ($crr->first_mile_updates ? ' ' . $crr->first_mile_updates : ''));
+                                                                $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
+                                                                $statusBadgeClass = match ((int) $crr->status) {
+                                                                    \App\Models\Crr::STATUS_ACTIVE,
+                                                                    \App\Models\Crr::STATUS_IN_PROGRESS,
+                                                                    \App\Models\Crr::STATUS_COMPLETED => 'label label-stock',
+                                                                    \App\Models\Crr::STATUS_CANCELLED => 'label label-danger',
+                                                                    \App\Models\Crr::STATUS_ARCHIVED => 'label label-inverse',
+                                                                    default => 'label label-pending',
+                                                                };
                                                             @endphp
                                                             <tr
                                                                 data-account-manager="{{ $accountManager }}"
@@ -573,15 +609,27 @@
                                                                 <td>
                                                                     <div style="display: flex; align-items: center; justify-content: space-between;">
                                                                         <a href="{{ route('stocks.edit', $crr->id) }}" class="table-link">{{ $crr->stock_number }}</a>
-                                                                        <div style="display: flex; gap: 4px;">
+                                                                        <div class="d-flex align-items-center" style="gap: 8px;">
+                                                                            @if($crr->is_landed_goods)
+                                                                                <span class="landed-badge" title="Landed Goods">Landed</span>
+                                                                            @endif
+                                                                            @if($hasDgr)
+                                                                                <i class="icofont icofont-warning text-danger" title="Dangerous Goods" style="font-size: 15px;"></i>
+                                                                            @endif
                                                                             @if($hasDocs)
-                                                                                <i class="fa fa-file-pdf-o icon-density icon-pdf"></i>
+                                                                                <i class="icofont icofont-file-alt text-muted" title="Documents Attached" style="font-size: 15px; color: #64748b !important;"></i>
+                                                                            @endif
+                                                                            @if($hasMedicine)
+                                                                                <i class="icofont icofont-first-aid text-success" title="Medicine" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                            @if($hasDeliveryIrreg)
+                                                                                <i class="icofont icofont-info-circle text-pending" title="Delivery irregularities - missing info" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                            @if($isNotStackable)
+                                                                                <i class="icofont icofont-info-square text-warning" title="Non-Stackable Content" style="font-size: 15px;"></i>
                                                                             @endif
                                                                             @if($crr->first_mile_updates)
                                                                                 <i class="ti-bell icon-density icon-bell"></i>
-                                                                            @endif
-                                                                            @if($hasDgr || $hasDeliveryIrreg)
-                                                                                <i class="ti-alert icon-density icon-warning"></i>
                                                                             @endif
                                                                             @if($hasCustomsValue)
                                                                                 <span style="color: #0ea5e9; font-weight: bold; font-size: 12px; margin-left: 2px;">$</span>
@@ -597,12 +645,13 @@
                                                                 <td>{{ $expectedDate['display'] }}</td>
                                                                 <td>{{ $deadlineWarehouse['display'] }}</td>
                                                                 <td style="max-width: 300px; white-space: normal; line-height: 1.2;">{{ $comment ?: '—' }}</td>
+                                                                <td><span class="{{ $statusBadgeClass }}">{{ $statusLabel }}</span></td>
                                                                 <td>{{ $crr->hub_agent ?? '—' }}</td>
                                                                 <td>{{ $pickupDate['display'] }}</td>
                                                             </tr>
                                                             @empty
                                                             <tr>
-                                                                <td colspan="11" class="text-center py-4 text-muted">No pickup stocks found.</td>
+                                                                <td colspan="12" class="text-center py-4 text-muted">No pickup stocks found.</td>
                                                             </tr>
                                                             @endforelse
                                                         </tbody>

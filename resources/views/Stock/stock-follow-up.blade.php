@@ -175,6 +175,9 @@
             color: #f59e0b;
             margin-left: 5px;
         }
+        .text-pending {
+            color: #f59e0b !important;
+        }
         .badge-landed {
             background-color: #f0f9ff;
             color: #0369a1;
@@ -504,6 +507,8 @@
                                                                 $totalWeight = $crr->packages->sum('weight');
                                                                 $hasDgr = $crr->packages->where('is_dgr', true)->isNotEmpty();
                                                                 $hasDocs = $crr->documents->isNotEmpty();
+                                                                $hasMedicine = $crr->packages->where('is_medicine', true)->isNotEmpty();
+                                                                $isNotStackable = $crr->packages->where('is_not_stackable', true)->isNotEmpty();
                                                                 $hasDeliveryIrreg = is_array($crr->delivery_irregularities) && in_array('Yes', $crr->delivery_irregularities, true);
                                                                 $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
                                                                 $statusClass = match ($crr->status) {
@@ -527,19 +532,29 @@
                                                             >
                                                                 <td>{{ $crr->hub_code ?? ($crr->hub_agent ?? '—') }}</td>
                                                                 <td>
-                                                                    @if($crr->is_landed_goods)
-                                                                        <span class="badge-landed">Landed</span>
-                                                                    @endif
-                                                                    @if($hasDgr || $hasDeliveryIrreg)
-                                                                        <i class="fa fa-warning icon-warning-red"></i>
-                                                                    @endif
-                                                                    <a href="{{ route('stocks.edit', $crr->id) }}" style="color: #0ea5e9;">{{ $crr->stock_number }}</a>
-                                                                    @if($hasDocs)
-                                                                        <i class="fa fa-file-pdf-o icon-doc-blue"></i>
-                                                                    @endif
-                                                                    @if($hasDeliveryIrreg)
-                                                                        <i class="fa fa-info-circle icon-info-yellow"></i>
-                                                                    @endif
+                                                                    <div class="d-flex align-items-center justify-content-between">
+                                                                        <a href="{{ route('stocks.edit', $crr->id) }}" style="color: #0ea5e9;">{{ $crr->stock_number }}</a>
+                                                                        <div class="d-flex align-items-center" style="gap: 8px;">
+                                                                            @if($crr->is_landed_goods)
+                                                                                <span class="badge-landed" title="Landed Goods">Landed</span>
+                                                                            @endif
+                                                                            @if($hasDgr)
+                                                                                <i class="icofont icofont-warning text-danger" title="Dangerous Goods" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                            @if($hasDocs)
+                                                                                <i class="icofont icofont-file-alt text-muted" title="Documents Attached" style="font-size: 15px; color: #64748b !important;"></i>
+                                                                            @endif
+                                                                            @if($hasMedicine)
+                                                                                <i class="icofont icofont-first-aid text-success" title="Medicine" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                            @if($hasDeliveryIrreg)
+                                                                                <i class="icofont icofont-info-circle text-pending" title="Delivery irregularities - missing info" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                            @if($isNotStackable)
+                                                                                <i class="icofont icofont-info-square text-warning" title="Non-Stackable Content" style="font-size: 15px;"></i>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
                                                                 </td>
                                                                 <td>{{ $customerName ?: '—' }}</td>
                                                                 <td>{{ $crr->vessel_name ?? '—' }}</td>
