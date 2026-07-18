@@ -802,7 +802,7 @@
                                                         </select>
                                                     </div>
                                                     <div class="crr-field-group">
-                                                        <label class="crr-label">Location</label>
+                                                        <label class="crr-label">Physical Location</label>
                                                         <input type="text" class="form-control" name="location"
                                                             value="{{ old('location') }}">
                                                     </div>

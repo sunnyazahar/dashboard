@@ -1416,7 +1416,7 @@
                                                     </div>
 
                                                     <div class="field-group">
-                                                        <label class="field-label">Location</label>
+                                                        <label class="field-label">Physical Location</label>
                                                         <input type="text" class="field-input" name="location"
                                                             value="{{ old('location', $crr->location) }}">
                                                     </div>
