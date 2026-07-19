@@ -374,6 +374,19 @@ class CrrController extends Controller
 
         $pdf = Pdf::loadView('Stock.print', compact('grouped', 'vesselInfos'))
                   ->setPaper('a4', 'portrait');
+
+        $pdf->render();
+        $dompdf = $pdf->getDomPDF();
+        $font = $dompdf->getFontMetrics()->getFont('helvetica', 'normal');
+        $dompdf->getCanvas()->page_text(
+            285,
+            820,
+            '{PAGE_NUM}/{PAGE_COUNT}',
+            $font,
+            8,
+            [0, 0, 0]
+        );
+
         return $pdf->stream('Stock-List-' . now()->format('YmdHis') . '.pdf');
     }
 
