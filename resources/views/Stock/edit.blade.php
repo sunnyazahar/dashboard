@@ -1084,7 +1084,7 @@
                                                     id="status-edit-container">
                                                     <div class="status-display"
                                                         style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                                        <span class="status-badge">{{ \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown' }}</span>
+                                                        <span class="status-badge stock-status-badge {{ \App\Models\Crr::statusBadgeClass($crr->status) }}">{{ \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown' }}</span>
                                                         <i class="ti-pencil-alt"
                                                             style="color: #64748b; font-size: 15px; cursor: pointer;"></i>
                                                     </div>
@@ -1100,7 +1100,14 @@
                                             </div>
                                         </div>
                                         <div class="summary-actions">
-                                            <button type="button" class="btn btn-header-outline">Accept CRR</button>
+                                            <button type="button"
+                                                id="accept-crr-btn"
+                                                class="btn btn-header-outline"
+                                                data-stock-number="{{ $crr->stock_number }}"
+                                                data-accept-url="{{ route('stocks.crr.update-accept', $crr->id) }}"
+                                                {{ $crr->accept ? 'disabled' : '' }}>
+                                                {{ $crr->accept ? 'Accepted' : 'Accept CRR' }}
+                                            </button>
                                             <a href="{{ route('stocks.print-labels', $crr->id) }}" target="_blank"
                                                 class="btn btn-header-outline"
                                                 style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Print
@@ -3060,6 +3067,67 @@ function updatePackageSummary() {
 
                 confirmStatusChange(newStatusLabel, function() {
                     saveStockStatus(newStatusValue, newStatusLabel);
+                });
+            });
+
+            function acceptCurrentCrr($button) {
+                $.ajax({
+                    url: $button.data('accept-url'),
+                    method: 'POST',
+                    dataType: 'json',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    }
+                }).done(function(response) {
+                    if (!response || !response.success) {
+                        alert('Could not accept stock.');
+                        return;
+                    }
+
+                    if (typeof swal === 'function') {
+                        swal.close();
+                    }
+
+                    window.location.reload();
+                }).fail(function(xhr) {
+                    if (typeof swal === 'function') {
+                        swal.close();
+                    }
+
+                    var message = 'Could not accept stock.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        message = xhr.responseJSON.error;
+                    }
+                    alert(message);
+                });
+            }
+
+            $('#accept-crr-btn').on('click', function() {
+                var $button = $(this);
+                var stockNumber = $button.data('stock-number');
+                var message = 'Accept stock ' + stockNumber + '?';
+
+                if (typeof swal !== 'function') {
+                    if (confirm(message)) {
+                        acceptCurrentCrr($button);
+                    }
+                    return;
+                }
+
+                swal({
+                    title: 'Accept stock?',
+                    text: message,
+                    type: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, accept',
+                    cancelButtonText: 'Cancel',
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                    showLoaderOnConfirm: true
+                }, function(isConfirm) {
+                    if (isConfirm) {
+                        acceptCurrentCrr($button);
+                    }
                 });
             });
 

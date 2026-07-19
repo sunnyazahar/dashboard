@@ -1576,7 +1576,7 @@
                                                         <span class="meta-label">Status</span>
                                                         <div class="header-inline-edit" id="status-edit-container">
                                                             <div class="header-inline-display status-display">
-                                                                <span class="status-badge">{{ $shipment->status }}</span>
+                                                                <span class="status-badge {{ $shipment->statusBadgeClass() }}">{{ $shipment->status }}</span>
                                                                 <i class="ti-pencil-alt" style="color: #64748b; font-size: 15px; cursor: pointer;"></i>
                                                             </div>
                                                             <div class="header-inline-select status-select-wrapper">
@@ -3148,7 +3148,10 @@
                     }
 
                     if (response.status) {
-                        $('.header-meta-group .status-badge').text(response.status);
+                        $('.header-meta-group .status-badge')
+                            .removeClass('stock-status-new stock-status-stock shipment-status-in-transit stock-status-in-progress stock-status-pending stock-status-cancelled stock-status-completed stock-status-archived stock-status-unknown')
+                            .addClass('stock-status-badge ' + stockStatusBadgeClass(response.status))
+                            .text(response.status);
                         $('.select2-status-inline').val(response.status).trigger('change.select2');
                         $('#shipment-current-status').val(response.status);
                         syncAddStockItemsButtonState();
@@ -3162,7 +3165,7 @@
                         }
 
                         $row.find('td').eq(9).html(
-                            '<span class="status-badge" style="background:#dcfce7; color:#166534;">' + stock.status + '</span>'
+                            '<span class="stock-status-badge ' + stockStatusBadgeClass(stock.status) + '">' + stock.status + '</span>'
                         );
 
                         $('#stock-items-modal-table tbody tr[data-id="' + stock.id + '"]').remove();
@@ -3212,7 +3215,10 @@
 
                     $('#consignee-party-code').val(consigneeCode);
                     if (response.status) {
-                        $('.header-meta-group .status-badge').text(response.status);
+                        $('.header-meta-group .status-badge')
+                            .removeClass('stock-status-new stock-status-stock shipment-status-in-transit stock-status-in-progress stock-status-pending stock-status-cancelled stock-status-completed stock-status-archived stock-status-unknown')
+                            .addClass('stock-status-badge ' + stockStatusBadgeClass(response.status))
+                            .text(response.status);
                         $('.select2-status-inline').val(response.status).trigger('change.select2');
                         $('#shipment-current-status').val(response.status);
                         syncAddStockItemsButtonState();
@@ -4501,12 +4507,7 @@
                 var hub = hubCode || hubAgent || '—';
                 var hubKey = normalizeHubKey(hubCode || hubAgent);
                 var status = $modalRow.data('status') || 'Pending';
-                var statusClass = 'label';
-                if (status === 'Pending') {
-                    statusClass += ' label-pending';
-                } else {
-                    statusClass += ' label-stock';
-                }
+                var statusClass = 'stock-status-badge ' + stockStatusBadgeClass(status);
                 var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '" data-hub-key="' + hubKey + '">' +
                     '<td>' + hub + '</td>' +
                     '<td>' + ($modalRow.data('vessel') || '—') + '</td>' +

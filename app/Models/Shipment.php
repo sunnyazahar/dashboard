@@ -323,14 +323,21 @@ class Shipment extends Model
 
     public function statusBadgeClass(): string
     {
-        return match ($this->status) {
-            'In process' => 'label label-warning',
-            'In transit' => 'label label-info',
-            'Delivered' => 'label label-success',
-            'Completed' => 'label label-success',
-            'Pending' => 'label label-danger',
-            'Draft' => 'label label-primary',
-            default => 'label label-primary',
+        return 'stock-status-badge ' . self::statusColorClass($this->status);
+    }
+
+    public static function statusColorClass(?string $status): string
+    {
+        return match (strtolower(trim((string) $status))) {
+            'draft', 'new' => 'stock-status-new',
+            'in transit' => 'shipment-status-in-transit',
+            'stock' => 'stock-status-stock',
+            'in process', 'in progress' => 'stock-status-in-progress',
+            'pending' => 'stock-status-pending',
+            'cancelled', 'canceled' => 'stock-status-cancelled',
+            'delivered', 'completed' => 'stock-status-completed',
+            'archived' => 'stock-status-archived',
+            default => 'stock-status-unknown',
         };
     }
 

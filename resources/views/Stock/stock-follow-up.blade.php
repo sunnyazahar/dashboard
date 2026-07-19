@@ -512,15 +512,6 @@
                                                                 $isNotStackable = $crr->packages->where('is_not_stackable', true)->isNotEmpty();
                                                                 $hasDeliveryIrreg = is_array($crr->delivery_irregularities) && in_array('Yes', $crr->delivery_irregularities, true);
                                                                 $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
-                                                                $statusClass = match ($crr->status) {
-                                                                    \App\Models\Crr::STATUS_NEW => 'badge-pending',
-                                                                    \App\Models\Crr::STATUS_PENDING => 'badge-pending',
-                                                                    \App\Models\Crr::STATUS_ACTIVE => 'badge-stock',
-                                                                    \App\Models\Crr::STATUS_IN_PROGRESS => 'badge-transit',
-                                                                    \App\Models\Crr::STATUS_CANCELLED => 'badge-on-call',
-                                                                    \App\Models\Crr::STATUS_ARCHIVED => 'badge-on-call',
-                                                                    default => 'badge-on-call',
-                                                                };
                                                                 $valueDisplay = $crr->customs_value
                                                                     ? number_format((float) $crr->customs_value, 2) . ' ' . ($crr->currency ?: 'USD')
                                                                     : '—';
@@ -579,7 +570,7 @@
                                                                 </td>
                                                                 <td>{{ $accountManager ?: '—' }}</td>
                                                                 <td>{{ $isEtl ? 'ETL' : ($crr->internal_shipment ?: '—') }}</td>
-                                                                <td><span class="label {{ $statusClass }}">{{ $statusLabel }}</span></td>
+                                                                <td><span class="stock-status-badge {{ \App\Models\Crr::statusBadgeClass($crr->status) }}">{{ $statusLabel }}</span></td>
                                                                 <td class="text-center">
                                                                     <button type="button"
                                                                         class="btn-accept accept-stock-btn"

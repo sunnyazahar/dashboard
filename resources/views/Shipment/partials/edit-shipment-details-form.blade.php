@@ -285,7 +285,7 @@
                             <td>{{ number_format($crr->packages->sum('weight'), 2) }}</td>
                             <td>{{ number_format($crr->packages->sum('cbm'), 3) }}</td>
                             <td>{{ $crr->customs_value ? number_format($crr->customs_value, 2) . ' ' . ($crr->currency ?? 'USD') : '—' }}</td>
-                            <td><span class="status-badge" style="background:#ffedd5; color:#9a3412;">{{ $statusLabel }}</span></td>
+                            <td><span class="stock-status-badge {{ \App\Models\Crr::statusBadgeClass($crr->status) }}">{{ $statusLabel }}</span></td>
                             <td style="text-align: center;"><button type="button" class="btn btn-link btn-sm p-0 remove-stock-item"><i class="ti-trash text-muted"></i></button></td>
                         </tr>
                     @empty

@@ -80,6 +80,38 @@ class Crr extends Model
         ];
     }
 
+    public static function statusBadgeClass(int|string|null $status): string
+    {
+        if ($status === null || $status === '') {
+            return 'stock-status-unknown';
+        }
+
+        if (is_string($status) && ! is_numeric($status)) {
+            $resolvedStatus = array_search(
+                strtolower(trim($status)),
+                array_map('strtolower', self::getStatusLabels()),
+                true
+            );
+
+            if ($resolvedStatus === false) {
+                return 'stock-status-unknown';
+            }
+
+            $status = $resolvedStatus;
+        }
+
+        return match ((int) $status) {
+            self::STATUS_NEW => 'stock-status-new',
+            self::STATUS_ACTIVE => 'stock-status-stock',
+            self::STATUS_IN_PROGRESS => 'stock-status-in-progress',
+            self::STATUS_PENDING => 'stock-status-pending',
+            self::STATUS_CANCELLED => 'stock-status-cancelled',
+            self::STATUS_COMPLETED => 'stock-status-completed',
+            self::STATUS_ARCHIVED => 'stock-status-archived',
+            default => 'stock-status-unknown',
+        };
+    }
+
     public static function statusUpdateAttributes(int $status): array
     {
         $attributes = ['status' => $status];

@@ -88,6 +88,7 @@
             font-weight: 700;
         }
     </style>
+    @include('partials.stock-status-badge-styles')
     @yield('styles')
 </head>
 

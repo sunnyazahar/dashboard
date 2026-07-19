@@ -186,17 +186,8 @@
                                     <td>
                                         @php
                                             $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
-                                            $badgeClass = 'label';
-                                            switch($crr->status) {
-                                                case \App\Models\Crr::STATUS_PENDING: $badgeClass .= ' label-pending'; break;
-                                                case \App\Models\Crr::STATUS_ACTIVE: $badgeClass .= ' label-stock'; break;
-                                                case \App\Models\Crr::STATUS_IN_PROGRESS: $badgeClass .= ' label-stock'; break;
-                                                case \App\Models\Crr::STATUS_COMPLETED: $badgeClass .= ' label-stock'; break;
-                                                case \App\Models\Crr::STATUS_CANCELLED: $badgeClass .= ' label-danger'; break;
-                                                case \App\Models\Crr::STATUS_ARCHIVED: $badgeClass .= ' label-inverse'; break;
-                                            }
                                         @endphp
-                                        <span class="{{ $badgeClass }}">{{ $statusLabel }}</span>
+                                        <span class="stock-status-badge {{ \App\Models\Crr::statusBadgeClass($crr->status) }}">{{ $statusLabel }}</span>
                                     </td>
                                 </tr>
                                 @empty

@@ -452,7 +452,11 @@
                                                            data-email="{{ $user->email }}"
                                                            data-phone-number="{{ $user->phone_number }}"
                                                            data-role="{{ $user->role }}"
-                                                           data-is-active="{{ $user->is_active ? '1' : '0' }}">
+                                                           data-is-active="{{ $user->is_active ? '1' : '0' }}"
+                                                           data-office-ids='@json($user->offices->modelKeys())'
+                                                           data-hub-ids='@json($user->hubs->modelKeys())'
+                                                           data-agent-ids='@json($user->agents->modelKeys())'
+                                                           data-supplier-ids='@json($user->suppliers->modelKeys())'>
                                                            <i class="ti-pencil"></i>
                                                        </button>
                                                    </td>
@@ -592,6 +596,40 @@
                                                                <div class="invalid-feedback d-block">{{ $message }}</div>
                                                            @enderror
                                                        </div>
+                                                       <div id="office-hub-assignments" class="user-assignment-fields" style="display:none;">
+                                                           <div class="form-group">
+                                                               <label for="edit-user-offices">Assigned offices</label>
+                                                               <select id="edit-user-offices" name="office_ids[]" class="form-control assignment-select" multiple>
+                                                                   @foreach($assignmentOffices as $office)
+                                                                       <option value="{{ $office->id }}" {{ in_array($office->id, old('office_ids', [])) ? 'selected' : '' }}>{{ $office->office_name }}</option>
+                                                                   @endforeach
+                                                               </select>
+                                                           </div>
+                                                           <div class="form-group">
+                                                               <label for="edit-user-hubs">Assigned hubs</label>
+                                                               <select id="edit-user-hubs" name="hub_ids[]" class="form-control assignment-select" multiple>
+                                                                   @foreach($assignmentHubs as $hub)
+                                                                       <option value="{{ $hub->id }}" {{ in_array($hub->id, old('hub_ids', [])) ? 'selected' : '' }}>{{ $hub->code ? $hub->code . ' - ' : '' }}{{ $hub->hub_name }}</option>
+                                                                   @endforeach
+                                                               </select>
+                                                           </div>
+                                                       </div>
+                                                       <div id="agent-assignments" class="user-assignment-fields form-group" style="display:none;">
+                                                           <label for="edit-user-agents">Assigned agents</label>
+                                                           <select id="edit-user-agents" name="agent_ids[]" class="form-control assignment-select" multiple>
+                                                               @foreach($assignmentAgents as $agent)
+                                                                   <option value="{{ $agent->id }}" {{ in_array($agent->id, old('agent_ids', [])) ? 'selected' : '' }}>{{ $agent->code ? $agent->code . ' - ' : '' }}{{ $agent->agent_name }}</option>
+                                                               @endforeach
+                                                           </select>
+                                                       </div>
+                                                       <div id="supplier-assignments" class="user-assignment-fields form-group" style="display:none;">
+                                                           <label for="edit-user-suppliers">Assigned suppliers</label>
+                                                           <select id="edit-user-suppliers" name="supplier_ids[]" class="form-control assignment-select" multiple>
+                                                               @foreach($assignmentSuppliers as $supplier)
+                                                                   <option value="{{ $supplier->id }}" {{ in_array($supplier->id, old('supplier_ids', [])) ? 'selected' : '' }}>{{ $supplier->supplier_name }}</option>
+                                                               @endforeach
+                                                           </select>
+                                                       </div>
                                                        <div class="form-group mb-0">
                                                            <label for="edit-user-status">Status</label>
                                                            <select id="edit-user-status" name="is_active"
@@ -687,6 +725,36 @@
                 width: '100%',
                 dropdownParent: $('#editUserModal')
             });
+            $('.assignment-select').select2({
+                placeholder: 'Select assignments',
+                width: '100%',
+                dropdownParent: $('#editUserModal')
+            });
+
+            function assignmentIds($button, attributeName) {
+                try {
+                    return JSON.parse($button.attr(attributeName) || '[]').map(String);
+                } catch (error) {
+                    return [];
+                }
+            }
+
+            function toggleAssignmentFields() {
+                var role = $('#edit-user-role').val();
+                $('.user-assignment-fields').hide();
+                $('#edit-user-offices, #edit-user-hubs, #edit-user-agents, #edit-user-suppliers').prop('disabled', true);
+
+                if (role === 'Operations' || role === 'Accounts') {
+                    $('#office-hub-assignments').show();
+                    $('#edit-user-offices, #edit-user-hubs').prop('disabled', false);
+                } else if (role === 'Agents') {
+                    $('#agent-assignments').show();
+                    $('#edit-user-agents').prop('disabled', false);
+                } else if (role === 'Supplier') {
+                    $('#supplier-assignments').show();
+                    $('#edit-user-suppliers').prop('disabled', false);
+                }
+            }
 
             var userUpdateUrlTemplate = @json(route('users.update', '__USER__'));
 
@@ -701,6 +769,11 @@
                 $('#edit-user-phone-number').val($button.attr('data-phone-number') || '');
                 $('#edit-user-role').val($button.attr('data-role') || '').trigger('change');
                 $('#edit-user-status').val($button.attr('data-is-active')).trigger('change');
+                $('#edit-user-offices').val(assignmentIds($button, 'data-office-ids')).trigger('change');
+                $('#edit-user-hubs').val(assignmentIds($button, 'data-hub-ids')).trigger('change');
+                $('#edit-user-agents').val(assignmentIds($button, 'data-agent-ids')).trigger('change');
+                $('#edit-user-suppliers').val(assignmentIds($button, 'data-supplier-ids')).trigger('change');
+                toggleAssignmentFields();
                 $('#edit-user-form').validate().resetForm();
                 $('#edit-user-form .is-invalid').removeClass('is-invalid');
                 $('#editUserModal').modal('show');
@@ -918,6 +991,7 @@
 
             $('#edit-user-role').on('change', function() {
                 $(this).valid();
+                toggleAssignmentFields();
             });
             $('#edit-user-status').on('change', function() {
                 $(this).valid();
@@ -993,6 +1067,7 @@
                 $('#addUserModal').modal('show');
             @endif
             @if ($errors->editUser->any())
+                toggleAssignmentFields();
                 $('#editUserModal').modal('show');
             @endif
         });

@@ -589,14 +589,6 @@
                                                                 $pickupDate = $formatDate($crr->actual_delivery_date);
                                                                 $comment = trim(($crr->first_mile_comment ?: '') . ($crr->first_mile_updates ? ' ' . $crr->first_mile_updates : ''));
                                                                 $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
-                                                                $statusBadgeClass = match ((int) $crr->status) {
-                                                                    \App\Models\Crr::STATUS_ACTIVE,
-                                                                    \App\Models\Crr::STATUS_IN_PROGRESS,
-                                                                    \App\Models\Crr::STATUS_COMPLETED => 'label label-stock',
-                                                                    \App\Models\Crr::STATUS_CANCELLED => 'label label-danger',
-                                                                    \App\Models\Crr::STATUS_ARCHIVED => 'label label-inverse',
-                                                                    default => 'label label-pending',
-                                                                };
                                                             @endphp
                                                             <tr
                                                                 data-account-manager="{{ $accountManager }}"
@@ -646,7 +638,7 @@
                                                                 <td>{{ $expectedDate['display'] }}</td>
                                                                 <td>{{ $deadlineWarehouse['display'] }}</td>
                                                                 <td style="max-width: 300px; white-space: normal; line-height: 1.2;">{{ $comment ?: '—' }}</td>
-                                                                <td><span class="{{ $statusBadgeClass }}">{{ $statusLabel }}</span></td>
+                                                                <td><span class="stock-status-badge {{ \App\Models\Crr::statusBadgeClass($crr->status) }}">{{ $statusLabel }}</span></td>
                                                                 <td>{{ $crr->hub_agent ?? '—' }}</td>
                                                                 <td>{{ $pickupDate['display'] }}</td>
                                                             </tr>

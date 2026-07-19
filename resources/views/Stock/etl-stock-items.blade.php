@@ -406,7 +406,7 @@
                                                        <td>{{$row['value']}}</td>
                                                        <td>{{$row['transit']}}</td>
                                                        <td></td>
-                                                       <td><span class="badge-stock">Stock</span></td>
+                                                       <td><span class="stock-status-badge stock-status-stock">Stock</span></td>
                                                    </tr>
                                                    @endforeach
                                                    @for($i=3; $i < 200; $i++)
@@ -431,7 +431,7 @@
                                                        <td>{{number_format(rand(500, 10000), 2)}} USD</td>
                                                        <td>AWB: 0715817441{{rand(0,9)}}</td>
                                                        <td></td>
-                                                       <td><span class="badge-stock">Stock</span></td>
+                                                       <td><span class="stock-status-badge stock-status-stock">Stock</span></td>
                                                    </tr>
                                                    @endfor
                                                </tbody>

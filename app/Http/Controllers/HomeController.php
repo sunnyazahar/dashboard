@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\OperationsDashboardService;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -21,8 +22,12 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index()
+    public function index(Request $request, OperationsDashboardService $dashboardService)
     {
-        return view('home');
+        $period = (int) $request->integer('period', 30);
+
+        return view('home', [
+            'dashboard' => $dashboardService->build($request->user(), $period),
+        ]);
     }
 }
