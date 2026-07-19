@@ -696,7 +696,7 @@
                                                         </div>
                                                 </div>
                                                 <div class="text-right" style="width: 20%; padding-top: 18px;">
-                                                     <button class="btn btn-outline-teal"><i class="ti-download"></i> Export</button>
+                                                     <!-- <button class="btn btn-outline-teal"><i class="ti-download"></i> Export</button> -->
                                                      <a href="{{ route('create-shipment') }}" class="btn btn-teal ml-2">Create shipment</a>
                                                 </div>
                                             </div>

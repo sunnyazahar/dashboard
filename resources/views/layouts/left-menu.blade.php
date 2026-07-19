@@ -81,41 +81,7 @@
                     </li>
                 </ul>
             </li>
-            <li
-                class="pcoded-hasmenu {{ request()->routeIs('billable-shipments', 'all-invoices', 'all-incoming-invoices', 'all-costs', 'accounting') ? 'pcoded-trigger' : '' }}"
-                data-menu-key="billing">
-                <a href="javascript:void(0)">
-                    <span class="pcoded-micon"><i class="icofont icofont-calculator-alt-2"></i></span>
-                    <span class="pcoded-mtext">Billing</span>
-                </a>
-                <ul class="pcoded-submenu">
-                    <li class="{{ request()->routeIs('billable-shipments') ? 'active' : '' }}">
-                        <a href="{{route('billable-shipments')}}">
-                            <span class="pcoded-mtext">Billable shipments</span>
-                        </a>
-                    </li>
-                    <li class="{{ request()->routeIs('all-invoices') ? 'active' : '' }}">
-                        <a href="{{route('all-invoices')}}">
-                            <span class="pcoded-mtext">All invoices</span>
-                        </a>
-                    </li>
-                    <li class="{{ request()->routeIs('all-incoming-invoices') ? 'active' : '' }}">
-                        <a href="{{route('all-incoming-invoices')}}">
-                            <span class="pcoded-mtext">All incoming invoices</span>
-                        </a>
-                    </li>
-                    <li class="{{ request()->routeIs('all-costs') ? 'active' : '' }}">
-                        <a href="{{route('all-costs')}}">
-                            <span class="pcoded-mtext">All costs</span>
-                        </a>
-                    </li>
-                    <li class="{{ request()->routeIs('accounting') ? 'active' : '' }}">
-                        <a href="{{route('accounting')}}">
-                            <span class="pcoded-mtext">Accounting</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
+            
             <li class="pcoded-hasmenu" style="display: none;" data-menu-key="contacts">
                 <a href="javascript:void(0)">
                     <span class="pcoded-micon"><i class="feather icon-package"></i></span>
