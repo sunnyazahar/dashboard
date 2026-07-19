@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock List - Marinetrans</title>
+    <title>Stock List</title>
     <link rel="stylesheet" type="text/css" href="{{ asset('files/assets/icon/icofont/css/icofont.css') }}">
     <style>
         @page {
@@ -225,20 +225,10 @@
             </td>
         </tr>
     </table>
-    @php
-        $firstVesselName = $grouped->keys()->first();
-        $vInfo = $vesselInfos[$firstVesselName] ?? null;
-        $customer = $vInfo ? $vInfo->customer : null;
-        $customerName = $customer ? $customer->customer_name : 'Anglo-Eastern (Germany) GmbH';
-        $eori = ($customer && $customer->invoiceDetail && $customer->invoiceDetail->eori_number)
-            ? 'HL/EORI ' . $customer->invoiceDetail->eori_number
-            : 'HL/EORI DE2742004';
-    @endphp
-
     <table class="header-table">
         <tr>
             <td class="customer-info">
-                Stock list Report for {{ $customerName }}
+                Stock list Report for {{ $reportCustomerName }}
             </td>
             <td class="logo-container">
                 <div class="logo-text">

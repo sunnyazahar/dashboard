@@ -359,11 +359,9 @@ class CrrController extends Controller
     public function printStockList(Request $request)
     {
         $ids = explode(',', $request->query('ids', ''));
-        $crrs = Crr::with(['packages', 'documents'])->whereIn('id', $ids)->get();
-
-        // Fetch customer vessel info for each vessel name
-        $vesselNames = $crrs->pluck('vessel_name')->unique();
-        $vesselInfos = \App\Models\CustomerVessel::with(['customer.invoiceDetail'])->whereIn('vessel', $vesselNames)->get()->keyBy('vessel');
+        $crrs = Crr::with(['packages', 'documents', 'customerVessel.customer'])
+            ->whereIn('id', $ids)
+            ->get();
 
         if ($crrs->isEmpty()) {
             return "<script>alert('No items selected.'); window.close();</script>";
@@ -371,8 +369,15 @@ class CrrController extends Controller
 
         // Group by vessel
         $grouped = $crrs->groupBy('vessel_name');
+        $selectedCustomerNames = $crrs
+            ->map(fn (Crr $crr) => $crr->customerVessel?->customer?->customer_name);
+        $uniqueCustomerNames = $selectedCustomerNames->filter()->unique()->values();
+        $reportCustomerName = $selectedCustomerNames->contains(fn ($name) => blank($name))
+            || $uniqueCustomerNames->count() !== 1
+                ? 'all customers'
+                : $uniqueCustomerNames->first();
 
-        $pdf = Pdf::loadView('Stock.print', compact('grouped', 'vesselInfos'))
+        $pdf = Pdf::loadView('Stock.print', compact('grouped', 'reportCustomerName'))
                   ->setPaper('a4', 'portrait');
 
         $pdf->render();
