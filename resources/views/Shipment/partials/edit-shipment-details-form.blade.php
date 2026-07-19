@@ -281,9 +281,13 @@
                             <td style="max-width: 150px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;display: block;">{{ $poNumbers ?: '—' }}</td>
                             <td>{{ $crr->supplier ?? '—' }}</td>
                             <td>
-                                <a href="{{ route('stocks.edit', $crr->id) }}" class="text-primary">
-                                    {{ $crr->stock_number }}
-                                </a>
+                                @if($crr->getKey())
+                                    <a href="{{ route('stocks.edit', ['id' => $crr->getKey()]) }}" class="text-primary">
+                                        {{ $crr->stock_number }}
+                                    </a>
+                                @else
+                                    <span class="text-primary">{{ $crr->stock_number }}</span>
+                                @endif
                             </td>
                             <td>{{ $crr->packages->count() }}</td>
                             <td>{{ number_format($crr->packages->sum('weight'), 2) }}</td>

@@ -65,10 +65,19 @@ class ShipmentStockSnapshotService
             $shipment->loadMissing('stockSnapshots');
 
             if ($shipment->stockSnapshots->isNotEmpty()) {
-                return $shipment->stockSnapshots
+                $snapshots = $shipment->stockSnapshots
                     ->sortBy('sort_order')
-                    ->values()
-                    ->map(fn (ShipmentStockSnapshot $snapshot) => $this->snapshotToCrrModel($snapshot));
+                    ->values();
+                $resolvedIds = Crr::query()
+                    ->whereIn('stock_number', $snapshots->pluck('stock_number')->filter()->unique())
+                    ->orderByDesc('id')
+                    ->get(['id', 'stock_number'])
+                    ->unique('stock_number')
+                    ->pluck('id', 'stock_number');
+
+                return $snapshots->map(
+                    fn (ShipmentStockSnapshot $snapshot) => $this->snapshotToCrrModel($snapshot, $resolvedIds)
+                );
             }
         }
 
@@ -88,12 +97,13 @@ class ShipmentStockSnapshotService
         return $crrs;
     }
 
-    public function snapshotToCrrModel(ShipmentStockSnapshot $snapshot): Crr
+    public function snapshotToCrrModel(ShipmentStockSnapshot $snapshot, ?Collection $resolvedIds = null): Crr
     {
         $data = $snapshot->snapshot_data ?? [];
         $crrAttributes = $data['crr'] ?? [];
 
-        $crrAttributes['id'] = $snapshot->original_crr_id;
+        $crrAttributes['id'] = $snapshot->original_crr_id
+            ?? $resolvedIds?->get($snapshot->stock_number);
         $crrAttributes['stock_number'] = $snapshot->stock_number ?? ($crrAttributes['stock_number'] ?? null);
         $crrAttributes['vessel_name'] = $snapshot->vessel_name ?? ($crrAttributes['vessel_name'] ?? null);
         $crrAttributes['supplier'] = $snapshot->supplier ?? ($crrAttributes['supplier'] ?? null);
@@ -102,7 +112,7 @@ class ShipmentStockSnapshotService
         $crrAttributes['currency'] = $snapshot->currency ?? ($crrAttributes['currency'] ?? null);
         $crrAttributes['status'] = Crr::STATUS_COMPLETED;
 
-        $crr = new Crr($crrAttributes);
+        $crr = (new Crr())->forceFill($crrAttributes);
         $crr->exists = true;
 
         $packages = collect($data['packages'] ?? [])->map(function (array $packageAttributes) use ($crr) {

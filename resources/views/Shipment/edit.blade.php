@@ -3377,7 +3377,7 @@
 
         var shipmentUpdateStatusUrl = @json(route('shipments.update-status', $shipment->id));
         var shipmentUpdateFlagsUrl = @json(route('shipments.update-flags', $shipment->id));
-        var stockEditUrlTemplate = @json(route('stocks.edit', '__CRR_ID__'));
+        var stockEditUrlTemplate = {{ Illuminate\Support\Js::from(route('stocks.edit', ['id' => '__CRR_ID__'])) }};
         var lastHeaderStatus = @json($shipment->status);
         var lastHeaderFlags = @json(array_slice($shipmentFlags, 0, 1));
         var suppressFlagsChange = false;
