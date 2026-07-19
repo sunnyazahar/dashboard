@@ -28,6 +28,7 @@ class ShipmentPreAlertService
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
         ]);
 
         if ($shipment->crrs->isEmpty() || !ShipmentPreAlertPdfBuilder::shipmentHasServiceDetails($shipment)) {
@@ -70,6 +71,7 @@ class ShipmentPreAlertService
             'shipment.courierLegs',
             'shipment.releaseLegs',
             'shipment.handCarryLegs',
+            'shipment.onBoardLegs',
         );
 
         $path = Storage::disk('public')->path($preAlert->file_path);

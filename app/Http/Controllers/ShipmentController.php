@@ -994,7 +994,10 @@ class ShipmentController extends Controller
         $fingerprintService->prepareForFingerprint($shipment);
         $preAlertCreated = false;
 
-        if ($fingerprintService->preAlertFingerprint($shipment) !== $preAlertFingerprintBefore) {
+        if (
+            $fingerprintService->preAlertFingerprint($shipment) !== $preAlertFingerprintBefore
+            || ! $shipment->preAlerts()->exists()
+        ) {
             try {
                 $preAlert = $preAlertService->generate($shipment);
                 $preAlertCreated = $preAlert !== null;

@@ -50,6 +50,7 @@ class ShipmentPdfFingerprintService
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
             'stockSnapshots',
         ];
     }
@@ -194,6 +195,15 @@ class ShipmentPdfFingerprintService
                     'contact_name' => $leg->contact_name,
                     'contact_phone' => $leg->contact_phone,
                     'onboard_hand_carry' => (bool) $leg->onboard_hand_carry,
+                ])
+                ->all(),
+            'On-board delivery' => $shipment->onBoardLegs
+                ->sortBy('sort_order')
+                ->values()
+                ->map(fn ($leg) => [
+                    'departure_date' => $this->normalizeValue($leg->departure_date),
+                    'delivery_date' => $this->normalizeValue($leg->delivery_date),
+                    'delivery_time' => $leg->delivery_time,
                 ])
                 ->all(),
             default => [],

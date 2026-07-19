@@ -243,6 +243,19 @@ class ShipmentPreAlertPdfBuilder
                 $result['departure_port'] = $departurePort;
                 $result['flight_number'] = $leg->contact_name ?: '—';
                 break;
+
+            case 'On-board delivery':
+                /** @var ShipmentOnBoardLeg|null $leg */
+                $leg = $shipment->onBoardLegs->first();
+                if (!$leg) {
+                    break;
+                }
+
+                $result['arrival_date'] = $this->formatDate($leg->delivery_date) ?? '—';
+                $result['arrival_time'] = $leg->delivery_time ?: '—';
+                $result['arrival'] = $this->formatArrival($leg->delivery_date, $leg->delivery_time);
+                $result['departure_port'] = $departurePort;
+                break;
         }
 
         return $result;
@@ -496,6 +509,7 @@ class ShipmentPreAlertPdfBuilder
             'Courier' => $shipment->courierLegs->isNotEmpty(),
             'Release' => $shipment->releaseLegs->isNotEmpty(),
             'Hand Carry' => $shipment->handCarryLegs->isNotEmpty(),
+            'On-board delivery' => true,
             default => false,
         };
     }

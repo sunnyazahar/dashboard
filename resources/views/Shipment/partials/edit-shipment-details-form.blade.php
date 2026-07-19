@@ -5,7 +5,18 @@
     $totalCbm = $shipment->crrs->sum(fn ($crr) => $crr->packages->sum('cbm'));
     $totalValue = $shipment->crrs->sum('customs_value');
     $serviceOptions = ['Courier', 'Airfreight', 'Sea freight', 'Truck', 'Release', 'Hand Carry', 'On-board delivery'];
-    $additionalServiceOptions = ['Console', 'Economy', 'Express', 'Weekly console', 'Normal'];
+    $additionalServiceOptions = [
+        'Console',
+        'Economy',
+        'Express',
+        'Weekly console',
+        'Normal',
+        'Barge station',
+        'Truck',
+        'Via ship chandler',
+        'On arrival',
+        'Major storing',
+    ];
 @endphp
 
 @if (session('success'))
