@@ -65,7 +65,7 @@
             border-radius: 4px;
             height: 32px;
             background: #fff;
-            overflow: hidden;
+            overflow: visible;
             width: 100%;
         }
         .filter-group .filter-label {
@@ -91,6 +91,52 @@
             background: transparent !important;
             width: 100%;
             color: #1e293b;
+        }
+        .filter-group .multiselect-native-select {
+            flex: 1;
+            min-width: 0;
+        }
+        .filter-group .multiselect-native-select .btn-group {
+            width: 100%;
+        }
+        .filter-group .multiselect-native-select .multiselect {
+            height: 30px;
+            padding: 4px 26px 4px 10px;
+            overflow: hidden;
+            border: 0;
+            border-radius: 0;
+            background: #fff;
+            color: #1e293b;
+            font-size: 11px;
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .filter-group .multiselect-native-select .multiselect-container {
+            width: max(100%, 280px);
+            max-height: 420px;
+            overflow-y: auto;
+            padding: 6px 0;
+            z-index: 1050;
+        }
+        .filter-group .multiselect-native-select .multiselect-container .input-group {
+            width: calc(100% - 12px);
+            margin: 0 6px 6px;
+        }
+        .filter-group .multiselect-native-select .multiselect-container label {
+            padding-top: 7px;
+            padding-bottom: 7px;
+            color: #263238;
+            font-size: 12px;
+            white-space: normal;
+        }
+        .filter-group .multiselect-native-select .multiselect-container input[type="checkbox"] {
+            margin-right: 8px;
+            accent-color: #176b87;
+        }
+        .filter-group .multiselect-native-select .multiselect-container .multiselect-reset a {
+            color: #176b87;
+            font-weight: 600;
         }
         .filter-group .select2-container--default .select2-selection--single,
         .filter-group .select2-container--default .select2-selection--multiple {
@@ -700,7 +746,7 @@
                                                             <div id="col-Hub-Agent" class="custom-col" style="flex: 0 0 200px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Hub/Agent</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input stock-filter-multiselect" multiple="multiple">
                                                                         @foreach($hubAgentOptions as $hubAgentOption)
                                                                             <option value="{{ $hubAgentOption }}">{{ $hubAgentOption }}</option>
                                                                         @endforeach
@@ -710,7 +756,7 @@
                                                             <div id="col-Customer" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Customer</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input stock-filter-multiselect" multiple="multiple">
                                                                         @foreach($customers as $customer)
                                                                             <option value="{{ $customer }}">{{ $customer }}</option>
                                                                         @endforeach
@@ -720,7 +766,7 @@
                                                             <div id="col-Vessel" class="custom-col" style="flex: 0 0 200px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Vessel</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input stock-filter-multiselect" multiple="multiple">
                                                                         @foreach($vessels as $vessel)
                                                                             <option value="{{ $vessel }}">{{ $vessel }}</option>
                                                                         @endforeach
@@ -730,7 +776,7 @@
                                                             <div id="col-Status" class="custom-col" style="flex: 0 0 200px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Status</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input stock-filter-multiselect" multiple="multiple">
                                                                         @foreach(\App\Models\Crr::getStatusLabels() as $value => $label)
                                                                             <option value="{{ $label }}">{{ $label }}</option>
                                                                         @endforeach
@@ -785,7 +831,7 @@
                                                             <div id="col-Account-manager" class="custom-col" style="flex: 0 0 200px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Account manager</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input stock-filter-multiselect" multiple="multiple">
                                                                         @foreach($accountManagers as $accountManager)
                                                                             <option value="{{ $accountManager }}">{{ $accountManager }}</option>
                                                                         @endforeach
@@ -795,7 +841,7 @@
                                                             <div id="col-Office" class="custom-col" style="flex: 0 0 200px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Office</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input stock-filter-multiselect" multiple="multiple">
                                                                         @foreach($offices as $office)
                                                                             <option value="{{ $office }}">{{ $office }}</option>
                                                                         @endforeach
@@ -1018,11 +1064,33 @@
         $(document).ready(function() {
             $('body').addClass('stocks-list-page');
 
-            // Initialize Select2 for standard filters
-            $('.select2').select2({
-                placeholder: "Click here",
-                allowClear: false,
-                width: '100%'
+            // Checkbox multiselects for stock filters
+            $('.stock-filter-multiselect').multiselect({
+                enableCaseInsensitiveFiltering: true,
+                includeResetOption: true,
+                resetText: 'Clear',
+                filterPlaceholder: 'Type here',
+                maxHeight: 420,
+                buttonWidth: '100%',
+                nonSelectedText: 'Click here',
+                numberDisplayed: 1,
+                nSelectedText: 'selected',
+                buttonText: function(options) {
+                    if (options.length === 0) {
+                        return 'Click here';
+                    }
+
+                    var firstSelection = $(options[0]).text();
+                    return options.length === 1 ? firstSelection : firstSelection + ', ...';
+                },
+                buttonTitle: function(options) {
+                    var labels = [];
+                    options.each(function() {
+                        labels.push($(this).text());
+                    });
+
+                    return labels.join(', ');
+                }
             });
 
             // Initialize Bootstrap Multiselect for special filter toggle
@@ -1250,7 +1318,11 @@
 
             $('.clear-filters').on('click', function(e) {
                 e.preventDefault();
-                $('.select2').val(null).trigger('change');
+                $('.stock-filter-multiselect').each(function() {
+                    $(this).multiselect('deselectAll', false);
+                    $(this).multiselect('updateButtonText');
+                    $(this).trigger('change');
+                });
                 $('.filter-input:not(select)').val('').trigger('keyup');
                 table.columns().search('').draw();
             });
