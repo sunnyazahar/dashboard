@@ -601,6 +601,7 @@ class CrrController extends Controller
                 'documents',
                 'customerVessel.customer.responsible.accountManager',
                 'shipments',
+                'registeredBy',
             ])
             ->latest()
             ->get();
@@ -651,20 +652,49 @@ class CrrController extends Controller
             ->sort()
             ->values();
 
-        $handledByOptions = $crrs
+        $hubAgentValues = $crrs
             ->pluck('hub_agent')
             ->filter()
             ->unique()
-            ->sort()
             ->values();
 
-        $hubAgents = $handledByOptions;
+        $handledByMap = collect();
+
+        Hub::query()
+            ->where(function ($query) use ($hubAgentValues) {
+                $query->whereIn('code', $hubAgentValues)
+                    ->orWhereIn('hub_name', $hubAgentValues);
+            })
+            ->get(['code', 'hub_name', 'responsible_manager'])
+            ->each(function (Hub $hub) use ($handledByMap) {
+                if ($hub->responsible_manager) {
+                    $handledByMap->put($hub->code, $hub->responsible_manager);
+                    $handledByMap->put($hub->hub_name, $hub->responsible_manager);
+                }
+            });
+
+        Agent::query()
+            ->where(function ($query) use ($hubAgentValues) {
+                $query->whereIn('code', $hubAgentValues)
+                    ->orWhereIn('agent_name', $hubAgentValues);
+            })
+            ->get(['code', 'agent_name', 'responsible_manager'])
+            ->each(function (Agent $agent) use ($handledByMap) {
+                if ($agent->responsible_manager) {
+                    $handledByMap->put($agent->code, $agent->responsible_manager);
+                    $handledByMap->put($agent->agent_name, $agent->responsible_manager);
+                }
+            });
+
+        $handledByOptions = $handledByMap->values()->unique()->sort()->values();
+        $hubAgents = $hubAgentValues->sort()->values();
 
         return view('Stock.pickup-work-list', compact(
             'crrs',
             'accountManagers',
             'vessels',
             'handledByOptions',
+            'handledByMap',
             'hubAgents',
         ));
     }

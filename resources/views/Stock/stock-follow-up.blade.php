@@ -568,7 +568,7 @@
                                                                         —
                                                                     @endforelse
                                                                 </td>
-                                                                <td>{{ $accountManager ?: '—' }}</td>
+                                                                <td>{{ $crr->registeredBy?->name ?? '—' }}</td>
                                                                 <td>{{ $isEtl ? 'ETL' : ($crr->internal_shipment ?: '—') }}</td>
                                                                 <td><span class="stock-status-badge {{ \App\Models\Crr::statusBadgeClass($crr->status) }}">{{ $statusLabel }}</span></td>
                                                                 <td class="text-center">

@@ -589,12 +589,13 @@
                                                                 $pickupDate = $formatDate($crr->actual_delivery_date);
                                                                 $comment = trim(($crr->first_mile_comment ?: '') . ($crr->first_mile_updates ? ' ' . $crr->first_mile_updates : ''));
                                                                 $statusLabel = \App\Models\Crr::getStatusLabels()[$crr->status] ?? 'Unknown';
+                                                                $handledBy = $handledByMap->get($crr->hub_agent, '');
                                                             @endphp
                                                             <tr
                                                                 data-account-manager="{{ $accountManager }}"
                                                                 data-hub-agent="{{ $crr->hub_agent ?? '' }}"
                                                                 data-vessel="{{ $crr->vessel_name ?? '' }}"
-                                                                data-handled-by="{{ $crr->hub_agent ?? '' }}"
+                                                                data-handled-by="{{ $handledBy }}"
                                                                 data-expected-delivery="{{ $expectedDate['filter'] }}"
                                                                 data-deadline-warehouse="{{ $deadlineWarehouse['filter'] }}"
                                                                 data-pickup-date="{{ $pickupDate['filter'] }}"
@@ -639,7 +640,7 @@
                                                                 <td>{{ $deadlineWarehouse['display'] }}</td>
                                                                 <td style="max-width: 300px; white-space: normal; line-height: 1.2;">{{ $comment ?: '—' }}</td>
                                                                 <td><span class="stock-status-badge {{ \App\Models\Crr::statusBadgeClass($crr->status) }}">{{ $statusLabel }}</span></td>
-                                                                <td>{{ $crr->hub_agent ?? '—' }}</td>
+                                                                <td>{{ $handledBy ?: '—' }}</td>
                                                                 <td>{{ $pickupDate['display'] }}</td>
                                                             </tr>
                                                             @empty
