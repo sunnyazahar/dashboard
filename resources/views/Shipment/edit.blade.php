@@ -3377,6 +3377,7 @@
 
         var shipmentUpdateStatusUrl = @json(route('shipments.update-status', $shipment->id));
         var shipmentUpdateFlagsUrl = @json(route('shipments.update-flags', $shipment->id));
+        var stockEditUrlTemplate = @json(route('stocks.edit', '__CRR_ID__'));
         var lastHeaderStatus = @json($shipment->status);
         var lastHeaderFlags = @json(array_slice($shipmentFlags, 0, 1));
         var suppressFlagsChange = false;
@@ -4513,12 +4514,14 @@
                 var hubKey = normalizeHubKey(hubCode || hubAgent);
                 var status = $modalRow.data('status') || 'Pending';
                 var statusClass = 'stock-status-badge ' + stockStatusBadgeClass(status);
+                var stockNumber = $modalRow.data('stock') || '—';
+                var stockEditUrl = stockEditUrlTemplate.replace('__CRR_ID__', encodeURIComponent(id));
                 var rowHtml = '<tr class="selected-stock-row" data-crr-id="' + id + '" data-hub-key="' + hubKey + '">' +
                     '<td>' + hub + '</td>' +
                     '<td>' + ($modalRow.data('vessel') || '—') + '</td>' +
                     '<td style="max-width:150px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block;">' + ($modalRow.data('po') || '—') + '</td>' +
                     '<td>' + ($modalRow.data('supplier') || '—') + '</td>' +
-                    '<td class="text-primary">' + ($modalRow.data('stock') || '—') + '</td>' +
+                    '<td><a href="' + stockEditUrl + '" class="text-primary">' + $('<div>').text(stockNumber).html() + '</a></td>' +
                     '<td>' + ($modalRow.data('items') || '—') + '</td>' +
                     '<td>' + ($modalRow.data('weight') || '—') + '</td>' +
                     '<td>' + ($modalRow.data('cbm') || '—') + '</td>' +

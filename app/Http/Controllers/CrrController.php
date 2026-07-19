@@ -24,7 +24,7 @@ class CrrController extends Controller
                 'documents',
                 'customerVessel.customer.responsible.accountManager.office',
             ])
-            ->latest()
+            ->orderByDesc('id')
             ->get();
 
         $customers = $crrs

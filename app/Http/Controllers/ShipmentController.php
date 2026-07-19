@@ -55,7 +55,7 @@ class ShipmentController extends Controller
             'truckLegs',
             'courierLegs',
             'releaseLegs',
-        ])->latest()->get();
+        ])->orderByDesc('id')->get();
 
         $partyNames = Shipment::batchResolvePartyNames($shipments);
         $vesselCustomerMap = Shipment::batchResolveVesselCustomerNames($shipments);

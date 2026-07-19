@@ -1151,6 +1151,7 @@
                 "responsive": false,
                 "searching": true,
                 "ordering": true,
+                "order": [],
                 "autoWidth": false,
                 "scrollY": '50vh',
                 "scrollX": true,

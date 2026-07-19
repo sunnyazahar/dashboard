@@ -280,7 +280,11 @@
                             <td>{{ $crr->vessel_name ?? '—' }}</td>
                             <td style="max-width: 150px;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;display: block;">{{ $poNumbers ?: '—' }}</td>
                             <td>{{ $crr->supplier ?? '—' }}</td>
-                            <td class="text-primary">{{ $crr->stock_number }}</td>
+                            <td>
+                                <a href="{{ route('stocks.edit', $crr->id) }}" class="text-primary">
+                                    {{ $crr->stock_number }}
+                                </a>
+                            </td>
                             <td>{{ $crr->packages->count() }}</td>
                             <td>{{ number_format($crr->packages->sum('weight'), 2) }}</td>
                             <td>{{ number_format($crr->packages->sum('cbm'), 3) }}</td>
