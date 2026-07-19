@@ -71,6 +71,7 @@ class ShipmentPdfFingerprintService
             'departure',
             'departure_port_code',
             'service',
+            'additional_service',
             'consignee',
             'consignee_address',
             'consignee_city',

@@ -158,6 +158,7 @@ class ShipmentManifestPdfBuilder
             'destinationPort' => $this->formatPortLabel($shipment->consignee_port_code, $shipment->location),
             'documentHandledBy' => $handledBy,
             'serviceLabel' => $shipment->service ?? '—',
+            'additionalServiceLabel' => $shipment->additional_service ?: '—',
             'pcsSummary' => $totalPackages . ' / ' . $totalPackages . ' / ' . $totalWeight . ' kg',
             'deadlineArrival' => $shipment->deadline_arrival?->format('d.m.y') ?? '—',
             'commentsHub' => $shipment->comments_departure_hub ?? '',

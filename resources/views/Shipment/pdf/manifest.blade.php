@@ -76,6 +76,7 @@
         <tr><td class="field-label">Port of destination</td><td>{{ $destinationPort }}</td></tr>
         <tr><td class="field-label">Document handled by</td><td>{{ $documentHandledBy }}</td></tr>
         <tr><td class="field-label">Service</td><td>{{ $serviceLabel }}</td></tr>
+        <tr><td class="field-label">Additional service</td><td>{{ $additionalServiceLabel }}</td></tr>
         <tr><td class="field-label">PCS / Repacked as / Weight</td><td>{{ $pcsSummary }}</td></tr>
         <tr><td class="field-label">Deadline arrival</td><td>{{ $deadlineArrival }}</td></tr>
     </table>

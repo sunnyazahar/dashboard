@@ -95,6 +95,7 @@
         <thead>
             <tr>
                 <th>Service</th>
+                <th>Additional service</th>
                 <th>Departure port</th>
                 <th>{{ $flightColumnLabel }}</th>
                 <th>Arrival date</th>
@@ -104,6 +105,7 @@
         <tbody>
             <tr>
                 <td>{{ $serviceLabel }}</td>
+                <td>{{ $additionalServiceLabel }}</td>
                 <td>{{ $serviceDeparturePort }}</td>
                 <td>{{ $flightNumber }}</td>
                 <td>{{ $arrivalDate }}</td>
