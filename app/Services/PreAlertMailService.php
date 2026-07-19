@@ -6,6 +6,7 @@ use App\Models\Shipment;
 use App\Models\ShipmentCourierLeg;
 use App\Models\ShipmentFlight;
 use App\Models\ShipmentHandCarryLeg;
+use App\Models\ShipmentOnBoardLeg;
 use App\Models\ShipmentReleaseLeg;
 use App\Models\ShipmentSeaLeg;
 use App\Models\ShipmentTruckLeg;
@@ -16,6 +17,7 @@ class PreAlertMailService
 {
     public function __construct(
         private ShipmentManifestPdfBuilder $manifestPdfBuilder,
+        private ShipmentPreAlertPdfBuilder $preAlertPdfBuilder,
         private EmlMessageBuilder $emlMessageBuilder,
     ) {}
 
@@ -61,6 +63,7 @@ class PreAlertMailService
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
         ]);
 
         if ($shipment->crrs->isEmpty()) {
@@ -88,18 +91,15 @@ class PreAlertMailService
     private function buildSubject(Shipment $shipment, array $manifestData): string
     {
         $vessel = $shipment->crrs->pluck('vessel_name')->filter()->first() ?? '—';
-        $deadline = $shipment->deadline_arrival?->format('d.m.Y') ?? '—';
         $service = $shipment->service ?? '—';
         $departure = $manifestData['departurePort'] ?? '—';
-        $destination = $manifestData['destinationPort'] ?? '—';
+        $destination = $this->buildDestinationLabel($shipment);
 
         return sprintf(
-            'Pre-alert for %s / %s / %s / %s / MT REF: %s / From %s to %s',
+            'Pre-alert for Ref. %s / %s / %s / From %s to %s',
             $shipment->shipment_number,
             $vessel,
-            $deadline,
             $service,
-            $shipment->shipment_number,
             $departure,
             $destination
         );
@@ -113,74 +113,54 @@ class PreAlertMailService
         string $senderEmail
     ): string {
         $consigneeName = $consigneeParty['name'] ?: ($shipment->consignee_att ?: 'Sir/Madam');
-        $destination = $manifestData['destinationPort'] ?? 'destination';
+        $destination = $this->buildDestinationLabel($shipment);
         $service = $shipment->service ?? 'shipment';
-        $deadline = $shipment->deadline_arrival?->format('d.m.Y') ?? '—';
 
         $lines = [
             'To ' . $consigneeName,
             '',
             'Please find attached pre-alert for ' . $service . ' to ' . $destination,
             '',
-            'Deadline ' . $deadline,
+            '',
+            'Shipment Details:',
+            'Shipment Ref. ' . $shipment->shipment_number,
+            'From: ' . ($manifestData['departurePort'] ?? '—'),
+            'To: ' . $destination,
+            'Vessel: ' . ($manifestData['vesselLine'] ?? '—'),
+            'Total packages: ' . ($manifestData['totals']['packages'] ?? '—'),
+            'Total weight: ' . ($manifestData['totals']['weight'] ?? '—') . ' kg',
+            'Total CBM: ' . ($manifestData['totals']['cbm'] ?? '—'),
             '',
         ];
 
-        if ($shipment->customer_reference) {
-            $lines[] = 'As per quote ' . $shipment->customer_reference . ', pls check with agent for loading.';
-            $lines[] = '';
-        }
-
-        $lines[] = 'MANIFEST DETAILS';
-        $lines[] = 'Shipment: ' . $shipment->shipment_number;
-        $lines[] = 'From: ' . ($manifestData['departurePort'] ?? '—');
-        $lines[] = 'To: ' . ($manifestData['destinationPort'] ?? '—');
-        $lines[] = 'Vessel: ' . ($manifestData['vesselLine'] ?? '—');
-        $lines[] = 'Total packages: ' . ($manifestData['totals']['packages'] ?? '—');
-        $lines[] = 'Total weight: ' . ($manifestData['totals']['weight'] ?? '—') . ' kg';
-        $lines[] = 'Total CBM: ' . ($manifestData['totals']['cbm'] ?? '—');
+        $lines[] = 'Service Details:';
+        $lines[] = '';
+        $serviceDetailLines = $this->preAlertPdfBuilder->reminderMailServiceDetailLines($shipment);
+        array_push($lines, ...array_slice($serviceDetailLines, 2));
         $lines[] = '';
 
-        $serviceDetails = $this->buildServiceDetailsSection($shipment);
-        if ($serviceDetails !== '') {
-            $lines[] = $serviceDetails;
-            $lines[] = '';
-        }
-
-        if ($shipment->comments_departure_hub) {
-            $lines[] = $shipment->comments_departure_hub;
-            $lines[] = '';
-        } elseif ($shipment->comments_consignee) {
-            $lines[] = $shipment->comments_consignee;
-            $lines[] = '';
-        }
-
-        if ($shipment->special_considerations_destination) {
-            $lines[] = $shipment->special_considerations_destination;
-            $lines[] = '';
-        }
-
-        $lines[] = 'Pls keep us posted.';
+        $lines[] = 'Please do the needful.';
         $lines[] = '';
         $lines[] = 'With kind regards,';
-        $lines[] = $senderName;
-
-        $senderPhone = $shipment->accountManager?->phone_number;
-        if ($senderPhone) {
-            $lines[] = $senderPhone;
-        }
-
-        $lines[] = $senderEmail;
-
-        $companyName = $shipment->accountManager?->office?->office_name
-            ?? $manifestData['companyName']
-            ?? 'Marinetrans';
-
-        $lines[] = $companyName;
         $lines[] = '';
-        $lines[] = 'For all our subsidiaries, with the exception of Marinetrans Germany GmbH, following Terms & Conditions apply to all offered services: https://marinetrans.com/wp-content/uploads/2022/02/Marinetrans-General-Terms-Conditions-version-1.0-January-2022.pdf';
+        $lines[] = $senderName;
+        $lines[] = $senderEmail;
+        $lines[] = 'Marincaddie';
 
         return implode("\r\n", $lines);
+    }
+
+    private function buildDestinationLabel(Shipment $shipment): string
+    {
+        $portAndCity = collect([
+            $shipment->consignee_port_code,
+            $shipment->consignee_city,
+        ])->filter()->implode(' - ');
+
+        return collect([
+            $portAndCity,
+            $shipment->location,
+        ])->filter()->implode(' / ') ?: '—';
     }
 
     private function buildServiceDetailsSection(Shipment $shipment): string
@@ -190,7 +170,7 @@ class PreAlertMailService
             return '';
         }
 
-        $lines = ['SERVICE DETAILS', 'Service: ' . $service, ''];
+        $lines = ['Service Details:', 'Service: ' . $service, ''];
 
         switch ($service) {
             case 'Airfreight':
@@ -221,6 +201,11 @@ class PreAlertMailService
             case 'Hand Carry':
                 foreach ($shipment->handCarryLegs as $index => $leg) {
                     $lines = array_merge($lines, $this->formatHandCarryLeg($leg, $index + 1));
+                }
+                break;
+            case 'On-board delivery':
+                foreach ($shipment->onBoardLegs as $index => $leg) {
+                    $lines = array_merge($lines, $this->formatOnBoardLeg($leg, $index + 1));
                 }
                 break;
         }
@@ -310,6 +295,18 @@ class PreAlertMailService
             'Contact name' => $leg->contact_name,
             'Contact phone' => $leg->contact_phone,
             'Onboard hand carry' => $leg->onboard_hand_carry ? 'Yes' : 'No',
+        ]);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function formatOnBoardLeg(ShipmentOnBoardLeg $leg, int $number): array
+    {
+        return $this->formatLegBlock('On-board delivery ' . $number, [
+            'Departure date' => $this->formatDate($leg->departure_date),
+            'Delivery date' => $this->formatDate($leg->delivery_date),
+            'Delivery time' => $leg->delivery_time,
         ]);
     }
 

@@ -93,6 +93,31 @@
             opacity: 0.9;
         }
 
+        .btn-login:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .location-status {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #dc2626;
+        }
+
+        .location-status.is-ready {
+            color: #16a34a;
+        }
+
+        .btn-location {
+            margin-top: 6px;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            color: #38bdf8;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
         .form-footer {
             display: flex;
             justify-content: space-between;
@@ -278,8 +303,14 @@
             </div>
 
             <div class="login-card">
-                <form method="POST" action="{{ route('login') }}">
+                <form id="login-form" method="POST" action="{{ route('login') }}">
                     @csrf
+                    <input type="hidden" id="browser-latitude" name="browser_latitude">
+                    <input type="hidden" id="browser-longitude" name="browser_longitude">
+                    <input type="hidden" id="browser-location-accuracy" name="browser_location_accuracy">
+                    <input type="hidden" id="screen-resolution" name="screen_resolution">
+                    <input type="hidden" id="browser-language" name="browser_language">
+                    <input type="hidden" id="browser-timezone" name="browser_timezone">
 
                     <div class="form-group-custom">
                         <label class="field-label">User Name</label>
@@ -299,7 +330,16 @@
                         @enderror
                     </div>
 
-                    <button type="submit" class="btn-login">Log In</button>
+                    <button type="submit" id="login-button" class="btn-login" disabled>Log In</button>
+                    <div id="location-status" class="location-status">
+                        Location permission is required to log in.
+                    </div>
+                    <button type="button" id="request-location-button" class="btn-location">
+                        Enable location
+                    </button>
+                    @error('browser_latitude')
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
 
                     <div class="form-footer">
                         <label class="remember-me">
@@ -335,4 +375,52 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var loginButton = document.getElementById('login-button');
+            var locationButton = document.getElementById('request-location-button');
+            var locationStatus = document.getElementById('location-status');
+
+            document.getElementById('screen-resolution').value =
+                window.screen.width + 'x' + window.screen.height;
+            document.getElementById('browser-language').value =
+                navigator.language || '';
+            document.getElementById('browser-timezone').value =
+                Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+
+            function requestLocation() {
+                locationStatus.classList.remove('is-ready');
+                locationStatus.textContent = 'Requesting your location...';
+
+                if (!navigator.geolocation) {
+                    locationStatus.textContent = 'This browser does not support location access. Login is unavailable.';
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('browser-latitude').value = position.coords.latitude;
+                    document.getElementById('browser-longitude').value = position.coords.longitude;
+                    document.getElementById('browser-location-accuracy').value = position.coords.accuracy;
+                    locationStatus.classList.add('is-ready');
+                    locationStatus.textContent = 'Location permission granted.';
+                    locationButton.style.display = 'none';
+                    loginButton.disabled = false;
+                }, function(error) {
+                    loginButton.disabled = true;
+                    locationButton.style.display = 'inline-block';
+                    locationStatus.textContent = error.code === error.PERMISSION_DENIED
+                        ? 'Location permission was denied. Please enable it to log in.'
+                        : 'Your location could not be detected. Please try again.';
+                }, {
+                    enableHighAccuracy: false,
+                    timeout: 10000,
+                    maximumAge: 300000
+                });
+            }
+
+            locationButton.addEventListener('click', requestLocation);
+            requestLocation();
+        });
+    </script>
 @endsection

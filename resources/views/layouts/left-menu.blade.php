@@ -44,31 +44,6 @@
                     </li> -->
                 </ul>
             </li>
-
-            <li class="pcoded-hasmenu" data-menu-key="quotes">
-                <a href="javascript:void(0)">
-                    <span class="pcoded-micon"><i class="feather icon-layers"></i></span>
-                    <span class="pcoded-mtext">Quotes</span>
-                </a>
-                <ul class="pcoded-submenu">
-                    <li class=" ">
-                        <a href="widget-statistic.html">
-                            <span class="pcoded-mtext">Statistic</span>
-                        </a>
-                    </li>
-                    <li class=" ">
-                        <a href="widget-data.html">
-                            <span class="pcoded-mtext">Data</span>
-                        </a>
-                    </li>
-                    <li class="">
-                        <a href="widget-chart.html">
-                            <span class="pcoded-mtext">Chart Widget</span>
-                        </a>
-                    </li>
-
-                </ul>
-            </li>
         </ul>
         <ul class="pcoded-item pcoded-left-item">
             <li
@@ -211,6 +186,19 @@
                     <li class="{{ request()->routeIs('administration.change-logs') ? 'active' : '' }}">
                         <a href="{{ route('administration.change-logs') }}">
                             <span class="pcoded-mtext">Change logs</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="pcoded-hasmenu {{ request()->routeIs('users.*') ? 'pcoded-trigger' : '' }}" data-menu-key="users">
+                <a href="javascript:void(0)">
+                    <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                    <span class="pcoded-mtext">Users</span>
+                </a>
+                <ul class="pcoded-submenu">
+                    <li class="{{ request()->routeIs('users.index') ? 'active' : '' }}">
+                        <a href="{{ route('users.index') }}">
+                            <span class="pcoded-mtext">Users list</span>
                         </a>
                     </li>
                 </ul>

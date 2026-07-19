@@ -11,6 +11,7 @@ class ManifestMailService
 {
     public function __construct(
         private ShipmentManifestPdfBuilder $manifestPdfBuilder,
+        private ShipmentPreAlertPdfBuilder $preAlertPdfBuilder,
         private CombinedPoPdfService $combinedPoPdfService,
         private EmlMessageBuilder $emlMessageBuilder,
     ) {}
@@ -68,99 +69,87 @@ class ManifestMailService
         return [
             'senderName' => $senderName,
             'senderEmail' => $senderEmail,
-            'subject' => $this->buildSubject($shipment, $manifestData, $consigneeParty),
-            'body' => $this->buildBody($shipment, $manifestData, $consigneeParty, $senderName, $senderEmail),
+            'subject' => $this->buildSubject($shipment, $manifestData),
+            'body' => $this->buildBody($shipment, $consigneeParty, $senderName, $senderEmail),
             'to' => $this->buildToAddresses($consigneeParty),
             'cc' => $this->buildCcAddresses($shipment, $senderEmail, $consigneeParty),
             'attachments' => $this->buildAttachments($shipment, $manifestData, $documentIds),
         ];
     }
 
-    private function buildSubject(Shipment $shipment, array $manifestData, array $consigneeParty): string
+    private function buildSubject(Shipment $shipment, array $manifestData): string
     {
         $vessel = $shipment->crrs->pluck('vessel_name')->filter()->first() ?? '—';
-        $deadline = $shipment->deadline_arrival?->format('d.m.Y') ?? '—';
         $service = $shipment->service ?? '—';
-        $departure = $shipment->departure_port_code ?: ($manifestData['departurePort'] ?? '—');
-        $consigneeName = $consigneeParty['name'] ?: ($shipment->consignee_att ?: '—');
-        $destinationTail = collect([
+        $departure = $manifestData['departurePort'] ?? ($shipment->departure_port_code ?: '—');
+        $destination = collect([
             $shipment->consignee_port_code,
-            $shipment->consignee_country,
-        ])->filter()->implode(' / ');
+            $shipment->consignee_city,
+        ])->filter()->implode(' - ');
 
-        if ($destinationTail === '') {
-            $destinationTail = $manifestData['destinationPort'] ?? '—';
+        if ($destination === '') {
+            $destination = $manifestData['destinationPort'] ?? '—';
         }
 
-        $routePart = trim($consigneeName . ' to ' . $destinationTail);
-
         return sprintf(
-            'Manifest for %s / %s / %s / %s / MT REF: %s / From %s / %s',
+            'Manifest for Shipment Ref. %s / %s / %s / From %s / to %s',
             $shipment->shipment_number,
             $vessel,
-            $deadline,
             $service,
-            $shipment->shipment_number,
             $departure,
-            $routePart
+            $destination
         );
     }
 
     private function buildBody(
         Shipment $shipment,
-        array $manifestData,
         array $consigneeParty,
         string $senderName,
         string $senderEmail
     ): string {
         $consigneeName = $consigneeParty['name'] ?: ($shipment->consignee_att ?: 'Sir/Madam');
-        $destination = $manifestData['destinationPort'] ?? 'destination';
+        $destination = $this->buildDestinationLabel($shipment);
         $service = $shipment->service ?? 'shipment';
         $deadline = $shipment->deadline_arrival?->format('d.m.Y') ?? '—';
 
         $lines = [
             'To ' . $consigneeName,
             '',
-            'Please prepare ' . $service . ' to ' . $destination,
+            'Please prepare ' . $service . ' to ' . $destination . ' and provide service details.',
             '',
-            'Deadline ' . $deadline,
+            '',
+            'Service Details:',
             '',
         ];
 
-        if ($shipment->customer_reference) {
-            $lines[] = 'As per quote ' . $shipment->customer_reference . ', pls check with agent for loading.';
-            $lines[] = '';
-        }
+        array_push($lines, ...$this->preAlertPdfBuilder->reminderMailServiceDetailLines($shipment));
 
-        if ($shipment->comments_departure_hub) {
-            $lines[] = $shipment->comments_departure_hub;
-            $lines[] = '';
-        } elseif ($shipment->comments_consignee) {
-            $lines[] = $shipment->comments_consignee;
-            $lines[] = '';
-        }
-
-        $lines[] = 'Pls keep us posted.';
-        $lines[] = '';
-        $lines[] = 'With kind regards,';
-        $lines[] = $senderName;
-
-        $senderPhone = $shipment->accountManager?->phone_number;
-        if ($senderPhone) {
-            $lines[] = $senderPhone;
-        }
-
-        $lines[] = $senderEmail;
-
-        $companyName = $shipment->accountManager?->office?->office_name
-            ?? $manifestData['companyName']
-            ?? 'Marinetrans';
-
-        $lines[] = $companyName;
-        $lines[] = '';
-        $lines[] = 'For all our subsidiaries, with the exception of Marinetrans Germany GmbH, following Terms & Conditions apply to all offered services: https://marinetrans.com/wp-content/uploads/2022/02/Marinetrans-General-Terms-Conditions-version-1.0-January-2022.pdf';
+        array_push($lines,
+            '',
+            'Deadline ' . $deadline,
+            '',
+            '',
+            '',
+            'With kind regards,',
+            $senderName,
+            $senderEmail,
+            'Marincaddie',
+        );
 
         return implode("\r\n", $lines);
+    }
+
+    private function buildDestinationLabel(Shipment $shipment): string
+    {
+        $portAndCity = collect([
+            $shipment->consignee_port_code,
+            $shipment->consignee_city,
+        ])->filter()->implode(' - ');
+
+        return collect([
+            $portAndCity,
+            $shipment->location,
+        ])->filter()->implode(' / ') ?: 'destination';
     }
 
     /**

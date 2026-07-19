@@ -930,21 +930,10 @@
                 window.location.href = 'mailto:?' + params.join('&');
             }
 
-            function downloadReminderEml(emlUrl, filename) {
-                var link = document.createElement('a');
-                link.href = emlUrl;
-                link.download = filename || 'pre-alert-reminder.eml';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-
             $(document).on('click', '.send-reminder-btn', function() {
                 var $btn = $(this);
                 var previewUrl = $btn.data('preview-url');
                 var recordUrl = $btn.data('record-url');
-                var emlUrl = $btn.data('eml-url');
-                var emlFilename = $btn.data('eml-filename');
                 var shipmentId = $btn.data('shipment-id');
 
                 if (!previewUrl || !recordUrl) {
@@ -954,11 +943,14 @@
                 $btn.prop('disabled', true);
 
                 $.getJSON(previewUrl)
-                    .done(function(preview) {
-                        openReminderMailto(preview);
-                        if (emlUrl) {
-                            downloadReminderEml(emlUrl, emlFilename);
+                    .done(function(response) {
+                        if (!response || !response.success || !response.preview) {
+                            $btn.prop('disabled', false);
+                            alert((response && response.message) || 'Unable to prepare reminder email.');
+                            return;
                         }
+
+                        openReminderMailto(response.preview);
 
                         $.ajax({
                             url: recordUrl,

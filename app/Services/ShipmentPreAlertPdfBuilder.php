@@ -7,6 +7,7 @@ use App\Models\Shipment;
 use App\Models\ShipmentCourierLeg;
 use App\Models\ShipmentFlight;
 use App\Models\ShipmentHandCarryLeg;
+use App\Models\ShipmentOnBoardLeg;
 use App\Models\ShipmentReleaseLeg;
 use App\Models\ShipmentSeaLeg;
 use App\Models\ShipmentTruckLeg;
@@ -31,6 +32,7 @@ class ShipmentPreAlertPdfBuilder
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
         ]);
 
         $base = $this->manifestPdfBuilder->build($shipment);
@@ -259,6 +261,7 @@ class ShipmentPreAlertPdfBuilder
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
         ]);
 
         $serviceDetails = $this->buildServiceDetails($shipment);
@@ -278,6 +281,7 @@ class ShipmentPreAlertPdfBuilder
             'Courier' => $this->courierReminderLines($shipment),
             'Release' => $this->releaseReminderLines($shipment),
             'Hand Carry' => $this->handCarryReminderLines($shipment),
+            'On-board delivery' => $this->onBoardReminderLines($shipment),
             default => [],
         };
 
@@ -369,6 +373,21 @@ class ShipmentPreAlertPdfBuilder
             'Contact: ' . $this->displayValue($leg?->contact_name),
             'Departure date: ' . $this->displayValue($leg ? $this->formatDate($leg->departure_date) : null),
             'Arrival date: ' . $this->displayArrivalDate($leg?->arrival_date, $leg?->arrival_time),
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function onBoardReminderLines(Shipment $shipment): array
+    {
+        /** @var ShipmentOnBoardLeg|null $leg */
+        $leg = $shipment->onBoardLegs->first();
+
+        return [
+            'Departure date: ' . $this->displayValue($leg ? $this->formatDate($leg->departure_date) : null),
+            'Delivery date: ' . $this->displayValue($leg ? $this->formatDate($leg->delivery_date) : null),
+            'Delivery time: ' . $this->displayValue($leg?->delivery_time),
         ];
     }
 

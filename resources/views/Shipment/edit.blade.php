@@ -2986,8 +2986,6 @@
                 return;
             }
 
-            openShipmentMailto(manifestMailPreview);
-
             var mailWindow = openMailDraftWindow();
             var originalText = $btn.text();
             $btn.prop('disabled', true).text('Preparing manifest...');
@@ -3014,6 +3012,7 @@
                     }
 
                     manifestMailPreview = response.preview;
+                    openShipmentMailto(response.preview);
                     var attachmentSources = (response.attachments && response.attachments.length)
                         ? response.attachments
                         : manifestCoreAttachmentSources;
@@ -3059,8 +3058,6 @@
                 return;
             }
 
-            openShipmentMailto(preAlertMailPreview);
-
             var mailWindow = openMailDraftWindow();
             var originalText = $btn.text();
             $btn.prop('disabled', true).text('Preparing pre-alert...');
@@ -3077,7 +3074,7 @@
                 }
             })
                 .done(function(response) {
-                    if (!response || !response.success) {
+                    if (!response || !response.success || !response.preview) {
                         if (mailWindow && !mailWindow.closed) {
                             mailWindow.close();
                         }
@@ -3087,6 +3084,7 @@
                     }
 
                     preAlertMailPreview = response.preview;
+                    openShipmentMailto(response.preview);
 
                     sendShipmentMail(
                         $btn,

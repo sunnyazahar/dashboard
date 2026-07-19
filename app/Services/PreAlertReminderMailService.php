@@ -11,7 +11,6 @@ use RuntimeException;
 class PreAlertReminderMailService
 {
     public function __construct(
-        private ShipmentManifestPdfBuilder $manifestPdfBuilder,
         private ShipmentPreAlertPdfBuilder $preAlertPdfBuilder,
         private EmlMessageBuilder $emlMessageBuilder,
     ) {}
@@ -35,6 +34,55 @@ class PreAlertReminderMailService
     {
         $mail = $this->prepareMail($shipment, $senderName, $senderEmail);
 
+        return $this->previewFromMail($mail);
+    }
+
+    public function buildDeliveryStatusEml(Shipment $shipment, ?string $senderName = null, ?string $senderEmail = null): string
+    {
+        $mail = $this->prepareMail($shipment, $senderName, $senderEmail, 'delivery_status');
+
+        return $this->emlMessageBuilder->build(
+            $mail['senderName'],
+            $mail['senderEmail'],
+            $mail['to'],
+            $mail['cc'],
+            $mail['subject'],
+            $mail['body'],
+            []
+        );
+    }
+
+    public function buildDeliveryStatusPreview(Shipment $shipment, ?string $senderName = null, ?string $senderEmail = null): array
+    {
+        return $this->previewFromMail(
+            $this->prepareMail($shipment, $senderName, $senderEmail, 'delivery_status')
+        );
+    }
+
+    public function buildInvoiceRequestEml(Shipment $shipment, ?string $senderName = null, ?string $senderEmail = null): string
+    {
+        $mail = $this->prepareMail($shipment, $senderName, $senderEmail, 'invoice_request');
+
+        return $this->emlMessageBuilder->build(
+            $mail['senderName'],
+            $mail['senderEmail'],
+            $mail['to'],
+            $mail['cc'],
+            $mail['subject'],
+            $mail['body'],
+            []
+        );
+    }
+
+    public function buildInvoiceRequestPreview(Shipment $shipment, ?string $senderName = null, ?string $senderEmail = null): array
+    {
+        return $this->previewFromMail(
+            $this->prepareMail($shipment, $senderName, $senderEmail, 'invoice_request')
+        );
+    }
+
+    private function previewFromMail(array $mail): array
+    {
         return [
             'to' => collect($mail['to'])->pluck('email')->filter()->implode(','),
             'cc' => collect($mail['cc'])->pluck('email')->filter()->implode(','),
@@ -43,7 +91,12 @@ class PreAlertReminderMailService
         ];
     }
 
-    private function prepareMail(Shipment $shipment, ?string $senderName, ?string $senderEmail): array
+    private function prepareMail(
+        Shipment $shipment,
+        ?string $senderName,
+        ?string $senderEmail,
+        string $mailType = 'pre_alert'
+    ): array
     {
         $shipment->loadMissing([
             'crrs.packages',
@@ -56,13 +109,13 @@ class PreAlertReminderMailService
             'courierLegs',
             'releaseLegs',
             'handCarryLegs',
+            'onBoardLegs',
         ]);
 
         if ($shipment->crrs->isEmpty()) {
             throw new RuntimeException('No stock items linked to this shipment.');
         }
 
-        $manifestData = $this->manifestPdfBuilder->build($shipment);
         $partyNames = Shipment::batchResolvePartyNames(collect([$shipment]));
         $departureParty = $this->resolveDepartureContact($shipment, $partyNames);
 
@@ -76,91 +129,186 @@ class PreAlertReminderMailService
         return [
             'senderName' => $senderName,
             'senderEmail' => $senderEmail,
-            'subject' => $this->buildSubject($shipment, $manifestData),
-            'body' => $this->buildBody($shipment, $manifestData, $departureParty, $senderName, $senderEmail),
+            'subject' => match ($mailType) {
+                'delivery_status' => $this->buildDeliveryStatusSubject($shipment),
+                'invoice_request' => $this->buildInvoiceRequestSubject($shipment),
+                default => $this->buildSubject($shipment),
+            },
+            'body' => match ($mailType) {
+                'delivery_status' => $this->buildDeliveryStatusBody($shipment, $departureParty, $senderName, $senderEmail),
+                'invoice_request' => $this->buildInvoiceRequestBody($shipment, $departureParty, $senderName, $senderEmail),
+                default => $this->buildBody($shipment, $departureParty, $senderName, $senderEmail),
+            },
             'to' => $this->buildToAddresses($departureParty),
             'cc' => $this->buildCcAddresses($shipment, $senderEmail, $departureParty['email']),
         ];
     }
 
-    private function buildSubject(Shipment $shipment, array $manifestData): string
+    private function buildSubject(Shipment $shipment): string
     {
         $vessel = $shipment->crrs->pluck('vessel_name')->filter()->first() ?? '—';
-        $deadline = $shipment->deadline_arrival?->format('d.m.Y') ?? '—';
         $service = $shipment->service ?? '—';
-        $departure = $manifestData['departurePort'] ?? '—';
-        $destination = $manifestData['destinationPort'] ?? '—';
 
         return sprintf(
-            'Manifest for %s / %s / %s / %s / MT REF: %s / From %s to %s',
-            $shipment->shipment_number,
+            'Reminder: Outgoing shipment details %s/ %s/ MT REF: %s / %s',
             $vessel,
-            $deadline,
             $service,
             $shipment->shipment_number,
-            $departure,
-            $destination
+            $this->buildDestinationLabel($shipment)
         );
     }
 
     private function buildBody(
         Shipment $shipment,
-        array $manifestData,
         array $departureParty,
         string $senderName,
         string $senderEmail
     ): string {
         $departureName = $departureParty['name'] ?: 'Sir/Madam';
-        $destination = $manifestData['destinationPort'] ?? 'destination';
         $service = $shipment->service ?? 'shipment';
-        $deadline = $shipment->deadline_arrival?->format('d.m.Y') ?? '—';
 
         $lines = [
             'To ' . $departureName,
             '',
-            'Please prepare ' . $service . ' to ' . $destination,
+            'Please provide the details of ' . $service . ' to ' . $this->buildDestinationLabel($shipment),
             '',
-            'Deadline ' . $deadline,
             '',
         ];
 
-        $serviceDetailLines = $this->preAlertPdfBuilder->reminderMailServiceDetailLines($shipment);
-        if ($serviceDetailLines !== []) {
-            array_push($lines, ...$serviceDetailLines);
-            $lines[] = '';
-        }
+        array_push($lines, ...$this->preAlertPdfBuilder->reminderMailServiceDetailLines($shipment));
 
-        if ($shipment->customer_reference) {
-            $lines[] = 'As per quote ' . $shipment->customer_reference . ', pls check with agent for boat loading care off their boat';
-            $lines[] = '';
-        }
-
-        if ($shipment->comments_departure_hub) {
-            $lines[] = $shipment->comments_departure_hub;
-            $lines[] = '';
-        }
-
-        $lines[] = 'Pls keep us posted.';
-        $lines[] = '';
-        $lines[] = '';
-        $lines[] = 'With kind regards,';
-        $lines[] = '';
-        $lines[] = $senderName;
-
-        $senderPhone = $shipment->accountManager?->phone_number;
-        if ($senderPhone) {
-            $lines[] = $senderPhone;
-        }
-
-        $lines[] = $senderEmail;
-
-        $companyName = $shipment->accountManager?->office?->office_name
-            ?? $manifestData['companyName']
-            ?? 'Marinetrans';
-
-        $lines[] = $companyName;
+        array_push($lines,
+            '',
+            '',
+            'With kind regards,',
+            '',
+            $senderName,
+            $senderEmail,
+            'Marincaddie',
+        );
 
         return implode("\r\n", $lines);
+    }
+
+    private function buildDeliveryStatusSubject(Shipment $shipment): string
+    {
+        $vessel = $shipment->crrs->pluck('vessel_name')->filter()->first() ?? '—';
+        $service = $shipment->service ?? '—';
+
+        return sprintf(
+            'Delivery status request - %s/ %s/ MT REF: %s / %s',
+            $vessel,
+            $service,
+            $shipment->shipment_number,
+            $this->buildDeliveryDestinationLabel($shipment)
+        );
+    }
+
+    private function buildDeliveryStatusBody(
+        Shipment $shipment,
+        array $departureParty,
+        string $senderName,
+        string $senderEmail
+    ): string {
+        $service = $shipment->service ?? 'shipment';
+        $lines = [
+            'To ' . ($departureParty['name'] ?: 'Sir/Madam'),
+            '',
+            'Please provide the delivery status of ' . $service . ' to ' . $this->buildDeliveryDestinationLabel($shipment),
+            '',
+            '',
+        ];
+
+        array_push($lines, ...$this->preAlertPdfBuilder->reminderMailServiceDetailLines($shipment));
+
+        array_push($lines,
+            '',
+            '',
+            'With kind regards,',
+            '',
+            $senderName,
+            $senderEmail,
+            'Marincaddie',
+        );
+
+        return implode("\r\n", $lines);
+    }
+
+    private function buildInvoiceRequestSubject(Shipment $shipment): string
+    {
+        $vessel = $shipment->crrs->pluck('vessel_name')->filter()->first() ?? '—';
+        $departurePort = $shipment->departure_port_code ?: '—';
+        $destinationPort = $shipment->consignee_port_code ?: '—';
+
+        return sprintf(
+            'Invoice Request - %s/%s/%s / %s',
+            $shipment->shipment_number,
+            $vessel,
+            $departurePort,
+            $destinationPort
+        );
+    }
+
+    private function buildInvoiceRequestBody(
+        Shipment $shipment,
+        array $departureParty,
+        string $senderName,
+        string $senderEmail
+    ): string {
+        $vessel = $shipment->crrs->pluck('vessel_name')->filter()->first() ?? '—';
+        $lines = [
+            'Attn: ' . ($departureParty['name'] ?: 'Sir/Madam'),
+            '',
+            sprintf(
+                'Please provide your Debit Note (Billing Invoice) for shipment Ref. %s / %s.',
+                $shipment->shipment_number,
+                $vessel
+            ),
+            '',
+            'Shipment Details:',
+            '',
+        ];
+
+        array_push($lines, ...$this->preAlertPdfBuilder->reminderMailServiceDetailLines($shipment));
+
+        array_push($lines,
+            '',
+            '',
+            'With kind regards,',
+            '',
+            $senderName,
+            $senderEmail,
+            'Marincaddie',
+        );
+
+        return implode("\r\n", $lines);
+    }
+
+    private function buildDestinationLabel(Shipment $shipment): string
+    {
+        $portAndCity = collect([
+            $shipment->consignee_port_code,
+            $shipment->consignee_city,
+        ])->filter()->implode(' - ');
+
+        return collect([
+            $portAndCity,
+            $shipment->location,
+        ])->filter()->implode(' / ') ?: '—';
+    }
+
+    private function buildDeliveryDestinationLabel(Shipment $shipment): string
+    {
+        $portCityDistrict = collect([
+            $shipment->consignee_port_code,
+            $shipment->consignee_city,
+            $shipment->consignee_district,
+        ])->filter()->implode(' - ');
+
+        return collect([
+            $portCityDistrict,
+            $shipment->location,
+        ])->filter()->implode(' / ') ?: '—';
     }
 
     /**

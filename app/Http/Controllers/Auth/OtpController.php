@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\LoginActivityService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class OtpController extends Controller
@@ -38,7 +41,7 @@ class OtpController extends Controller
         ]);
     }
 
-    public function verify(Request $request)
+    public function verify(Request $request, LoginActivityService $loginActivityService)
     {
         $request->validate([
             'otp' => ['required', 'string', 'size:' . self::OTP_LENGTH, 'regex:/^\d+$/'],
@@ -65,6 +68,8 @@ class OtpController extends Controller
 
         $request->session()->forget(['login_otp_hash', 'login_otp_expires_at', 'login_otp_last_sent_at']);
         $request->session()->put('otp_verified', true);
+        $this->terminateOtherSessions($request);
+        $loginActivityService->record($request, $request->user());
 
         return redirect()->intended('/dashboard');
     }
@@ -161,5 +166,25 @@ class OtpController extends Controller
     private function resendRateLimitKey(Request $request): string
     {
         return 'otp-resend:' . ($request->user()?->id ?? $request->ip());
+    }
+
+    private function terminateOtherSessions(Request $request): void
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return;
+        }
+
+        if (config('session.driver') === 'database') {
+            DB::connection(config('session.connection'))
+                ->table(config('session.table', 'sessions'))
+                ->where('user_id', $user->getAuthIdentifier())
+                ->where('id', '!=', $request->session()->getId())
+                ->delete();
+        }
+
+        $user->setRememberToken(Str::random(60));
+        $user->saveQuietly();
     }
 }

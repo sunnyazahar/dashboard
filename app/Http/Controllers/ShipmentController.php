@@ -369,10 +369,10 @@ class ShipmentController extends Controller
                 'status' => $shipment->status ?? '—',
                 'status_badge_class' => $shipment->statusBadgeClass(),
                 'reminder_sent_count' => (int) ($shipment->reminder_sent_count ?? 0),
-                'preview_url' => route('shipments.pre-alert-reminder-mail.preview', $shipment->id),
+                'preview_url' => route('shipments.invoice-request-mail.preview', $shipment->id),
                 'record_url' => route('shipments.pre-alert-reminder-mail.send', $shipment->id),
-                'eml_url' => route('shipments.pre-alert-reminder-mail', $shipment->id),
-                'eml_filename' => 'pre-alert-reminder-' . $shipment->shipment_number . '.eml',
+                'eml_url' => route('shipments.invoice-request-mail', $shipment->id),
+                'eml_filename' => 'invoice-request-' . $shipment->shipment_number . '.eml',
             ];
         })->values();
 
@@ -432,6 +432,109 @@ class ShipmentController extends Controller
         }
 
         $filename = 'pre-alert-reminder-' . $shipment->shipment_number . '.eml';
+
+        return response($eml, 200, [
+            'Content-Type' => 'message/rfc822',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
+    }
+
+    public function deliveryStatusReminderMailPreview($id, PreAlertReminderMailService $reminderMailService)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        if ($shipment->status === 'Completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Completed shipments cannot receive delivery status reminders.',
+            ], 422);
+        }
+
+        try {
+            $preview = $reminderMailService->buildDeliveryStatusPreview(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'preview' => $preview,
+            'eml_url' => route('shipments.delivery-status-reminder-mail', $shipment->id),
+            'eml_filename' => 'delivery-status-request-' . $shipment->shipment_number . '.eml',
+        ]);
+    }
+
+    public function deliveryStatusReminderMail($id, PreAlertReminderMailService $reminderMailService)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        try {
+            $eml = $reminderMailService->buildDeliveryStatusEml(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            Log::error('Delivery status reminder mail draft failed: ' . $e->getMessage());
+            abort(400, $e->getMessage());
+        }
+
+        $filename = 'delivery-status-request-' . $shipment->shipment_number . '.eml';
+
+        return response($eml, 200, [
+            'Content-Type' => 'message/rfc822',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
+    }
+
+    public function invoiceRequestMailPreview($id, PreAlertReminderMailService $reminderMailService)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        try {
+            $preview = $reminderMailService->buildInvoiceRequestPreview(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'preview' => $preview,
+            'eml_url' => route('shipments.invoice-request-mail', $shipment->id),
+            'eml_filename' => 'invoice-request-' . $shipment->shipment_number . '.eml',
+        ]);
+    }
+
+    public function invoiceRequestMail($id, PreAlertReminderMailService $reminderMailService)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        try {
+            $eml = $reminderMailService->buildInvoiceRequestEml(
+                $shipment,
+                auth()->user()?->name,
+                auth()->user()?->email
+            );
+        } catch (\Throwable $e) {
+            Log::error('Invoice request mail draft failed: ' . $e->getMessage());
+            abort(400, $e->getMessage());
+        }
+
+        $filename = 'invoice-request-' . $shipment->shipment_number . '.eml';
 
         return response($eml, 200, [
             'Content-Type' => 'message/rfc822',

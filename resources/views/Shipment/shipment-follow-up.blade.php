@@ -578,10 +578,10 @@
                                                                         class="btn btn-outline-teal py-1 pl-2 pr-2 send-reminder-btn"
                                                                         style="font-size: 10px; height: 24px; border-color: #ddd; color: #666;"
                                                                         data-shipment-id="{{ $shipment->id }}"
-                                                                        data-preview-url="{{ route('shipments.pre-alert-reminder-mail.preview', $shipment->id) }}"
+                                                                        data-preview-url="{{ route('shipments.delivery-status-reminder-mail.preview', $shipment->id) }}"
                                                                         data-record-url="{{ route('shipments.pre-alert-reminder-mail.send', $shipment->id) }}"
-                                                                        data-eml-url="{{ route('shipments.pre-alert-reminder-mail', $shipment->id) }}"
-                                                                        data-eml-filename="pre-alert-reminder-{{ $shipment->shipment_number }}.eml">Send reminder</button>
+                                                                        data-eml-url="{{ route('shipments.delivery-status-reminder-mail', $shipment->id) }}"
+                                                                        data-eml-filename="delivery-status-request-{{ $shipment->shipment_number }}.eml">Send reminder</button>
                                                                 </td>
                                                             </tr>
                                                             @empty
