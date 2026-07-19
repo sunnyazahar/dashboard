@@ -100,6 +100,7 @@ class CrrController extends Controller
 
             $crrData = [
                 'stock_number'            => $stockNumber,
+                'registered_by'            => $request->user()->id,
                 'vessel_name'             => $request->input('vessel_name'),
                 'po_numbers'              => $poNumbersArray,
                 'po_remarks'              => $request->input('po_remarks'),
@@ -211,9 +212,16 @@ class CrrController extends Controller
     }
     public function edit($id)
     {
-        $crr = Crr::with(['packages', 'costs', 'documents', 'changeLogs.user'])->findOrFail($id);
+        $crr = Crr::with([
+            'packages',
+            'costs',
+            'documents',
+            'changeLogs.user',
+            'registeredBy',
+            'customerVessel.customer.responsible.accountManager',
+        ])->findOrFail($id);
         
-        $vessels = \App\Models\CustomerVessel::with('customer')
+        $vessels = \App\Models\CustomerVessel::with('customer.responsible.accountManager')
             ->select('vessel', 'customer_id')
             ->groupBy('vessel', 'customer_id')
             ->get();

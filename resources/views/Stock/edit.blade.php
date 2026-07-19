@@ -1044,13 +1044,13 @@
                                             </div>
                                             <div class="summary-item">
                                                 <span class="summary-label">Registered by</span>
-                                                <span class="summary-value"><a href="#" class="summary-link">System
-                                                        User</a></span>
+                                                <span class="summary-value">{{ $crr->registeredBy?->name ?? '—' }}</span>
                                             </div>
                                             <div class="summary-item">
                                                 <span class="summary-label">Account manager</span>
-                                                <span class="summary-value"><a href="#"
-                                                        class="summary-link">Joshua</a></span>
+                                                <span class="summary-value" id="summary-account-manager">
+                                                    {{ $crr->customerVessel?->customer?->responsible?->accountManager?->name ?? '—' }}
+                                                </span>
                                             </div>
                                             <div class="summary-item">
                                                 <span class="summary-label">Flags</span>
@@ -1160,6 +1160,7 @@
                                                             @foreach($vessels as $vessel)
                                                                 <option value="{{ $vessel->vessel }}"
                                                                     data-customer="{{ optional($vessel->customer)->customer_name }}"
+                                                                    data-account-manager="{{ $vessel->customer?->responsible?->accountManager?->name }}"
                                                                     {{ $crr->vessel_name == $vessel->vessel ? 'selected' : '' }}>
                                                                     {{ $vessel->vessel }}
                                                                 </option>
@@ -2433,12 +2434,16 @@
             var $mainVesselSelect = $('select[name="vessel_name"]');
             var $vesselCustomerGroup = $('#vessels-customer-name-group');
             var $vesselCustomerName = $('#vessels_customer_name');
+            var $summaryAccountManager = $('#summary-account-manager');
 
             function updateVesselCustomerName() {
-                var customerName = $mainVesselSelect.find('option:selected').data('customer') || '';
+                var $selectedVessel = $mainVesselSelect.find('option:selected');
+                var customerName = $selectedVessel.data('customer') || '';
+                var accountManagerName = $selectedVessel.data('account-manager') || '—';
 
                 $vesselCustomerName.val(customerName);
                 $vesselCustomerGroup.toggle(Boolean(customerName));
+                $summaryAccountManager.text(accountManagerName);
             }
 
             $mainVesselSelect.on('change', updateVesselCustomerName);

@@ -4,11 +4,13 @@ namespace App\Models;
 
 use App\Casts\JsonArrayCast;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Crr extends Model
 {
     protected $fillable = [
         'stock_number',
+        'registered_by',
         'duplicated_from_crr_id',
         'vessel_name',
         'po_numbers',
@@ -148,6 +150,11 @@ class Crr extends Model
     public function shipments()
     {
         return $this->belongsToMany(Shipment::class, 'shipment_crr');
+    }
+
+    public function registeredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registered_by');
     }
 
     public function scopeStockFollowUp($query)
