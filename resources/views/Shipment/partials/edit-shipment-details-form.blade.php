@@ -302,7 +302,7 @@
             <span>Total CBM: {{ number_format($totalCbm, 2) }}</span>
             <span>Total value: {{ number_format($totalValue, 2) }}</span>
             <div class="ml-auto">
-                <button type="button" id="add-stock-items-btn" class="btn btn-premium btn-outline-custom ml-2" @if($shipment->status === 'Completed') disabled @endif>Add stock items</button>
+                <button type="button" id="add-stock-items-btn" class="btn btn-premium btn-outline-custom ml-2" @if(in_array($shipment->status, ['Completed', 'Cancelled'], true)) disabled @endif>Add stock items</button>
             </div>
         </div>
     </div>

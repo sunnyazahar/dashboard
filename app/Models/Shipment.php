@@ -344,7 +344,6 @@ class Shipment extends Model
     public static function availableFlags(): array
     {
         return [
-            'Follow up',
             'Pick up',
             'Un mark pick up',
         ];
@@ -352,7 +351,7 @@ class Shipment extends Model
 
     public static function defaultFlags(): array
     {
-        return ['Follow up'];
+        return [];
     }
 
     public static function batchResolvePartyNames(Collection $shipments): array

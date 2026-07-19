@@ -612,19 +612,32 @@ class ShipmentController extends Controller
         $shipment = Shipment::findOrFail($id);
 
         $validated = $request->validate([
-            'status' => ['required', Rule::in(['Draft', 'In process', 'In transit', 'Delivered', 'Completed', 'Pending'])],
+            'status' => ['required', Rule::in(['In process', 'In transit', 'Delivered', 'Completed', 'Cancelled'])],
         ]);
 
         $previousStatus = $shipment->status;
-        $shipment->update(['status' => $validated['status']]);
+        DB::transaction(function () use ($shipment, $validated, $previousStatus, $changeLogService) {
+            $shipment->update(['status' => $validated['status']]);
 
-        if ($previousStatus !== $shipment->status) {
-            $changeLogService->log(
-                $shipment,
-                'Status edited',
-                'From ' . ($previousStatus ?: 'empty') . ' to ' . $shipment->status
-            );
-        }
+            if ($shipment->status === 'Cancelled') {
+                $crrIds = $shipment->crrs()->pluck('crrs.id');
+
+                if ($crrIds->isNotEmpty()) {
+                    Crr::query()->whereIn('id', $crrIds)->update([
+                        'status' => Crr::STATUS_ACTIVE,
+                        'internal_shipment' => null,
+                    ]);
+                }
+            }
+
+            if ($previousStatus !== $shipment->status) {
+                $changeLogService->log(
+                    $shipment,
+                    'Status edited',
+                    'From ' . ($previousStatus ?: 'empty') . ' to ' . $shipment->status
+                );
+            }
+        });
 
         return response()->json([
             'success' => true,
@@ -859,7 +872,7 @@ class ShipmentController extends Controller
             DB::transaction(function () use ($shipment, $request, $validated) {
                 $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
 
-                if ($request->has('crr_ids') && $shipment->status !== 'Completed') {
+                if ($request->has('crr_ids') && ! in_array($shipment->status, ['Completed', 'Cancelled'], true)) {
                     $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
                     $shipment->crrs()->sync($crrIds);
                     $this->syncCrrInternalShipments($shipment, $crrIds);
@@ -935,7 +948,7 @@ class ShipmentController extends Controller
             DB::transaction(function () use ($shipment, $request, $validated) {
                 $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
 
-                if ($request->has('crr_ids') && $shipment->status !== 'Completed') {
+                if ($request->has('crr_ids') && ! in_array($shipment->status, ['Completed', 'Cancelled'], true)) {
                     $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
                     $shipment->crrs()->sync($crrIds);
                     $this->syncCrrInternalShipments($shipment, $crrIds);
@@ -1189,7 +1202,7 @@ class ShipmentController extends Controller
             DB::transaction(function () use ($shipment, $request, $validated) {
                 $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
 
-                if ($request->has('crr_ids') && $shipment->status !== 'Completed') {
+                if ($request->has('crr_ids') && ! in_array($shipment->status, ['Completed', 'Cancelled'], true)) {
                     $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
                     $shipment->crrs()->sync($crrIds);
                     $this->syncCrrInternalShipments($shipment, $crrIds);
@@ -1290,7 +1303,7 @@ class ShipmentController extends Controller
             DB::transaction(function () use ($shipment, $request, $validated) {
                 $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
 
-                if ($request->has('crr_ids') && $shipment->status !== 'Completed') {
+                if ($request->has('crr_ids') && ! in_array($shipment->status, ['Completed', 'Cancelled'], true)) {
                     $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
                     $shipment->crrs()->sync($crrIds);
                     $this->syncCrrInternalShipments($shipment, $crrIds);
@@ -1607,7 +1620,7 @@ class ShipmentController extends Controller
 
             $shipment->update($this->buildShipmentAttributes($request, $validated, onlyPresent: true));
 
-            if ($shipment->status !== 'Completed') {
+            if (! in_array($shipment->status, ['Completed', 'Cancelled'], true)) {
                 $crrIds = array_values(array_unique($validated['crr_ids'] ?? []));
                 $shipment->crrs()->sync($crrIds);
 

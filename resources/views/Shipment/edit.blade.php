@@ -1548,7 +1548,10 @@
                                                     <div class="meta-item">
                                                         <span class="meta-label">Flags</span>
                                                         @php
-                                                            $shipmentFlags = $shipment->flags ?? \App\Models\Shipment::defaultFlags();
+                                                            $shipmentFlags = array_values(array_intersect(
+                                                                $shipment->flags ?? \App\Models\Shipment::defaultFlags(),
+                                                                \App\Models\Shipment::availableFlags()
+                                                            ));
                                                             $selectedShipmentFlag = $shipmentFlags[0] ?? null;
                                                         @endphp
                                                         <div class="header-inline-edit" id="flags-edit-container">
@@ -1581,7 +1584,7 @@
                                                             </div>
                                                             <div class="header-inline-select status-select-wrapper">
                                                                 <select class="select2-status-inline" name="header_status">
-                                                                    @foreach (['Draft', 'In process', 'In transit', 'Delivered', 'Completed', 'Pending'] as $statusOption)
+                                                                    @foreach (['In process', 'In transit', 'Delivered', 'Completed', 'Cancelled'] as $statusOption)
                                                                         <option value="{{ $statusOption }}" {{ $shipment->status === $statusOption ? 'selected' : '' }}>{{ $statusOption }}</option>
                                                                     @endforeach
                                                                 </select>
@@ -3375,7 +3378,7 @@
         var shipmentUpdateStatusUrl = @json(route('shipments.update-status', $shipment->id));
         var shipmentUpdateFlagsUrl = @json(route('shipments.update-flags', $shipment->id));
         var lastHeaderStatus = @json($shipment->status);
-        var lastHeaderFlags = @json(array_slice($shipment->flags ?? \App\Models\Shipment::defaultFlags(), 0, 1));
+        var lastHeaderFlags = @json(array_slice($shipmentFlags, 0, 1));
         var suppressFlagsChange = false;
         var flagsConfirmOpen = false;
         var suppressStatusChange = false;
@@ -3487,7 +3490,9 @@
         }
 
         function confirmStatusChange(newStatusLabel, onConfirm) {
-            var message = 'Change status to "' + newStatusLabel + '"?';
+            var message = newStatusLabel === 'Cancelled'
+                ? 'Cancel this shipment? Its selected stocks will be returned to Stock status.'
+                : 'Change status to "' + newStatusLabel + '"?';
 
             if (typeof swal === 'function') {
                 statusConfirmOpen = true;
@@ -4304,8 +4309,8 @@
         });
 
         function syncAddStockItemsButtonState() {
-            var isCompleted = ($('#shipment-current-status').val() || $('.header-meta-group .status-badge').text().trim()) === 'Completed';
-            $('#add-stock-items-btn').prop('disabled', isCompleted);
+            var status = ($('#shipment-current-status').val() || $('.header-meta-group .status-badge').text().trim());
+            $('#add-stock-items-btn').prop('disabled', status === 'Completed' || status === 'Cancelled');
         }
 
         function syncFinalizeTransitButtonState() {
