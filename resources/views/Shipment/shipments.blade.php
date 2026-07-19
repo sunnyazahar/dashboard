@@ -483,6 +483,7 @@
             color: #008080;
         }
     </style>
+    @include('partials.searchable-filter-multiselect-styles')
 @endsection
 
 @section('content')
@@ -572,7 +573,7 @@
                                                             <div id="col-Customer" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Customer</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($customers as $customer)
                                                                             <option value="{{ $customer }}">{{ $customer }}</option>
                                                                         @endforeach
@@ -582,7 +583,7 @@
                                                             <div id="col-Vessel" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Vessel</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($vessels as $vessel)
                                                                             <option value="{{ $vessel }}">{{ $vessel }}</option>
                                                                         @endforeach
@@ -614,7 +615,7 @@
                                                             <div id="col-Departure-hub" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Departure port code</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($departureOptions as $departure)
                                                                             <option value="{{ $departure }}">{{ $departure }}</option>
                                                                         @endforeach
@@ -636,7 +637,7 @@
                                                             <div id="col-Account-manager" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Account manager</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($accountManagers as $manager)
                                                                             <option value="{{ $manager->name }}">{{ $manager->name }}</option>
                                                                         @endforeach
@@ -646,7 +647,7 @@
                                                             <div id="col-Created-by" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Created by</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($creators as $creator)
                                                                             <option value="{{ $creator->name }}">{{ $creator->name }}</option>
                                                                         @endforeach
@@ -656,7 +657,7 @@
                                                             <div id="col-Office" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Office</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($offices as $office)
                                                                             <option value="{{ $office->office_name }}">{{ $office->office_name }}</option>
                                                                         @endforeach
@@ -674,7 +675,7 @@
                                                             <div id="col-Service" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Service</span>
-                                                                    <select class="form-control filter-input select2" multiple="multiple">
+                                                                    <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($services as $service)
                                                                             <option value="{{ $service }}">{{ $service }}</option>
                                                                         @endforeach
@@ -684,8 +685,7 @@
                                                             <div id="col-Status" class="custom-col" style="flex: 0 0 180px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Status</span>
-                                                                    <select class="form-control filter-input select2">
-                                                                        <option value=""></option>
+                                                                    <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($statuses as $status)
                                                                             <option value="{{ $status }}">{{ $status }}</option>
                                                                         @endforeach
@@ -843,17 +843,13 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    @include('partials.searchable-filter-multiselect-script')
 
     <script>
         $(document).ready(function() {
             $('body').addClass('shipments-list-page');
 
-            // Initialize Select2 for standard filters
-            $('.select2').select2({
-                placeholder: "Click here",
-                allowClear: true,
-                width: '100%'
-            });
+            initializeSearchableFilterMultiselect('.searchable-filter-multiselect');
 
             // Initialize Bootstrap Multiselect for special filter toggle
             $('#filter-multiselect').multiselect({
@@ -1084,8 +1080,8 @@
                     return false;
                 }
 
-                var selectedStatus = $('#col-Status select').val();
-                if (!matchesSelectedValues(selectedStatus ? [selectedStatus] : [], rowData($row, 'status'))) {
+                var selectedStatuses = $('#col-Status select').val() || [];
+                if (!matchesSelectedValues(selectedStatuses, rowData($row, 'status'))) {
                     return false;
                 }
 
@@ -1094,7 +1090,7 @@
 
             $('.clear-filters').on('click', function(e) {
                 e.preventDefault();
-                $('.select2').val(null).trigger('change');
+                clearSearchableFilterMultiselect('.searchable-filter-multiselect');
                 $('.filter-input:not(select)').val('').trigger('keyup');
                 table.columns().search('').draw();
             });
