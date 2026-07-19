@@ -464,65 +464,69 @@
                                                         <label>Customer name</label>
                                                         <div class="input-with-icon">
                                                             <input type="text" name="customer_name" class="form-control"
-                                                                placeholder="">
+                                                                value="{{ old('customer_name') }}" placeholder="">
                                                             <span class="input-icon-btn"><i class="ti-more-alt"></i></span>
                                                         </div>
                                                     </div>
                                                     <div class="form-group d-none">
                                                         <label>Customer number from FM</label>
-                                                        <input type="text" name="customer_number_fm" class="form-control">
+                                                        <input type="text" name="customer_number_fm" class="form-control"
+                                                            value="{{ old('customer_number_fm') }}">
                                                     </div>
                                                     <div class="form-group d-none">
                                                         <label>Customer group</label>
                                                         <select name="customer_group" class="form-control select2-field">
                                                             <option></option>
-                                                            <option value="N/A">N/A</option>
+                                                            <option value="N/A" {{ old('customer_group') === 'N/A' ? 'selected' : '' }}>N/A</option>
                                                             @foreach($groups as $group)
-                                                                <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                                                <option value="{{ $group->id }}" {{ (string) old('customer_group') === (string) $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Phone number (with country code)</label>
                                                         <input type="text" name="phone_number" class="form-control"
-                                                            value="">
+                                                            value="{{ old('phone_number') }}">
                                                     </div>
                                                     <div class="form-group">
                                                         <label>E-mail</label>
                                                         <input type="text" name="email" class="form-control"
-                                                            value=""
+                                                            value="{{ old('email') }}"
                                                             placeholder="email@example.com; email2@example.com">
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Internal shipment</label>
                                                         <select name="internal_shipment" class="form-control select2-field">
                                                             <option></option>
-                                                            <option value="1">Yes</option>
-                                                            <option value="0">No</option>
+                                                            <option value="1" {{ old('internal_shipment') === '1' ? 'selected' : '' }}>Yes</option>
+                                                            <option value="0" {{ old('internal_shipment') === '0' ? 'selected' : '' }}>No</option>
                                                         </select>
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Remarks</label>
-                                                        <textarea name="remarks" class="form-control"></textarea>
+                                                        <textarea name="remarks" class="form-control">{{ old('remarks') }}</textarea>
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Special considerations for destination</label>
                                                         <textarea name="special_considerations"
-                                                            class="form-control"></textarea>
+                                                            class="form-control">{{ old('special_considerations') }}</textarea>
                                                     </div>
                                                     <div class="form-group">
                                                         <label>UN / LOCODE</label>
                                                         <select name="un_locode" class="form-control select2-field">
                                                             <option></option>
+                                                            @if(old('un_locode'))
+                                                                <option value="{{ old('un_locode') }}" selected>{{ old('un_locode') }}</option>
+                                                            @endif
                                                         </select>
                                                     </div>
 
                                                     <div class="custom-checkbox-group d-none">
-                                                        <input type="checkbox" name="show_transport_details">
+                                                        <input type="checkbox" name="show_transport_details" {{ old('show_transport_details') ? 'checked' : '' }}>
                                                         <span>Show transport details on customer portal</span>
                                                     </div>
                                                     <div class="custom-checkbox-group d-none">
-                                                        <input type="checkbox" name="esea_store_stock_only">
+                                                        <input type="checkbox" name="esea_store_stock_only" {{ old('esea_store_stock_only') ? 'checked' : '' }}>
                                                         <span>eSea store stock only</span>
                                                     </div>
                                                 </div>
@@ -532,20 +536,22 @@
                                                     <div class="form-section-title">Customer address</div>
                                                     <div class="form-group">
                                                         <label>Street address</label>
-                                                        <input type="text" name="street_address" class="form-control">
+                                                        <input type="text" name="street_address" class="form-control"
+                                                            value="{{ old('street_address') }}">
                                                     </div>
                                                     <div class="form-inline-row">
                                                         <div class="form-group" style="flex: 2;">
                                                             <label>City</label>
-                                                            <input type="text" name="city" class="form-control">
+                                                            <input type="text" name="city" class="form-control" value="{{ old('city') }}">
                                                         </div>
                                                         <div class="form-group" style="flex: 2;">
                                                             <label>District/state</label>
-                                                            <input type="text" name="district_state" class="form-control">
+                                                            <input type="text" name="district_state" class="form-control"
+                                                                value="{{ old('district_state') }}">
                                                         </div>
                                                         <div class="form-group" style="flex: 1.5;">
                                                             <label>Zip code</label>
-                                                            <input type="text" name="zip_code" class="form-control">
+                                                            <input type="text" name="zip_code" class="form-control" value="{{ old('zip_code') }}">
                                                         </div>
                                                     </div>
                                                     <div class="form-group">
@@ -554,14 +560,15 @@
                                                             <option></option>
                                                             @foreach($countries as $country)
                                                                 <option value="{{ $country->id }}"
-                                                                    data-flag="{{ $country->flag_url }}">{{ $country->name }}
+                                                                    data-flag="{{ $country->flag_url }}"
+                                                                    {{ (string) old('country') === (string) $country->id ? 'selected' : '' }}>{{ $country->name }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Port code</label>
-                                                        <input type="text" name="port_code" class="form-control">
+                                                        <input type="text" name="port_code" class="form-control" value="{{ old('port_code') }}">
                                                     </div>
 
                                                     <div class="form-section-title" style="margin-top: 30px;">Postal address
@@ -569,21 +576,23 @@
                                                     <div class="form-group">
                                                         <label>Street address/post box</label>
                                                         <input type="text" name="postal_street_address"
-                                                            class="form-control">
+                                                            class="form-control" value="{{ old('postal_street_address') }}">
                                                     </div>
                                                     <div class="form-inline-row">
                                                         <div class="form-group" style="flex: 2;">
                                                             <label>City</label>
-                                                            <input type="text" name="postal_city" class="form-control">
+                                                            <input type="text" name="postal_city" class="form-control"
+                                                                value="{{ old('postal_city') }}">
                                                         </div>
                                                         <div class="form-group" style="flex: 2;">
                                                             <label>District/state</label>
                                                             <input type="text" name="postal_district_state"
-                                                                class="form-control">
+                                                                class="form-control" value="{{ old('postal_district_state') }}">
                                                         </div>
                                                         <div class="form-group" style="flex: 1.5;">
                                                             <label>Zip code</label>
-                                                            <input type="text" name="postal_zip_code" class="form-control">
+                                                            <input type="text" name="postal_zip_code" class="form-control"
+                                                                value="{{ old('postal_zip_code') }}">
                                                         </div>
                                                     </div>
                                                     <div class="form-group">
@@ -592,7 +601,8 @@
                                                             <option></option>
                                                             @foreach($countries as $country)
                                                                 <option value="{{ $country->id }}"
-                                                                    data-flag="{{ $country->flag_url }}">{{ $country->name }}
+                                                                    data-flag="{{ $country->flag_url }}"
+                                                                    {{ (string) old('postal_country') === (string) $country->id ? 'selected' : '' }}>{{ $country->name }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
@@ -605,26 +615,28 @@
                                                     <div class="form-group">
                                                         <label>Invoice recipient name</label>
                                                         <input type="text" name="invoice_recipient_name"
-                                                            class="form-control">
+                                                            class="form-control" value="{{ old('invoice_recipient_name') }}">
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Invoice recipient address</label>
                                                         <input type="text" name="invoice_recipient_address"
-                                                            class="form-control">
+                                                            class="form-control" value="{{ old('invoice_recipient_address') }}">
                                                     </div>
                                                     <div class="form-inline-row">
                                                         <div class="form-group" style="flex: 2;">
                                                             <label>City</label>
-                                                            <input type="text" name="invoice_city" class="form-control">
+                                                            <input type="text" name="invoice_city" class="form-control"
+                                                                value="{{ old('invoice_city') }}">
                                                         </div>
                                                         <div class="form-group" style="flex: 2;">
                                                             <label>District/state</label>
                                                             <input type="text" name="invoice_district_state"
-                                                                class="form-control">
+                                                                class="form-control" value="{{ old('invoice_district_state') }}">
                                                         </div>
                                                         <div class="form-group" style="flex: 1.5;">
                                                             <label>Zip code</label>
-                                                            <input type="text" name="invoice_zip_code" class="form-control">
+                                                            <input type="text" name="invoice_zip_code" class="form-control"
+                                                                value="{{ old('invoice_zip_code') }}">
                                                         </div>
                                                     </div>
                                                     <div class="form-group">
@@ -633,7 +645,8 @@
                                                             <option></option>
                                                             @foreach($countries as $country)
                                                                 <option value="{{ $country->id }}"
-                                                                    data-flag="{{ $country->flag_url }}">{{ $country->name }}
+                                                                    data-flag="{{ $country->flag_url }}"
+                                                                    {{ (string) old('invoice_country') === (string) $country->id ? 'selected' : '' }}>{{ $country->name }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
@@ -642,49 +655,53 @@
                                                         <label>Currency</label>
                                                         <select name="currency" class="form-control select2-field">
                                                             <option></option>
-                                                            <option value="USD">USD - US Dollar</option>
-                                                            <option value="EUR">EUR - Euro</option>
-                                                            <option value="GBP">GBP - British Pound</option>
-                                                            <option value="INR">INR - Indian Rupee</option>
+                                                            <option value="USD" {{ old('currency') === 'USD' ? 'selected' : '' }}>USD - US Dollar</option>
+                                                            <option value="EUR" {{ old('currency') === 'EUR' ? 'selected' : '' }}>EUR - Euro</option>
+                                                            <option value="GBP" {{ old('currency') === 'GBP' ? 'selected' : '' }}>GBP - British Pound</option>
+                                                            <option value="INR" {{ old('currency') === 'INR' ? 'selected' : '' }}>INR - Indian Rupee</option>
                                                         </select>
                                                     </div>
                                                     <div class="form-group">
                                                         <label>E-mails for invoicing</label>
-                                                        <input type="text" name="invoicing_email" class="form-control">
+                                                        <input type="text" name="invoicing_email" class="form-control"
+                                                            value="{{ old('invoicing_email') }}">
                                                     </div>
                                                     <div class="form-group">
                                                         <label>E-mails for invoicing (CC)</label>
-                                                        <input type="text" name="invoicing_email_cc" class="form-control">
+                                                        <input type="text" name="invoicing_email_cc" class="form-control"
+                                                            value="{{ old('invoicing_email_cc') }}">
                                                     </div>
                                                     <div class="form-inline-row">
                                                         <div class="form-group" style="flex: 1;">
                                                             <label>Payment terms (days)</label>
                                                             <input type="text" name="payment_terms" class="form-control"
-                                                                value="30">
+                                                                value="{{ old('payment_terms', 30) }}">
                                                         </div>
                                                         <div class="form-group" style="flex: 1;">
                                                             <label>Invoice frequency</label>
                                                             <select name="invoice_frequency" class="form-control">
                                                                 <option></option>
-                                                                <option value="Daily">Daily</option>
-                                                                <option value="Weekly">Weekly</option>
-                                                                <option value="Monthly">Monthly</option>
+                                                                <option value="Daily" {{ old('invoice_frequency') === 'Daily' ? 'selected' : '' }}>Daily</option>
+                                                                <option value="Weekly" {{ old('invoice_frequency') === 'Weekly' ? 'selected' : '' }}>Weekly</option>
+                                                                <option value="Monthly" {{ old('invoice_frequency') === 'Monthly' ? 'selected' : '' }}>Monthly</option>
                                                             </select>
                                                         </div>
                                                     </div>
                                                     <div class="form-group">
                                                         <label>Remarks regarding invoicing</label>
                                                         <textarea name="invoicing_remarks" class="form-control"
-                                                            style="min-height: 40px;"></textarea>
+                                                            style="min-height: 40px;">{{ old('invoicing_remarks') }}</textarea>
                                                     </div>
                                                     <div class="form-inline-row">
                                                         <div class="form-group">
                                                             <label>VAT number</label>
-                                                            <input type="text" name="vat_number" class="form-control">
+                                                            <input type="text" name="vat_number" class="form-control"
+                                                                value="{{ old('vat_number') }}">
                                                         </div>
                                                         <div class="form-group">
                                                             <label>EORI number</label>
-                                                            <input type="text" name="eori_number" class="form-control">
+                                                            <input type="text" name="eori_number" class="form-control"
+                                                                value="{{ old('eori_number') }}">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -697,7 +714,7 @@
                                                         <select name="sales_manager" class="form-control select2-field">
                                                             <option></option>
                                                             @foreach($salesManagers as $manager)
-                                                                <option value="{{ $manager->id }}">{{ $manager->name }}</option>
+                                                                <option value="{{ $manager->id }}" {{ (string) old('sales_manager') === (string) $manager->id ? 'selected' : '' }}>{{ $manager->name }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>
