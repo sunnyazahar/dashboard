@@ -249,6 +249,7 @@
             color: #4b5563 !important;
         }
     </style>
+    @include('partials.searchable-filter-multiselect-styles')
 @endsection
 
 @section('content')
@@ -310,9 +311,8 @@
                                            <div class="filter-item" style="min-width: 250px;">
                                                <span class="filter-item-label">Hub</span>
                                                <div class="filter-item-content" style="flex: 1;">
-                                                   <select class="form-control select2">
-                                                       <option value="54684">54684 - Poseidon Fra...</option>
-                                                       <option value="54685">54685 - Atlas Logistics</option>
+                                                   <select id="filter-hub" class="form-control searchable-filter-multiselect" multiple="multiple">
+                                                       <option value="ABJ">ABJ</option>
                                                    </select>
                                                </div>
                                            </div>
@@ -337,10 +337,9 @@
                                            <div class="filter-item" style="min-width: 200px;">
                                                <span class="filter-item-label">Status</span>
                                                <div class="filter-item-content" style="flex: 1;">
-                                                   <select class="form-control select2">
-                                                       <option>Click here</option>
-                                                       <option>Stock</option>
-                                                       <option>Pending</option>
+                                                   <select id="filter-status" class="form-control searchable-filter-multiselect" multiple="multiple">
+                                                       <option value="Stock">Stock</option>
+                                                       <option value="Pending">Pending</option>
                                                    </select>
                                                </div>
                                            </div>
@@ -483,6 +482,7 @@
     {{-- <script src="{{ asset('files/assets/pages/data-table/js/data-table-custom.js') }}"></script> --}}
     <!-- Bootstrap Multiselect js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js') }}"></script>
+    @include('partials.searchable-filter-multiselect-script')
     <script src="{{ asset('files/assets/js/pcoded.min.js') }}"></script>
     <script src="{{ asset('files/assets/js/vartical-layout.min.js') }}"></script>
     <script src="{{ asset('files/assets/js/jquery.mCustomScrollbar.concat.min.js') }}"></script>
@@ -492,12 +492,7 @@
 
     <script>
         $(document).ready(function() {
-            // Initialize Select2
-            $('.select2').select2({
-                placeholder: "Click here",
-                allowClear: true,
-                width: '100%'
-            });
+            initializeSearchableFilterMultiselect('#filter-hub, #filter-status');
 
             // Initialize DataTable
             var table = $('#etl-table').DataTable({
@@ -511,6 +506,31 @@
                 "columnDefs": [
                     { "orderable": false, "targets": [0] }
                 ]
+            });
+
+            $.fn.dataTable.ext.search.push(function(settings, data) {
+                if (settings.nTable.id !== 'etl-table') {
+                    return true;
+                }
+
+                var selectedHubs = $('#filter-hub').val() || [];
+                var selectedStatuses = $('#filter-status').val() || [];
+                var hubMatches = selectedHubs.length === 0 || selectedHubs.indexOf(String(data[1] || '').trim()) !== -1;
+                var rowStatus = $('<div>').html(data[12] || '').text().trim();
+                var statusMatches = selectedStatuses.length === 0 || selectedStatuses.indexOf(rowStatus) !== -1;
+
+                return hubMatches && statusMatches;
+            });
+
+            $('#filter-hub, #filter-status').on('change', function() {
+                table.draw();
+            });
+
+            $('.clear-filters-link').on('click', function(event) {
+                event.preventDefault();
+                clearSearchableFilterMultiselect('#filter-hub, #filter-status');
+                $('#hideDgr').prop('checked', false);
+                table.search('').columns().search('').draw();
             });
 
             // Handle Check All

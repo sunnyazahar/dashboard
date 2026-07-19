@@ -384,6 +384,7 @@
             color: #6c757d !important;
         }
     </style>
+    @include('partials.searchable-filter-multiselect-styles')
 @endsection
 
 @section('content')
@@ -454,7 +455,7 @@
                                                     <div style="display: flex; align-items: center; gap: 10px;">
                                                         <span class="filter-label" style="margin-bottom: 0;">Account manager</span>
                                                         <div style="width: 200px;">
-                                                            <select id="filter-account-manager" class="select2 form-control" multiple="multiple">
+                                                            <select id="filter-account-manager" class="form-control searchable-filter-multiselect" multiple="multiple">
                                                                 @foreach ($accountManagers as $manager)
                                                                     <option value="{{ $manager }}">{{ $manager }}</option>
                                                                 @endforeach
@@ -464,7 +465,7 @@
                                                     <div style="display: flex; align-items: center; gap: 10px;">
                                                         <span class="filter-label" style="margin-bottom: 0;">Customer</span>
                                                         <div style="width: 250px;">
-                                                            <select id="filter-customer" class="select2 form-control" multiple="multiple">
+                                                            <select id="filter-customer" class="form-control searchable-filter-multiselect" multiple="multiple">
                                                                 @foreach ($customers as $customer)
                                                                     <option value="{{ $customer }}">{{ $customer }}</option>
                                                                 @endforeach
@@ -650,17 +651,14 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    @include('partials.searchable-filter-multiselect-script')
     <script type="text/javascript" src="{{ asset('files/assets/js/sweetalert.js') }}"></script>
 
     <script>
         $(document).ready(function() {
             var csrfToken = $('meta[name="csrf-token"]').attr('content');
 
-            $('#filter-account-manager, #filter-customer').select2({
-                placeholder: "Click here",
-                allowClear: true,
-                width: '100%'
-            });
+            initializeSearchableFilterMultiselect('#filter-account-manager, #filter-customer');
 
             var table = $('#offices-table').DataTable({
                 "dom": '<"table-scroll-wrapper"rt><"pagination-sticky-footer"p>',
@@ -711,7 +709,7 @@
 
             $('.clear-filters').on('click', function(e) {
                 e.preventDefault();
-                $('#filter-account-manager, #filter-customer').val(null).trigger('change');
+                clearSearchableFilterMultiselect('#filter-account-manager, #filter-customer');
                 table.search('').columns().search('').draw();
             });
 

@@ -335,6 +335,7 @@
             color: rgb(24, 100, 131) !important;
         }
     </style>
+    @include('partials.searchable-filter-multiselect-styles')
 @endsection
 
 @section('content')
@@ -418,7 +419,7 @@
                                                             <div id="col-Account-manager" class="custom-col" style="flex: 0 0 220px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Account manager</span>
-                                                                    <select id="filter-account-manager" class="form-control filter-input select2" multiple="multiple">
+                                                                    <select id="filter-account-manager" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($accountManagers as $manager)
                                                                             <option value="{{ $manager->name }}">{{ $manager->name }}</option>
                                                                         @endforeach
@@ -436,7 +437,7 @@
                                                             <div id="col-Customer" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Customer</span>
-                                                                    <select id="filter-customer" class="form-control filter-input select2" multiple="multiple">
+                                                                    <select id="filter-customer" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($customers as $customer)
                                                                             <option value="{{ $customer }}">{{ $customer }}</option>
                                                                         @endforeach
@@ -447,7 +448,7 @@
                                                             <div id="col-Vessel" class="custom-col" style="flex: 0 0 200px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Vessel</span>
-                                                                    <select id="filter-vessel" class="form-control filter-input select2" multiple="multiple">
+                                                                    <select id="filter-vessel" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($vessels as $vessel)
                                                                             <option value="{{ $vessel }}">{{ $vessel }}</option>
                                                                         @endforeach
@@ -465,8 +466,7 @@
                                                             <div id="col-Status" class="custom-col" style="flex: 0 0 180px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Status</span>
-                                                                    <select id="filter-status" class="form-control filter-input select2">
-                                                                        <option value=""></option>
+                                                                    <select id="filter-status" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($statuses as $status)
                                                                             <option value="{{ $status }}">{{ $status }}</option>
                                                                         @endforeach
@@ -477,7 +477,7 @@
                                                             <div id="col-Created-by" class="custom-col" style="flex: 0 0 220px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Created by</span>
-                                                                    <select id="filter-created-by" class="form-control filter-input select2" multiple="multiple">
+                                                                    <select id="filter-created-by" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($creators as $creator)
                                                                             <option value="{{ $creator->name }}">{{ $creator->name }}</option>
                                                                         @endforeach
@@ -647,6 +647,7 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    @include('partials.searchable-filter-multiselect-script')
     <!-- date-range-picker js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/moment/moment.js') }}"></script>
     <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
@@ -654,12 +655,9 @@
 
     <script>
         $(document).ready(function() {
-            // Initialize Select2 for standard filters
-            $('.select2').select2({
-                placeholder: "Click here",
-                allowClear: true,
-                width: '100%'
-            });
+            initializeSearchableFilterMultiselect(
+                '#filter-account-manager, #filter-customer, #filter-vessel, #filter-status, #filter-created-by'
+            );
 
             // Initialize Bootstrap Multiselect for special filter toggle
             $('#filter-multiselect').multiselect({
@@ -814,8 +812,8 @@
                     return false;
                 }
 
-                var selectedStatus = $('#filter-status').val();
-                if (!matchesSelectedValues(selectedStatus ? [selectedStatus] : [], rowData($row, 'status'))) {
+                var selectedStatuses = $('#filter-status').val() || [];
+                if (!matchesSelectedValues(selectedStatuses, rowData($row, 'status'))) {
                     return false;
                 }
 
@@ -832,7 +830,9 @@
 
             $('.clear-filters').on('click', function(e) {
                 e.preventDefault();
-                $('.select2').val(null).trigger('change');
+                clearSearchableFilterMultiselect(
+                    '#filter-account-manager, #filter-customer, #filter-vessel, #filter-status, #filter-created-by'
+                );
                 $('.filter-input:not(select)').val('').trigger('keyup');
                 table.columns().search('').draw();
             });

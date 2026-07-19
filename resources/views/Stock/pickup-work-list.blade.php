@@ -376,6 +376,7 @@
             color: #6c757d !important;
         }
     </style>
+    @include('partials.searchable-filter-multiselect-styles')
 @endsection
 
 @section('content')
@@ -460,7 +461,7 @@
                                                             <div id="col-Account-manager" class="custom-col" style="flex: 0 0 220px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Account manager</span>
-                                                                    <select id="filter-account-manager" class="form-control filter-input select2" multiple="multiple">
+                                                                    <select id="filter-account-manager" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($accountManagers as $manager)
                                                                             <option value="{{ $manager }}">{{ $manager }}</option>
                                                                         @endforeach
@@ -497,7 +498,7 @@
                                                             <div id="col-Handled-by" class="custom-col" style="flex: 0 0 227px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Handled by</span>
-                                                                    <select id="filter-handled-by" class="form-control filter-input select2" multiple="multiple">
+                                                                    <select id="filter-handled-by" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($handledByOptions as $handledBy)
                                                                             <option value="{{ $handledBy }}">{{ $handledBy }}</option>
                                                                         @endforeach
@@ -507,7 +508,7 @@
                                                             <div id="col-Vessel" class="custom-col" style="flex: 0 0 250px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Vessel</span>
-                                                                    <select id="filter-vessel" class="form-control filter-input select2" multiple="multiple">
+                                                                    <select id="filter-vessel" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($vessels as $vessel)
                                                                             <option value="{{ $vessel }}">{{ $vessel }}</option>
                                                                         @endforeach
@@ -523,7 +524,7 @@
                                                             <div id="col-Hub-Agent" class="custom-col" style="flex: 0 0 280px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Hub/Agent</span>
-                                                                    <select id="filter-hub-agent" class="form-control filter-input select2" multiple="multiple">
+                                                                    <select id="filter-hub-agent" class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
                                                                         @foreach ($hubAgents as $hubAgent)
                                                                             <option value="{{ $hubAgent }}">{{ $hubAgent }}</option>
                                                                         @endforeach
@@ -712,17 +713,16 @@
     <script type="text/javascript" src="{{ asset('files/assets/js/script.js') }}"></script>
     <!-- Select 2 js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/select2/dist/js/select2.full.min.js') }}"></script>
+    @include('partials.searchable-filter-multiselect-script')
     <!-- date-range-picker js -->
     <script type="text/javascript" src="{{ asset('files/bower_components/moment/moment.js') }}"></script>
     <script type="text/javascript" src="{{ asset('files/bower_components/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
 
     <script>
         $(document).ready(function() {
-            $('#filter-account-manager, #filter-handled-by, #filter-vessel, #filter-hub-agent').select2({
-                placeholder: "Click here",
-                allowClear: true,
-                width: '100%'
-            });
+            initializeSearchableFilterMultiselect(
+                '#filter-account-manager, #filter-handled-by, #filter-vessel, #filter-hub-agent'
+            );
 
             // Initialize Bootstrap Multiselect for special filter toggle
             $('#filter-multiselect').multiselect({
@@ -892,7 +892,9 @@
 
             $('.clear-filters').on('click', function(e) {
                 e.preventDefault();
-                $('#filter-account-manager, #filter-handled-by, #filter-vessel, #filter-hub-agent').val(null).trigger('change');
+                clearSearchableFilterMultiselect(
+                    '#filter-account-manager, #filter-handled-by, #filter-vessel, #filter-hub-agent'
+                );
                 $('#filter-stock-number, #filter-supplier-ref, #filter-expected-delivery, #filter-deadline-warehouse, #filter-pickup-date').val('').trigger('change');
                 table.search('').columns().search('').draw();
             });
