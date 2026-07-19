@@ -381,12 +381,6 @@
                     <div class="alert alert-success alert-otp mb-0">{{ session('status') }}</div>
                 @endif
 
-                @if (config('app.debug') && session('debug_otp'))
-                    <div class="alert alert-info alert-otp mb-0">
-                        Debug OTP: <strong>{{ session('debug_otp') }}</strong>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('otp.verify') }}" id="otp-form">
                     @csrf
                     <input type="hidden" name="otp" id="otp-value" value="{{ old('otp') }}">

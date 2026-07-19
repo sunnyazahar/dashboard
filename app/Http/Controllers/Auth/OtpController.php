@@ -104,10 +104,6 @@ class OtpController extends Controller
 
         $this->deliverOtp($user?->email, $otp);
 
-        if (config('app.debug')) {
-            $request->session()->flash('debug_otp', $otp);
-        }
-
         return $otp;
     }
 
@@ -118,11 +114,15 @@ class OtpController extends Controller
         }
 
         try {
-            Mail::raw(
-                "Your MarineCaddie verification code is: {$otp}\n\nThis code expires in " . self::OTP_TTL_MINUTES . " minutes.",
+            Mail::send(
+                'emails.auth.login-otp',
+                [
+                    'otp' => $otp,
+                    'expiresInMinutes' => self::OTP_TTL_MINUTES,
+                ],
                 function ($message) use ($email) {
                     $message->to($email)->subject('Your MarineCaddie verification code');
-                }
+                },
             );
         } catch (\Throwable $e) {
             Log::warning('OTP email failed to send: ' . $e->getMessage(), [
@@ -130,12 +130,6 @@ class OtpController extends Controller
             ]);
         }
 
-        if (config('app.debug')) {
-            Log::info('Login OTP generated', [
-                'email' => $email,
-                'otp' => $otp,
-            ]);
-        }
     }
 
     private function maskEmail(string $email): string
