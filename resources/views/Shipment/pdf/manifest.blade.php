@@ -67,18 +67,15 @@
         <tr><td class="field-label">C/O</td><td>{{ $consigneeName }}</td></tr>
         <tr><td class="field-label"></td><td>{{ $consigneeAddress }}</td></tr>
         <tr><td class="field-label">E-mail</td><td>{{ $consigneeEmail }}</td></tr>
-        <tr><td class="field-label">Phone</td><td>{{ $consigneeContactPhone }}</td></tr>
-        <tr><td class="field-label">Contact</td><td>{{ $consigneeContact }}</td></tr>
-        <tr><td class="field-label">Contact email</td><td>{{ $consigneeContactEmail }}</td></tr>
-        <tr><td class="field-label">Contact phone</td><td>{{ $consigneeContactPhone }}</td></tr>
-        <tr><td class="field-label">Agent</td><td>{{ $agentName }}</td></tr>
+        <tr><td class="field-label">Phone</td><td>{{ $consigneePhone }}</td></tr>
         <tr><td class="field-label">Port of departure</td><td>{{ $departurePort }}</td></tr>
         <tr><td class="field-label">Port of destination</td><td>{{ $destinationPort }}</td></tr>
-        <tr><td class="field-label">Document handled by</td><td>{{ $documentHandledBy }}</td></tr>
+        <tr><td class="field-label">Location</td><td>{{ $shipmentLocation }}</td></tr>
         <tr><td class="field-label">Service</td><td>{{ $serviceLabel }}</td></tr>
         <tr><td class="field-label">Additional service</td><td>{{ $additionalServiceLabel }}</td></tr>
         <tr><td class="field-label">PCS / Repacked as / Weight</td><td>{{ $pcsSummary }}</td></tr>
         <tr><td class="field-label">Deadline arrival</td><td>{{ $deadlineArrival }}</td></tr>
+        <tr><td class="field-label">Document handled by</td><td>{{ $documentHandledBy }}</td></tr>
     </table>
     <div class="footer-ref">Combined PO document link<br>{{ $combinedPoReference }}</div>
 </div>

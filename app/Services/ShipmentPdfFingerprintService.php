@@ -78,7 +78,11 @@ class ShipmentPdfFingerprintService
             'consignee_district',
             'consignee_zip',
             'consignee_country',
+            'consignee_port_code',
             'consignee_att',
+            'consignee_email',
+            'location',
+            'deadline_arrival',
         ];
 
         $data = [];
