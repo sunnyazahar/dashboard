@@ -5,41 +5,41 @@
     <title>Pre-alert {{ $shipment->shipment_number }}</title>
     <style>
         @page { size: A4; margin: 12mm 10mm; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #222; line-height: 1.35; margin: 0; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #222; line-height: 1.4; margin: 0; }
         .page { page-break-after: always; }
         .page:last-child { page-break-after: auto; }
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         .header-table td { vertical-align: top; }
-        .doc-title { font-size: 14px; font-weight: bold; margin: 0 0 4px; }
-        .doc-subtitle { font-size: 11px; font-weight: bold; margin: 0 0 8px; }
-        .company { font-size: 10px; font-weight: bold; }
-        .muted { color: #555; }
-        .header-right { text-align: right; font-size: 8px; }
-        .brand-logo { line-height: 1.05; margin-bottom: 6px; }
-        .brand-marine { font-size: 18px; font-weight: bold; color: #002D5B; }
-        .brand-caddie { font-size: 18px; font-weight: bold; color: #349DDA; }
-        .brand-tagline { display: block; font-size: 7px; color: #FF6B03; font-weight: bold; margin-top: 2px; }
-        .section-title { font-size: 11px; font-weight: bold; margin: 14px 0 8px; }
-        .expected-line { margin: 0 0 10px; font-size: 9px; }
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 8px; }
-        .data-table th, .data-table td { border: 0.5px solid #ccc; padding: 4px 3px; text-align: left; vertical-align: top; }
+        .doc-title { font-size: 17px; font-weight: bold; margin: 0 0 4px; }
+        .doc-subtitle { font-size: 13px; font-weight: bold; margin: 0 0 8px; }
+        .company { font-size: 12px; font-weight: bold; }
+        .muted { color: #555; font-size: 11px; }
+        .header-right { text-align: right; font-size: 10px; }
+        .brand-logo { line-height: 1.05; margin-bottom: 4px; }
+        .brand-marine { font-size: 20px; font-weight: bold; color: #002D5B; }
+        .brand-caddie { font-size: 20px; font-weight: bold; color: #349DDA; }
+        .brand-tagline { display: block; font-size: 9px; color: #FF6B03; font-weight: bold; margin-top: 2px; }
+        .section-title { font-size: 13px; font-weight: bold; margin: 12px 0 8px; }
+        .expected-line { margin: 0 0 10px; font-size: 11px; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px; }
+        .data-table th, .data-table td { border: 0.5px solid #ccc; padding: 5px 4px; text-align: left; vertical-align: top; }
         .data-table th { background: #f3f4f6; font-weight: bold; }
-        .field-block { margin: 10px 0; font-size: 9px; }
+        .field-block { margin: 10px 0; font-size: 11px; }
         .field-label { font-weight: bold; margin-bottom: 4px; }
-        .address-block { white-space: pre-wrap; font-size: 9px; margin-top: 4px; }
-        .notify-title { font-size: 10px; font-weight: bold; margin: 12px 0 6px; }
-        .vessel-heading { font-size: 10px; font-weight: bold; margin: 10px 0 6px; }
-        .footer-ref { margin-top: 16px; font-size: 8px; font-weight: bold; }
+        .address-block { white-space: pre-wrap; font-size: 11px; margin-top: 4px; }
+        .notify-title { font-size: 12px; font-weight: bold; margin: 12px 0 6px; }
+        .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
+        .footer-ref { margin-top: 14px; font-size: 10px; font-weight: bold; }
         .page-footer {
-            margin-top: 18px;
+            margin-top: 16px;
             padding-top: 8px;
             border-top: 0.5px solid #ddd;
-            font-size: 8px;
+            font-size: 10px;
             text-align: right;
         }
-        .summary-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 9px; }
-        .summary-table td { padding: 3px 0; vertical-align: top; }
-        .summary-label { width: 35%; font-weight: bold; }
+        .summary-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
+        .summary-table td { padding: 4px 0; vertical-align: top; }
+        .summary-label { width: 38%; font-weight: bold; }
         .description-cell { white-space: pre-wrap; }
     </style>
 </head>

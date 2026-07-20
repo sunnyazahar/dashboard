@@ -5,41 +5,41 @@
     <title>Manifest {{ $shipment->shipment_number }}</title>
     <style>
         @page { size: A4; margin: 12mm 10mm; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #222; line-height: 1.35; margin: 0; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #222; line-height: 1.4; margin: 0; }
         .page { page-break-after: always; }
         .page:last-child { page-break-after: auto; }
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         .header-table td { vertical-align: top; }
-        .doc-title { font-size: 14px; font-weight: bold; margin: 0 0 4px; }
-        .doc-subtitle { font-size: 11px; font-weight: bold; margin: 0 0 8px; }
-        .company { font-size: 10px; font-weight: bold; }
-        .muted { color: #555; }
-        .header-right { text-align: right; font-size: 8px; }
-        .brand-logo { line-height: 1.05; margin-bottom: 6px; }
-        .brand-marine { font-size: 18px; font-weight: bold; color: #002D5B; }
-        .brand-caddie { font-size: 18px; font-weight: bold; color: #349DDA; }
-        .brand-tagline { display: block; font-size: 7px; color: #FF6B03; font-weight: bold; margin-top: 2px; }
-        .section-title { font-size: 11px; font-weight: bold; margin: 14px 0 8px; }
-        .field-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        .field-table td { padding: 2px 0; vertical-align: top; }
-        .field-label { width: 28%; font-weight: bold; }
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 8px; }
-        .data-table th, .data-table td { border: 0.5px solid #ccc; padding: 4px 3px; text-align: left; }
+        .doc-title { font-size: 17px; font-weight: bold; margin: 0 0 4px; }
+        .doc-subtitle { font-size: 13px; font-weight: bold; margin: 0 0 8px; }
+        .company { font-size: 12px; font-weight: bold; }
+        .muted { color: #555; font-size: 11px; }
+        .header-right { text-align: right; font-size: 10px; }
+        .brand-logo { line-height: 1.05; margin-bottom: 4px; }
+        .brand-marine { font-size: 20px; font-weight: bold; color: #002D5B; }
+        .brand-caddie { font-size: 20px; font-weight: bold; color: #349DDA; }
+        .brand-tagline { display: block; font-size: 9px; color: #FF6B03; font-weight: bold; margin-top: 2px; }
+        .section-title { font-size: 13px; font-weight: bold; margin: 12px 0 8px; }
+        .field-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 11px; }
+        .field-table td { padding: 3px 0; vertical-align: top; }
+        .field-label { width: 30%; font-weight: bold; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px; }
+        .data-table th, .data-table td { border: 0.5px solid #ccc; padding: 5px 4px; text-align: left; }
         .data-table th { background: #f3f4f6; font-weight: bold; }
-        .totals-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 8px; }
-        .totals-table td { padding: 2px 0; }
-        .totals-label { width: 35%; font-weight: bold; }
-        .footer-ref { margin-top: 16px; font-size: 8px; font-weight: bold; }
+        .totals-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+        .totals-table td { padding: 3px 0; }
+        .totals-label { width: 38%; font-weight: bold; }
+        .footer-ref { margin-top: 14px; font-size: 10px; font-weight: bold; }
         .page-footer {
-            margin-top: 18px;
+            margin-top: 16px;
             padding-top: 8px;
             border-top: 0.5px solid #ddd;
-            font-size: 8px;
+            font-size: 10px;
             text-align: right;
         }
-        .comments { white-space: pre-wrap; font-size: 8px; margin-top: 8px; }
-        .vessel-heading { font-size: 10px; font-weight: bold; margin: 10px 0 6px; }
-        .pending-eta { font-size: 8px; color: #666; margin: 6px 0 2px; }
+        .comments { white-space: pre-wrap; font-size: 10px; margin-top: 8px; }
+        .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
+        .pending-eta { font-size: 10px; color: #666; margin: 6px 0 2px; }
     </style>
 </head>
 <body>
@@ -99,7 +99,7 @@
     </table>
     <div class="section-title" style="margin-top:10px;">Comments to hub</div>
     <div class="comments">{{ $commentsHub ?: '—' }}</div>
-    {!! $footer('1', '4', $combinedPoReference) !!}
+    {!! $footer('1', '3', $combinedPoReference) !!}
 </div>
 
 {{-- Manifest / Invoice --}}
@@ -157,10 +157,10 @@
         <tr><td class="totals-label">Contact</td><td>{{ $consigneeContact }}, {{ $consigneeContactEmail }}, {{ $consigneeContactPhone }}</td></tr>
         <tr><td class="totals-label">Customer</td><td>{{ $customerName }}</td></tr>
     </table>
-    {!! $footer('2', '4', $combinedPoReference) !!}
+    {!! $footer('2', '3', $combinedPoReference) !!}
 </div>
 
-{{-- Packing list --}}
+{{-- Packing list (single page) --}}
 <div class="page">
     {!! $header('Packing list') !!}
     <div class="vessel-heading">{{ $manifestRows->first()['vessel'] ?? $vesselLine }}</div>
@@ -201,19 +201,14 @@
             </tr>
         </tbody>
     </table>
-    <table class="field-table" style="margin-top:10px;">
+    <table class="field-table" style="margin-top:8px;">
         <tr><td class="field-label">Shipper</td><td>{{ $shipperLine }}</td></tr>
         <tr><td class="field-label">Consignee</td><td>{{ $consigneeLine }}</td></tr>
         <tr><td class="field-label">Departure</td><td>{{ $departurePort }}</td></tr>
         <tr><td class="field-label">Destination</td><td>{{ $destinationPort }}</td></tr>
         <tr><td class="field-label">Deadline date</td><td>{{ $deadlineArrival }}</td></tr>
     </table>
-    {!! $footer('3', '4', $combinedPoReference) !!}
-</div>
-
-<div class="page">
-    {!! $header('Packing list') !!}
-    <table class="totals-table">
+    <table class="totals-table" style="margin-top:8px;">
         <tr><td class="totals-label">Total in consignment</td><td>{{ $totals['packages'] }} pcs</td></tr>
         <tr><td class="totals-label">Total weight</td><td>{{ $totals['weight'] }} kg</td></tr>
         <tr><td class="totals-label">Estimated volume weight</td><td>{{ number_format($totals['volume_weight'], 2) }} kg</td></tr>
@@ -221,7 +216,7 @@
         <tr><td class="totals-label">Total CBM</td><td>{{ number_format($totals['cbm'], 2) }} m³</td></tr>
         <tr><td class="totals-label">Total CBFT</td><td>{{ number_format($totals['cbft'], 2) }} ft³</td></tr>
     </table>
-    {!! $footer('4', '4', $combinedPoReference, false) !!}
+    {!! $footer('3', '3', $combinedPoReference) !!}
 </div>
 
 </body>
