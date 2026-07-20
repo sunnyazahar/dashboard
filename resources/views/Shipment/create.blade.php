@@ -837,11 +837,23 @@
                                                             <label class="mb-0" style="font-size: 11px;">Additional service </label>
                                                             <select name="additional_service" class="form-control select2">
                                                                 <option></option>
-                                                                <option {{ old('additional_service') === 'Console' ? 'selected' : '' }}>Console</option>
-                                                                <option {{ old('additional_service') === 'Economy' ? 'selected' : '' }}>Economy</option>
-                                                                <option {{ old('additional_service') === 'Express' ? 'selected' : '' }}>Express</option>
-                                                                <option {{ old('additional_service') === 'Weekly console' ? 'selected' : '' }}>Weekly console</option>
-                                                                <option {{ old('additional_service') === 'Normal' ? 'selected' : '' }}>Normal</option>
+                                                                @php
+                                                                    $additionalServiceOptions = [
+                                                                        'Console',
+                                                                        'Economy',
+                                                                        'Express',
+                                                                        'Weekly console',
+                                                                        'Normal',
+                                                                        'Barge station',
+                                                                        'Truck',
+                                                                        'Via ship chandler',
+                                                                        'On arrival',
+                                                                        'Major storing',
+                                                                    ];
+                                                                @endphp
+                                                                @foreach ($additionalServiceOptions as $additionalServiceOption)
+                                                                    <option value="{{ $additionalServiceOption }}" {{ old('additional_service') === $additionalServiceOption ? 'selected' : '' }}>{{ $additionalServiceOption }}</option>
+                                                                @endforeach
                                                             </select>
                                                         </div>
                                                     </div>
@@ -1011,10 +1023,9 @@
                                                             </select>
                                                         </div>
                                                         <div class="form-group mb-2">
-                                                            <label class="mb-0" style="font-size: 11px;">Att</label>
-                                                            <select name="consignee_att" class="form-control select2">
-                                                                <option></option>
-                                                            </select>
+                                                            <label class="mb-0" style="font-size: 11px;">Contact person</label>
+                                                            <input type="text" name="consignee_att" class="form-control filter-input"
+                                                                placeholder="" value="{{ old('consignee_att') }}">
                                                         </div>
                                                         <div class="form-group mb-2">
                                                             <label class="mb-0" style="font-size: 11px;">Port code</label>
