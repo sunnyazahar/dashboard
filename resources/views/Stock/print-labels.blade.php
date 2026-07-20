@@ -151,10 +151,6 @@
                 <div class="field-value">{{ $crr->stock_number }}</div>
             </div>
 
-            <div class="field-group">
-                <div class="field-label">To</div>
-                <div class="field-value"> MV {{ $crr->vessel_name ?: '—' }}</div>
-            </div>
 
             <div class="field-group">
                 <div class="field-label">Hub / Agent</div>
@@ -163,6 +159,10 @@
             <div class="field-group">
                 <div class="field-label">Physical Location</div>
                 <div class="field-value" style="font-size: 12px;">{{ $crr->location ?: '—' }}</div>
+            </div>
+            <div class="field-group">
+                <div class="field-label">To</div>
+                <div class="field-value"> MV {{ $crr->vessel_name ?: '—' }}</div>
             </div>
             <div class="field-group">
                 <div class="field-label">Supplier</div>
