@@ -41,7 +41,7 @@
         .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
         .pending-eta { font-size: 10px; color: #666; margin: 6px 0 2px; }
         .onboard-receipt {
-            margin-top: 30px;
+            margin-top: 0;
             width: 100%;
         }
         .onboard-receipt-labels {
@@ -50,7 +50,8 @@
         }
         .onboard-receipt-labels td {
             padding: 0;
-            font-size: 11px;
+            font-size: 14px;
+            font-weight: bold;
             color: #222;
             vertical-align: top;
             width: 33.33%;
@@ -59,12 +60,27 @@
             height: 48px;
         }
         .onboard-receipt-line {
+            width: 50%;
             border-top: 1px dashed #9ca3af;
             margin: 0 0 8px;
         }
         .onboard-receipt-signatory {
-            font-size: 11px;
+            font-size: 14px;
             color: #222;
+            font-weight: bold;
+        }
+        .page-manifest-invoice {
+            position: relative;
+            min-height: 255mm;
+        }
+        .page-manifest-invoice .onboard-receipt-wrap {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 20;
+        }
+        .page-manifest-invoice .page-footer {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -125,7 +141,7 @@
 </div>
 
 {{-- Manifest / Invoice --}}
-<div class="page">
+<div class="page page-manifest-invoice">
     {!! $header('Manifest / Invoice') !!}
     <div class="vessel-heading">{{ $vesselLine }}</div>
     <table class="data-table">
@@ -179,21 +195,23 @@
         <tr><td class="totals-label">Contact</td><td>{{ $consigneeContact }}, {{ $consigneeContactEmail }}, {{ $consigneeContactPhone }}</td></tr>
         <tr><td class="totals-label">Customer</td><td>{{ $customerName }}</td></tr>
     </table>
-    @if (($serviceLabel ?? '') === 'On-board delivery')
-        <div class="onboard-receipt">
-            <table class="onboard-receipt-labels">
-                <tr>
-                    <td style="text-align:left;">Date received</td>
-                    <td style="text-align:center;">Stamp</td>
-                    <td></td>
-                </tr>
-            </table>
-            <div class="onboard-receipt-space"></div>
-            <div class="onboard-receipt-line"></div>
-            <div class="onboard-receipt-signatory">{{ $onBoardSignatory }}</div>
-        </div>
-    @endif
-    {!! $footer('2', '3') !!}
+    <div class="onboard-receipt-wrap">
+        @if (($serviceLabel ?? '') === 'On-board delivery')
+            <div class="onboard-receipt">
+                <table class="onboard-receipt-labels">
+                    <tr>
+                        <td style="text-align:left;">Date received</td>
+                        <td style="text-align:center;">Stamp</td>
+                        <td></td>
+                    </tr>
+                </table>
+                <div class="onboard-receipt-space"></div>
+                <div class="onboard-receipt-line"></div>
+                <div class="onboard-receipt-signatory">{{ $onBoardSignatory }}</div>
+            </div>
+        @endif
+        {!! $footer('2', '3') !!}
+    </div>
 </div>
 
 {{-- Packing list (single page) --}}
