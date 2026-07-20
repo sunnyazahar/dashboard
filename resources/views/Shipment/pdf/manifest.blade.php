@@ -40,6 +40,31 @@
         .comments { white-space: pre-wrap; font-size: 10px; margin-top: 8px; }
         .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
         .pending-eta { font-size: 10px; color: #666; margin: 6px 0 2px; }
+        .onboard-receipt {
+            margin-top: 28px;
+            width: 100%;
+        }
+        .onboard-receipt-labels {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .onboard-receipt-labels td {
+            padding: 0;
+            font-size: 11px;
+            color: #222;
+            vertical-align: top;
+        }
+        .onboard-receipt-space {
+            height: 48px;
+        }
+        .onboard-receipt-line {
+            border-top: 1px dashed #9ca3af;
+            margin: 0 0 8px;
+        }
+        .onboard-receipt-signatory {
+            font-size: 11px;
+            color: #222;
+        }
     </style>
 </head>
 <body>
@@ -157,6 +182,19 @@
         <tr><td class="totals-label">Contact</td><td>{{ $consigneeContact }}, {{ $consigneeContactEmail }}, {{ $consigneeContactPhone }}</td></tr>
         <tr><td class="totals-label">Customer</td><td>{{ $customerName }}</td></tr>
     </table>
+    @if (($serviceLabel ?? '') === 'On-board delivery')
+        <div class="onboard-receipt">
+            <table class="onboard-receipt-labels">
+                <tr>
+                    <td style="text-align:left;">Date received</td>
+                    <td style="text-align:right;">Stamp</td>
+                </tr>
+            </table>
+            <div class="onboard-receipt-space"></div>
+            <div class="onboard-receipt-line"></div>
+            <div class="onboard-receipt-signatory">{{ $onBoardSignatory }}</div>
+        </div>
+    @endif
     {!! $footer('2', '3', $combinedPoReference) !!}
 </div>
 

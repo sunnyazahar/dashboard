@@ -164,6 +164,7 @@ class ShipmentManifestPdfBuilder
             'documentHandledBy' => $handledBy,
             'serviceLabel' => $shipment->service ?? '—',
             'additionalServiceLabel' => $shipment->additional_service ?: '—',
+            'onBoardSignatory' => $this->formatOnBoardSignatory($primaryVessel),
             'pcsSummary' => $totalPackages . ' / ' . $totalPackages . ' / ' . $totalWeight . ' kg',
             'deadlineArrival' => $shipment->deadline_arrival?->format('d.m.y') ?? '—',
             'commentsHub' => $shipment->comments_departure_hub ?? '',
@@ -357,6 +358,19 @@ class ShipmentManifestPdfBuilder
     private function formatNumber($value): string
     {
         return $value !== null && $value !== '' ? (string) round((float) $value, 0) : '—';
+    }
+
+    private function formatOnBoardSignatory(?string $vesselName): string
+    {
+        $vessel = trim((string) $vesselName);
+
+        if ($vessel === '') {
+            $vessel = '—';
+        } elseif (! preg_match('/^MV\b/i', $vessel)) {
+            $vessel = 'MV ' . $vessel;
+        }
+
+        return 'Master / Chief Engineer of ' . $vessel;
     }
 
     private function joinParts(array $parts, string $separator = ', '): string
