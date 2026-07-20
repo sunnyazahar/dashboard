@@ -25,6 +25,18 @@ class ShipmentPdfFingerprintService
         ));
     }
 
+    /**
+     * Fingerprint only service type + service-detail legs.
+     * Used to decide whether a new pre-alert should be generated.
+     */
+    public function serviceDetailsFingerprint(Shipment $shipment): string
+    {
+        return $this->hash([
+            'service' => $shipment->service,
+            'service_details' => $this->serviceDetailsPayload($shipment),
+        ]);
+    }
+
     public function prepareForFingerprint(Shipment $shipment): Shipment
     {
         $shipment->loadMissing($this->relations());

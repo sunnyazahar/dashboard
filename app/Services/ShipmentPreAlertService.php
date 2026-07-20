@@ -42,7 +42,8 @@ class ShipmentPreAlertService
                 ->where('shipment_id', $shipment->id)
                 ->max('version') + 1;
 
-            $fileName = 'pre-alert-' . $shipment->shipment_number . '-' . $version . '.pdf';
+            $label = ShipmentPreAlert::labelForVersion($version);
+            $fileName = str_replace(' ', '-', $label) . '-' . $shipment->shipment_number . '-' . $version . '.pdf';
             $relativePath = 'shipment_pre_alerts/' . $shipment->id . '/' . $fileName;
             $pdfContent = $this->buildPdfContent($shipment);
 
@@ -51,7 +52,7 @@ class ShipmentPreAlertService
             return ShipmentPreAlert::create([
                 'shipment_id' => $shipment->id,
                 'version' => $version,
-                'file_name' => 'prealert' . $version,
+                'file_name' => $label,
                 'file_path' => $relativePath,
                 'form_hash' => null,
             ]);

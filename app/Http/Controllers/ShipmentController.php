@@ -942,7 +942,7 @@ class ShipmentController extends Controller
         }
 
         $fingerprintService->prepareForFingerprint($shipment);
-        $preAlertFingerprintBefore = $fingerprintService->preAlertFingerprint($shipment);
+        $serviceDetailsFingerprintBefore = $fingerprintService->serviceDetailsFingerprint($shipment);
 
         try {
             DB::transaction(function () use ($shipment, $request, $validated) {
@@ -995,7 +995,7 @@ class ShipmentController extends Controller
         $preAlertCreated = false;
 
         if (
-            $fingerprintService->preAlertFingerprint($shipment) !== $preAlertFingerprintBefore
+            $fingerprintService->serviceDetailsFingerprint($shipment) !== $serviceDetailsFingerprintBefore
             || ! $shipment->preAlerts()->exists()
         ) {
             try {
@@ -1355,7 +1355,10 @@ class ShipmentController extends Controller
         }
 
         try {
-            if (\App\Services\ShipmentPreAlertPdfBuilder::shipmentHasServiceDetails($shipment)) {
+            if (
+                \App\Services\ShipmentPreAlertPdfBuilder::shipmentHasServiceDetails($shipment)
+                && ! $shipment->preAlerts()->exists()
+            ) {
                 app(ShipmentPreAlertService::class)->generate($shipment);
                 $shipment->load('preAlerts');
             }
@@ -1614,7 +1617,7 @@ class ShipmentController extends Controller
 
         $fingerprintService->prepareForFingerprint($shipment);
         $manifestFingerprintBefore = $fingerprintService->manifestFingerprint($shipment);
-        $preAlertFingerprintBefore = $fingerprintService->preAlertFingerprint($shipment);
+        $serviceDetailsFingerprintBefore = $fingerprintService->serviceDetailsFingerprint($shipment);
 
         DB::beginTransaction();
 
@@ -1697,7 +1700,7 @@ class ShipmentController extends Controller
 
         if (
             \App\Services\ShipmentPreAlertPdfBuilder::shipmentHasServiceDetails($freshShipment)
-            && $fingerprintService->preAlertFingerprint($freshShipment) !== $preAlertFingerprintBefore
+            && $fingerprintService->serviceDetailsFingerprint($freshShipment) !== $serviceDetailsFingerprintBefore
         ) {
             try {
                 app(ShipmentPreAlertService::class)->generate($freshShipment);
@@ -2151,7 +2154,10 @@ class ShipmentController extends Controller
 
         Crr::whereIn('id', $removedCrrIds)
             ->where('internal_shipment', $shipment->shipment_number)
-            ->update(['internal_shipment' => null]);
+            ->update([
+                'internal_shipment' => null,
+                'status' => Crr::STATUS_ACTIVE,
+            ]);
     }
 
     private function syncIrregularities(Shipment $shipment, array $irregularities): void

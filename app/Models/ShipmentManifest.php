@@ -27,6 +27,15 @@ class ShipmentManifest extends Model
 
     public function displayLabel(): string
     {
-        return 'manifest' . $this->version;
+        return self::labelForVersion((int) $this->version);
+    }
+
+    public static function labelForVersion(int $version): string
+    {
+        if ($version <= 1) {
+            return 'manifest';
+        }
+
+        return 'manifest ' . ($version - 1);
     }
 }

@@ -35,8 +35,9 @@ class ShipmentManifestService
                 ->where('shipment_id', $shipment->id)
                 ->max('version') + 1;
 
-            $fileName = 'manifest' . $version . '-' . $shipment->shipment_number . '.pdf';
-            $relativePath = 'shipment_manifests/' . $shipment->id . '/' . $fileName;
+            $label = ShipmentManifest::labelForVersion($version);
+            $fileName = $label . '-' . $shipment->shipment_number . '.pdf';
+            $relativePath = 'shipment_manifests/' . $shipment->id . '/' . str_replace(' ', '-', $fileName);
             $pdfContent = $this->buildPdfContent($shipment);
 
             $this->storePdf($relativePath, $pdfContent);
@@ -44,7 +45,7 @@ class ShipmentManifestService
             return ShipmentManifest::create([
                 'shipment_id' => $shipment->id,
                 'version' => $version,
-                'file_name' => 'manifest' . $version,
+                'file_name' => $label,
                 'file_path' => $relativePath,
                 'form_hash' => null,
             ]);

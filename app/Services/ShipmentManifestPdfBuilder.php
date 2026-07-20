@@ -121,7 +121,7 @@ class ShipmentManifestPdfBuilder
             }
         }
 
-        $createdAt = Carbon::now('UTC')->format('d.m.Y H:i') . ' UTC';
+        $createdAt = Carbon::now('Asia/Kolkata')->format('d.m.Y H:i') . ' IST';
         $handledBy = trim(($shipment->creator?->name ?? 'System') . ' on ' . Carbon::now()->format('d.m.Y H:i'));
 
         $companyName = $departureParty['name'] ?: 'Marinetrans';

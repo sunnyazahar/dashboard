@@ -27,6 +27,15 @@ class ShipmentPreAlert extends Model
 
     public function displayLabel(): string
     {
-        return 'prealert' . $this->version;
+        return self::labelForVersion((int) $this->version);
+    }
+
+    public static function labelForVersion(int $version): string
+    {
+        if ($version <= 1) {
+            return 'pre-alert';
+        }
+
+        return 'pre-alert ' . ($version - 1);
     }
 }

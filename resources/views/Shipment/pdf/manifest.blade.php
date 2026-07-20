@@ -31,12 +31,21 @@
         .totals-label { width: 38%; font-weight: bold; }
         .footer-ref { margin-top: 14px; font-size: 10px; font-weight: bold; }
         .page-footer {
-            margin-top: 16px;
+            margin-top: 18px;
             padding-top: 8px;
-            border-top: 0.5px solid #ddd;
-            font-size: 10px;
-            text-align: right;
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+            color: #222;
+            line-height: 1.35;
         }
+        .page-footer td {
+            vertical-align: top;
+            padding: 0;
+        }
+        .page-footer-left { width: 38%; text-align: left; }
+        .page-footer-center { width: 24%; text-align: center; vertical-align: middle; }
+        .page-footer-right { width: 38%; text-align: right; }
         .comments { white-space: pre-wrap; font-size: 10px; margin-top: 8px; }
         .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
         .pending-eta { font-size: 10px; color: #666; margin: 6px 0 2px; }
@@ -107,8 +116,22 @@
         </table>';
     };
 
-    $footer = function ($pageNo, $pageTotal) {
-        return '<div class="page-footer">' . e($pageNo) . ' / ' . e($pageTotal) . '</div>';
+    $footer = function ($pageNo, $pageTotal) use ($createdAt) {
+        return '
+        <table class="page-footer">
+            <tr>
+                <td class="page-footer-left">
+                    MarineCaddie India Private Limited<br>
+                    Innov8 Aerocity, Asset-5A, Hospitality District<br>
+                    Near IGI Airport, Aerocity, New Delhi-110037.
+                </td>
+                <td class="page-footer-center">' . e($pageNo) . '/' . e($pageTotal) . '</td>
+                <td class="page-footer-right">
+                    +919560773375 ops@marinecaddie.com<br>
+                    Created on ' . e($createdAt) . '
+                </td>
+            </tr>
+        </table>';
     };
 @endphp
 

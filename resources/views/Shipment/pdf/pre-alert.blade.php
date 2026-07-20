@@ -31,12 +31,21 @@
         .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
         .footer-ref { margin-top: 14px; font-size: 10px; font-weight: bold; }
         .page-footer {
-            margin-top: 16px;
+            margin-top: 18px;
             padding-top: 8px;
-            border-top: 0.5px solid #ddd;
-            font-size: 10px;
-            text-align: right;
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+            color: #222;
+            line-height: 1.35;
         }
+        .page-footer td {
+            vertical-align: top;
+            padding: 0;
+        }
+        .page-footer-left { width: 38%; text-align: left; }
+        .page-footer-center { width: 24%; text-align: center; vertical-align: middle; }
+        .page-footer-right { width: 38%; text-align: right; }
         .summary-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
         .summary-table td { padding: 4px 0; vertical-align: top; }
         .summary-label { width: 38%; font-weight: bold; }
@@ -73,6 +82,24 @@
         'Release' => 'Freight company',
         'Hand Carry' => 'Contact',
         default => 'Flight',
+    };
+
+    $footer = function ($pageNo, $pageTotal) use ($createdAt) {
+        return '
+        <table class="page-footer">
+            <tr>
+                <td class="page-footer-left">
+                    MarineCaddie India Private Limited<br>
+                    Innov8 Aerocity, Asset-5A, Hospitality District<br>
+                    Near IGI Airport, Aerocity, New Delhi-110037.
+                </td>
+                <td class="page-footer-center">' . e($pageNo) . '/' . e($pageTotal) . '</td>
+                <td class="page-footer-right">
+                    +919560773375 ops@marinecaddie.com<br>
+                    Created on ' . e($createdAt) . '
+                </td>
+            </tr>
+        </table>';
     };
 @endphp
 
@@ -151,7 +178,7 @@
         <div>{{ $customerName }}</div>
     </div>
 
-    <div class="page-footer">1 / 2</div>
+    {!! $footer(1, 2) !!}
 </div>
 
 <div class="page">
@@ -211,7 +238,7 @@
             </tr>
         </tbody>
     </table>
-    <div class="page-footer">2 / 2</div>
+    {!! $footer(2, 2) !!}
 </div>
 
 </body>

@@ -510,7 +510,7 @@ class ShipmentPreAlertPdfBuilder
             'Courier' => $shipment->courierLegs->isNotEmpty(),
             'Release' => $shipment->releaseLegs->isNotEmpty(),
             'Hand Carry' => $shipment->handCarryLegs->isNotEmpty(),
-            'On-board delivery' => true,
+            'On-board delivery' => $shipment->onBoardLegs->isNotEmpty(),
             default => false,
         };
     }
