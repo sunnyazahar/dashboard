@@ -180,6 +180,7 @@
                 <th>Cust. value</th>
                 <th>Description</th>
                 <th>Stock no</th>
+                <th>Location</th>
             </tr>
         </thead>
         <tbody>
@@ -193,6 +194,7 @@
                 <td>{{ $row['customs_value'] }}</td>
                 <td class="description-cell">{{ $row['description'] }}</td>
                 <td>{{ $row['stock_number'] }}</td>
+                <td>{{ $row['location'] ?? '—' }}</td>
             </tr>
             @endforeach
             <tr>
@@ -200,7 +202,7 @@
                 <td><strong>{{ $totalPiecesLabel }}</strong></td>
                 <td><strong>{{ $totals['weight'] ?? 0 }} kg</strong></td>
                 <td><strong>{{ number_format((float) ($totals['cbm'] ?? 0), 2) }} CBM</strong></td>
-                <td colspan="3"><strong>{{ $customsValueLabel }}</strong></td>
+                <td colspan="4"><strong>{{ $customsValueLabel }}</strong></td>
             </tr>
         </tbody>
     </table>

@@ -94,6 +94,7 @@ class ShipmentPreAlertPdfBuilder
                     : '—',
                 'description' => $description,
                 'stock_number' => $crr->stock_number ?? '—',
+                'location' => $crr->location ?: '—',
             ];
         });
 

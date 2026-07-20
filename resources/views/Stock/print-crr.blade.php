@@ -188,17 +188,18 @@
                 <td colspan="1">
                     <b>
                         {{ collect([$hubAgentCode, $hubAgentName])->filter()->join(' - ') ?: '—' }}
-                        @if ($crr->location)
-                            / {{ $crr->location }}
-                        @endif
                     </b>
                 </td>
+            </tr>
+            <tr>
+                <td class="label-col">Physical Location</td>
+                <td colspan="1"><b>{{ $crr->location ?: '—' }}</b></td>
             </tr>
             <tr>
                 <td class="label-col">Stock No: </td>
                 <td colspan="1">{{ $crr->stock_number }}</td>
 
-                <td rowspan="14" class="dim-col">
+                <td rowspan="15" class="dim-col">
                     <table class="dim-table">
                         <thead>
                             <tr>
@@ -217,7 +218,7 @@
                                     <td>{{ number_format($pkg->height, 0) }}</td>
                                     <td>{{ number_format($pkg->weight, 0) }}</td>
                                     <td>
-                                        <div style="font-size: 8px;">{{ $pkg->warehouse_location ?: '—' }}</div>
+                                        <div style="font-size: 8px;">{{ $pkg->warehouse_location ?: ($crr->location ?: '—') }}</div>
                                         <div style="margin-top: 2px;">
                                             @if ($pkg->is_dgr)
                                                 <span class="icon-print bg-dgr">DGR</span>

@@ -409,22 +409,9 @@ class CrrController extends Controller
     public function showPrintCrr($id)
     {
         $crr = Crr::with(['packages', 'documents', 'customerVessel.customer'])->findOrFail($id);
-        $hubAgent = Hub::query()
-            ->where('code', $crr->hub_agent)
-            ->orWhere('hub_name', $crr->hub_agent)
-            ->first();
+        $this->applyPrintLocationOverride($crr);
 
-        if (! $hubAgent) {
-            $hubAgent = Agent::query()
-                ->where('code', $crr->hub_agent)
-                ->orWhere('agent_name', $crr->hub_agent)
-                ->first();
-        }
-
-        $hubAgentCode = $hubAgent?->code ?: $crr->hub_code;
-        $hubAgentName = $hubAgent instanceof Hub
-            ? $hubAgent->hub_name
-            : ($hubAgent instanceof Agent ? $hubAgent->agent_name : null);
+        [$hubAgentCode, $hubAgentName] = $this->resolveHubAgentForPrint($crr);
         
         // MT Manager name from user if available, using placeholder like screenshot
         $mt_manager = "Clarence Ng Yao Wei, SIN"; 
@@ -442,10 +429,55 @@ class CrrController extends Controller
     public function showPrintLabels($id)
     {
         $crr = Crr::with(['packages', 'customerVessel.customer'])->findOrFail($id);
-        
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Stock.print-labels', compact('crr'))
+        $this->applyPrintLocationOverride($crr);
+
+        [$hubAgentCode, $hubAgentName] = $this->resolveHubAgentForPrint($crr);
+        $consignee = collect([$hubAgentCode, $hubAgentName])->filter()->join(' - ') ?: ($crr->hub_agent ?: '—');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Stock.print-labels', compact('crr', 'consignee'))
                   ->setPaper([0, 0, 283, 425], 'portrait'); // 100mm x 150mm approx
         return $pdf->stream('Labels-' . $crr->stock_number . '.pdf');
+    }
+
+    /**
+     * Prefer the Physical Location currently entered on the edit form (query string),
+     * so print works even before the CRR is saved.
+     */
+    private function applyPrintLocationOverride(Crr $crr): void
+    {
+        $location = request()->query('location');
+
+        if (is_string($location)) {
+            $location = trim($location);
+            if ($location !== '') {
+                $crr->location = $location;
+            }
+        }
+    }
+
+    /**
+     * @return array{0: ?string, 1: ?string} [code, name]
+     */
+    private function resolveHubAgentForPrint(Crr $crr): array
+    {
+        $hubAgent = Hub::query()
+            ->where('code', $crr->hub_agent)
+            ->orWhere('hub_name', $crr->hub_agent)
+            ->first();
+
+        if (! $hubAgent) {
+            $hubAgent = Agent::query()
+                ->where('code', $crr->hub_agent)
+                ->orWhere('agent_name', $crr->hub_agent)
+                ->first();
+        }
+
+        $code = $hubAgent?->code ?: $crr->hub_code;
+        $name = $hubAgent instanceof Hub
+            ? $hubAgent->hub_name
+            : ($hubAgent instanceof Agent ? $hubAgent->agent_name : null);
+
+        return [$code, $name];
     }
 
     /**

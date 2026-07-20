@@ -74,6 +74,7 @@ class ShipmentManifestPdfBuilder
                 'description' => $crr->content ?? 'Shipspares',
                 'stock_number' => $crr->stock_number ?? '—',
                 'transit_id' => $crr->transit_id ?? '',
+                'location' => $crr->location ?: '—',
             ];
         });
 
@@ -88,7 +89,7 @@ class ShipmentManifestPdfBuilder
                 $packageIndex++;
                 $packingRows[] = [
                     'stock_number' => $crr->stock_number ?? '—',
-                    'position' => $crr->hub_code ?? '—',
+                    'position' => $crr->location ?: ($crr->hub_code ?? '—'),
                     'supplier' => $crr->supplier ?? '—',
                     'po_number' => $poNumbers ?: '—',
                     'item_label' => $packageIndex . ' of ' . max($totalPackages, 1),
@@ -106,7 +107,7 @@ class ShipmentManifestPdfBuilder
                 $packageIndex++;
                 $packingRows[] = [
                     'stock_number' => $crr->stock_number ?? '—',
-                    'position' => $package->warehouse_location ?: ($crr->hub_code ?? '—'),
+                    'position' => $package->warehouse_location ?: ($crr->location ?: ($crr->hub_code ?? '—')),
                     'supplier' => $crr->supplier ?? '—',
                     'po_number' => $poNumbers ?: '—',
                     'item_label' => $packageIndex . ' of ' . max($totalPackages, 1),

@@ -1109,11 +1109,11 @@
                                                 {{ $crr->accept ? 'Accepted' : 'Accept CRR' }}
                                             </button>
                                             <a href="{{ route('stocks.print-labels', $crr->id) }}" target="_blank"
-                                                class="btn btn-header-outline"
+                                                class="btn btn-header-outline js-print-with-location"
                                                 style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Print
                                                 labels</a>
                                             <a href="{{ route('stocks.print-crr', $crr->id) }}" target="_blank"
-                                                class="btn btn-header-outline"
+                                                class="btn btn-header-outline js-print-with-location"
                                                 style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Print
                                                 CRR</a>
                                             <button type="button" class="btn-more-circle">
@@ -2353,6 +2353,26 @@
             fixedHeaderOffset();
             $(window).on('resize', fixedHeaderOffset);
             // ──────────────────────────────────────────────────────────────
+
+            // Pass current Physical Location into print PDFs (even before save).
+            $(document).on('click', '.js-print-with-location', function (e) {
+                var baseHref = $(this).attr('href');
+                if (!baseHref) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                var locationValue = ($('input[name="location"]').val() || '').trim();
+                var url = new URL(baseHref, window.location.origin);
+                if (locationValue) {
+                    url.searchParams.set('location', locationValue);
+                } else {
+                    url.searchParams.delete('location');
+                }
+
+                window.open(url.toString(), '_blank');
+            });
 
             // Data for dynamic rows
             var hubs = @json($hubs);

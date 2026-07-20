@@ -377,6 +377,17 @@
                     <strong>{{ $maskedEmail }}</strong>
                 </p>
 
+                @if (! empty($localOtp))
+                    <div class="alert {{ ! empty($otpMailFailed) ? 'alert-warning' : 'alert-info' }} alert-otp mb-0">
+                        @if (! empty($otpMailFailed))
+                            Email could not be sent from this machine (SMTP blocked/unreachable).
+                        @else
+                            Local development mode.
+                        @endif
+                        Your code is <strong style="letter-spacing: 2px; font-size: 15px;">{{ $localOtp }}</strong>
+                    </div>
+                @endif
+
                 @if (session('status'))
                     <div class="alert alert-success alert-otp mb-0">{{ session('status') }}</div>
                 @endif

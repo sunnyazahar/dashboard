@@ -106,6 +106,7 @@ class ShipmentPdfFingerprintService
                     'customs_value' => $this->normalizeValue($crr->customs_value),
                     'currency' => $crr->currency,
                     'hub_agent' => $crr->hub_agent,
+                    'location' => $crr->location,
                     'transit_id' => $crr->transit_id,
                     'expected_delivery_date' => $this->normalizeValue($crr->expected_delivery_date),
                     'hs_code' => $crr->hs_code,

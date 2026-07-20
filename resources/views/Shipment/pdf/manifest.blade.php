@@ -106,6 +106,7 @@
                 <th>Cust. value</th>
                 <th>Description</th>
                 <th>Stock no / Transit id</th>
+                <th>Location</th>
             </tr>
         </thead>
         <tbody>
@@ -119,6 +120,7 @@
                 <td>{{ $row['customs_value'] }} {{ $row['currency'] }}</td>
                 <td>{{ $row['description'] }}</td>
                 <td>{{ $row['stock_number'] }}@if($row['transit_id']) / {{ $row['transit_id'] }}@endif</td>
+                <td>{{ $row['location'] ?? '—' }}</td>
             </tr>
             @endforeach
             <tr>
@@ -127,7 +129,7 @@
                 <td><strong>{{ $totals['weight'] }} kg</strong></td>
                 <td><strong>{{ number_format($totals['cbm'], 2) }} CBM</strong></td>
                 <td><strong>{{ $totals['customs_value'] }} {{ $totals['currency'] }}</strong></td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
             </tr>
         </tbody>
     </table>

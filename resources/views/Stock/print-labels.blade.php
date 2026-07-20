@@ -19,6 +19,7 @@
 
         .label-page {
             page-break-after: always;
+            page-break-inside: avoid;
             position: relative;
             height: auto;
         }
@@ -29,7 +30,7 @@
 
         .header {
             width: 100%;
-            margin-bottom: 5mm;
+            margin-bottom: 4mm;
         }
 
         .header-left {
@@ -70,13 +71,13 @@
         }
 
         .field-group {
-            margin-bottom: 1.5mm;
+            margin-bottom: 1.2mm;
         }
 
         .field-label {
             font-size: 10px;
             color: #333;
-            margin-bottom: 1mm;
+            margin-bottom: 0.5mm;
         }
 
         .field-value {
@@ -86,27 +87,25 @@
         }
 
         .small-field-group {
-            margin-top: 5mm;
+            margin-top: 3mm;
         }
 
         .small-row {
-            margin-bottom: 2mm;
+            margin-bottom: 1.5mm;
             font-size: 11px;
             vertical-align: middle;
+            line-height: 1.2;
         }
 
         .small-label {
             display: inline-block;
-            width: 25mm;
+            width: 32mm;
             vertical-align: middle;
-            height: 15px;
         }
 
         .small-value {
             font-weight: bold;
             vertical-align: middle;
-            height: 15px;
-            margin-bottom: 15px;
         }
 
         .footer-date {
@@ -159,7 +158,7 @@
 
             <div class="field-group">
                 <div class="field-label">Consignee</div>
-                <div class="field-value" style="font-size: 12px;">{{ $crr->supplier ?: '—' }}</div>
+                <div class="field-value" style="font-size: 12px;">{{ $consignee }}</div>
             </div>
             <div class="field-group">
                 <div class="field-label">Supplier</div>
@@ -168,8 +167,13 @@
 
             <div class="small-field-group">
                 <div class="small-row">
+                    <span class="small-label">Physical Location</span>
+                    <span class="small-value">{{ $crr->location ?: '—' }}</span>
+                </div>
+
+                <div class="small-row">
                     <span class="small-label">Pos</span>
-                    <span class="small-value">{{ $pkg->warehouse_location ?: '—' }}</span>
+                    <span class="small-value">{{ $pkg->warehouse_location ?: ($crr->location ?: '—') }}</span>
                 </div>
 
                 <div class="small-row">

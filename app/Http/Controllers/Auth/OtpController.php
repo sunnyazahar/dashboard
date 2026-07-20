@@ -31,6 +31,12 @@ class OtpController extends Controller
 
         if (! $request->session()->has('login_otp_hash')) {
             $this->issueOtp($request);
+        } elseif (
+            app()->environment(['local', 'development', 'testing'])
+            && ! $request->session()->has('login_otp_local')
+        ) {
+            // Older local sessions may have a hash but no on-screen debug code.
+            $this->issueOtp($request);
         }
 
         $user = $request->user();
@@ -38,6 +44,8 @@ class OtpController extends Controller
         return view('auth.otp', [
             'maskedEmail' => $this->maskEmail((string) $user->email),
             'resendAvailableIn' => $this->resendAvailableIn($request),
+            'localOtp' => $this->localDebugOtp($request),
+            'otpMailFailed' => (bool) $request->session()->get('login_otp_mail_failed'),
         ]);
     }
 
@@ -66,7 +74,13 @@ class OtpController extends Controller
             ]);
         }
 
-        $request->session()->forget(['login_otp_hash', 'login_otp_expires_at', 'login_otp_last_sent_at']);
+        $request->session()->forget([
+            'login_otp_hash',
+            'login_otp_expires_at',
+            'login_otp_last_sent_at',
+            'login_otp_local',
+            'login_otp_mail_failed',
+        ]);
         $request->session()->put('otp_verified', true);
         $this->terminateOtherSessions($request);
         $loginActivityService->record($request, $request->user());
@@ -109,27 +123,51 @@ class OtpController extends Controller
 
     private function deliverOtp(?string $email, string $otp): void
     {
-        if (! $email) {
-            return;
+        $delivered = false;
+
+        if ($email) {
+            try {
+                Mail::send(
+                    'emails.auth.login-otp',
+                    [
+                        'otp' => $otp,
+                        'expiresInMinutes' => self::OTP_TTL_MINUTES,
+                    ],
+                    function ($message) use ($email) {
+                        $message->to($email)->subject('Your MarineCaddie verification code');
+                    },
+                );
+                $delivered = true;
+            } catch (\Throwable $e) {
+                Log::warning('OTP email failed to send: ' . $e->getMessage(), [
+                    'email' => $email,
+                ]);
+            }
         }
 
-        try {
-            Mail::send(
-                'emails.auth.login-otp',
-                [
-                    'otp' => $otp,
-                    'expiresInMinutes' => self::OTP_TTL_MINUTES,
-                ],
-                function ($message) use ($email) {
-                    $message->to($email)->subject('Your MarineCaddie verification code');
-                },
-            );
-        } catch (\Throwable $e) {
-            Log::warning('OTP email failed to send: ' . $e->getMessage(), [
+        // Local/dev only: surface the code when SMTP is unreachable (common on local networks).
+        if (app()->environment(['local', 'development', 'testing'])) {
+            session([
+                'login_otp_local' => $otp,
+                'login_otp_mail_failed' => ! $delivered,
+            ]);
+            Log::info('Local OTP code issued', [
                 'email' => $email,
+                'otp' => $otp,
+                'mail_delivered' => $delivered,
             ]);
         }
+    }
 
+    private function localDebugOtp(Request $request): ?string
+    {
+        if (! app()->environment(['local', 'development', 'testing'])) {
+            return null;
+        }
+
+        $otp = $request->session()->get('login_otp_local');
+
+        return is_string($otp) && $otp !== '' ? $otp : null;
     }
 
     private function maskEmail(string $email): string
