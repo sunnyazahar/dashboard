@@ -151,14 +151,6 @@
         <div>{{ $customerName }}</div>
     </div>
 
-    <div class="footer-ref">
-        Combined PO document link<br>
-        @if($combinedPoUrl)
-            <a href="{{ $combinedPoUrl }}">{{ $combinedPoReference }}</a>
-        @else
-            {{ $combinedPoReference }}
-        @endif
-    </div>
     <div class="page-footer">1 / 2</div>
 </div>
 

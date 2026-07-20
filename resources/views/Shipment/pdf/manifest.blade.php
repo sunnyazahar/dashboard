@@ -41,7 +41,7 @@
         .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
         .pending-eta { font-size: 10px; color: #666; margin: 6px 0 2px; }
         .onboard-receipt {
-            margin-top: 28px;
+            margin-top: 30px;
             width: 100%;
         }
         .onboard-receipt-labels {
@@ -53,6 +53,7 @@
             font-size: 11px;
             color: #222;
             vertical-align: top;
+            width: 33.33%;
         }
         .onboard-receipt-space {
             height: 48px;
@@ -90,12 +91,8 @@
         </table>';
     };
 
-    $footer = function ($pageNo, $pageTotal, $combinedPoReference, $withPoLink = true) {
-        $po = $withPoLink
-            ? '<div class="footer-ref">Combined PO document link<br>' . e($combinedPoReference) . '</div>'
-            : '';
-
-        return $po . '<div class="page-footer">' . e($pageNo) . ' / ' . e($pageTotal) . '</div>';
+    $footer = function ($pageNo, $pageTotal) {
+        return '<div class="page-footer">' . e($pageNo) . ' / ' . e($pageTotal) . '</div>';
     };
 @endphp
 
@@ -124,7 +121,7 @@
     </table>
     <div class="section-title" style="margin-top:10px;">Comments to hub</div>
     <div class="comments">{{ $commentsHub ?: '—' }}</div>
-    {!! $footer('1', '3', $combinedPoReference) !!}
+    {!! $footer('1', '3') !!}
 </div>
 
 {{-- Manifest / Invoice --}}
@@ -187,7 +184,8 @@
             <table class="onboard-receipt-labels">
                 <tr>
                     <td style="text-align:left;">Date received</td>
-                    <td style="text-align:right;">Stamp</td>
+                    <td style="text-align:center;">Stamp</td>
+                    <td></td>
                 </tr>
             </table>
             <div class="onboard-receipt-space"></div>
@@ -195,7 +193,7 @@
             <div class="onboard-receipt-signatory">{{ $onBoardSignatory }}</div>
         </div>
     @endif
-    {!! $footer('2', '3', $combinedPoReference) !!}
+    {!! $footer('2', '3') !!}
 </div>
 
 {{-- Packing list (single page) --}}
@@ -254,7 +252,7 @@
         <tr><td class="totals-label">Total CBM</td><td>{{ number_format($totals['cbm'], 2) }} m³</td></tr>
         <tr><td class="totals-label">Total CBFT</td><td>{{ number_format($totals['cbft'], 2) }} ft³</td></tr>
     </table>
-    {!! $footer('3', '3', $combinedPoReference) !!}
+    {!! $footer('3', '3') !!}
 </div>
 
 </body>
