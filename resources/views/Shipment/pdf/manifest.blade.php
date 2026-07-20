@@ -258,7 +258,7 @@
             @foreach ($packingRows as $index => $row)
                 @if ($row['pending_eta'] && ($index === 0 || ($packingRows[$index - 1]['stock_number'] ?? null) !== $row['stock_number']))
                 <tr>
-                    <td colspan="7" class="pending-eta">Pending ETA: {{ $row['pending_eta'] }}</td>
+                    <td colspan="7" class="pending-eta" style="font-weight: bold;">In Transit &nbsp;&nbsp;  Transit ID: &nbsp;&nbsp; {{ $row['transit_id'] ?? '' }} &nbsp;&nbsp; ETA: &nbsp;&nbsp; {{ $row['pending_eta'] }}</td>
                 </tr>
                 @endif
                 <tr>

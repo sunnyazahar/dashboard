@@ -95,6 +95,7 @@ class ShipmentManifestPdfBuilder
                     'item_label' => $packageIndex . ' of ' . max($totalPackages, 1),
                     'weight_label' => '0 of ' . round($totalWeight, 0) . ' kg',
                     'dimensions' => '—',
+                    'transit_id' => $crr->transit_id ?? '',
                     'pending_eta' => $crr->expected_delivery_date
                         ? Carbon::parse($crr->expected_delivery_date)->format('d.m.Y')
                         : null,
@@ -113,6 +114,7 @@ class ShipmentManifestPdfBuilder
                     'item_label' => $packageIndex . ' of ' . max($totalPackages, 1),
                     'weight_label' => round((float) $package->weight, 0) . ' of ' . round($totalWeight, 0) . ' kg',
                     'dimensions' => $this->formatDimensions($package->length, $package->width, $package->height),
+                    'transit_id' => $crr->transit_id ?? '',
                     'pending_eta' => $crr->expected_delivery_date
                         ? Carbon::parse($crr->expected_delivery_date)->format('d.m.Y')
                         : null,
