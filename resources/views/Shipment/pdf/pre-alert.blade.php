@@ -6,7 +6,13 @@
     <style>
         @page { size: A4; margin: 12mm 10mm; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #222; line-height: 1.4; margin: 0; }
-        .page { page-break-after: always; }
+        .page {
+            position: relative;
+            min-height: 273mm;
+            padding-bottom: 42px;
+            box-sizing: border-box;
+            page-break-after: always;
+        }
         .page:last-child { page-break-after: auto; }
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         .header-table td { vertical-align: top; }
@@ -30,9 +36,15 @@
         .notify-title { font-size: 12px; font-weight: bold; margin: 12px 0 6px; }
         .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
         .footer-ref { margin-top: 14px; font-size: 10px; font-weight: bold; }
+        .page-footer-wrap {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
         .page-footer {
-            margin-top: 18px;
-            padding-top: 8px;
+            margin: 0;
+            padding: 0;
             width: 100%;
             border-collapse: collapse;
             font-size: 8px;
@@ -86,20 +98,22 @@
 
     $footer = function ($pageNo, $pageTotal) use ($createdAt) {
         return '
-        <table class="page-footer">
-            <tr>
-                <td class="page-footer-left">
-                    MarineCaddie India Private Limited<br>
-                    Innov8 Aerocity, Asset-5A, Hospitality District<br>
-                    Near IGI Airport, Aerocity, New Delhi-110037.
-                </td>
-                <td class="page-footer-center">' . e($pageNo) . '/' . e($pageTotal) . '</td>
-                <td class="page-footer-right">
-                    +919560773375 ops@marinecaddie.com<br>
-                    Created on ' . e($createdAt) . '
-                </td>
-            </tr>
-        </table>';
+        <div class="page-footer-wrap">
+            <table class="page-footer">
+                <tr>
+                    <td class="page-footer-left">
+                        MarineCaddie India Private Limited<br>
+                        Innov8 Aerocity, Asset-5A, Hospitality District<br>
+                        Near IGI Airport, Aerocity, New Delhi-110037.
+                    </td>
+                    <td class="page-footer-center">' . e($pageNo) . '/' . e($pageTotal) . '</td>
+                    <td class="page-footer-right">
+                        +919560773375 ops@marinecaddie.com<br>
+                        Created on ' . e($createdAt) . '
+                    </td>
+                </tr>
+            </table>
+        </div>';
     };
 @endphp
 

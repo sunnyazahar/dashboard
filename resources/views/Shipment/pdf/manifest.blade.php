@@ -6,7 +6,13 @@
     <style>
         @page { size: A4; margin: 12mm 10mm; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #222; line-height: 1.4; margin: 0; }
-        .page { page-break-after: always; }
+        .page {
+            position: relative;
+            min-height: 273mm;
+            padding-bottom: 42px;
+            box-sizing: border-box;
+            page-break-after: always;
+        }
         .page:last-child { page-break-after: auto; }
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         .header-table td { vertical-align: top; }
@@ -30,9 +36,15 @@
         .totals-table td { padding: 3px 0; }
         .totals-label { width: 38%; font-weight: bold; }
         .footer-ref { margin-top: 14px; font-size: 10px; font-weight: bold; }
+        .page-footer-wrap {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
         .page-footer {
-            margin-top: 18px;
-            padding-top: 8px;
+            margin: 0;
+            padding: 0;
             width: 100%;
             border-collapse: collapse;
             font-size: 8px;
@@ -79,17 +91,13 @@
             font-weight: bold;
         }
         .page-manifest-invoice {
-            position: relative;
-            min-height: 255mm;
+            padding-bottom: 130px;
         }
         .page-manifest-invoice .onboard-receipt-wrap {
             position: absolute;
             left: 0;
             right: 0;
-            bottom: 20;
-        }
-        .page-manifest-invoice .page-footer {
-            margin-top: 10px;
+            bottom: 42px;
         }
     </style>
 </head>
@@ -118,20 +126,22 @@
 
     $footer = function ($pageNo, $pageTotal) use ($createdAt) {
         return '
-        <table class="page-footer">
-            <tr>
-                <td class="page-footer-left">
-                    MarineCaddie India Private Limited<br>
-                    Innov8 Aerocity, Asset-5A, Hospitality District<br>
-                    Near IGI Airport, Aerocity, New Delhi-110037.
-                </td>
-                <td class="page-footer-center">' . e($pageNo) . '/' . e($pageTotal) . '</td>
-                <td class="page-footer-right">
-                    +919560773375 ops@marinecaddie.com<br>
-                    Created on ' . e($createdAt) . '
-                </td>
-            </tr>
-        </table>';
+        <div class="page-footer-wrap">
+            <table class="page-footer">
+                <tr>
+                    <td class="page-footer-left">
+                        MarineCaddie India Private Limited<br>
+                        Innov8 Aerocity, Asset-5A, Hospitality District<br>
+                        Near IGI Airport, Aerocity, New Delhi-110037.
+                    </td>
+                    <td class="page-footer-center">' . e($pageNo) . '/' . e($pageTotal) . '</td>
+                    <td class="page-footer-right">
+                        +919560773375 ops@marinecaddie.com<br>
+                        Created on ' . e($createdAt) . '
+                    </td>
+                </tr>
+            </table>
+        </div>';
     };
 @endphp
 
@@ -165,7 +175,7 @@
 </div>
 
 {{-- Manifest / Invoice --}}
-<div class="page page-manifest-invoice">
+<div class="page{{ ($serviceLabel ?? '') === 'On-board delivery' ? ' page-manifest-invoice' : '' }}">
     {!! $header('Manifest / Invoice') !!}
     <div class="vessel-heading">{{ $vesselLine }}</div>
     <table class="data-table">
@@ -219,8 +229,8 @@
         <tr><td class="totals-label">Contact</td><td>{{ $consigneeContact }}, {{ $consigneeContactEmail }}, {{ $consigneeContactPhone }}</td></tr>
         <tr><td class="totals-label">Customer</td><td>{{ $customerName }}</td></tr>
     </table>
-    <div class="onboard-receipt-wrap">
-        @if (($serviceLabel ?? '') === 'On-board delivery')
+    @if (($serviceLabel ?? '') === 'On-board delivery')
+        <div class="onboard-receipt-wrap">
             <div class="onboard-receipt">
                 <table class="onboard-receipt-labels">
                     <tr>
@@ -233,9 +243,9 @@
                 <div class="onboard-receipt-line"></div>
                 <div class="onboard-receipt-signatory">{{ $onBoardSignatory }}</div>
             </div>
-        @endif
-        {!! $footer('2', '3') !!}
-    </div>
+        </div>
+    @endif
+    {!! $footer('2', '3') !!}
 </div>
 
 {{-- Packing list (single page) --}}
