@@ -262,6 +262,8 @@ class ShipmentManifestPdfBuilder
                 $customer = Customer::find($id);
                 if ($customer) {
                     $result['name'] = $customer->customer_name;
+                    $result['phone'] = $customer->phone;
+                    $result['email'] = $customer->email;
                 }
                 break;
             case 'supplier':
@@ -273,7 +275,7 @@ class ShipmentManifestPdfBuilder
                         $supplier->city,
                         $supplier->zip_code,
                     ]);
-                    $result['phone'] = $supplier->phone;
+                    $result['phone'] = $supplier->phone_number;
                     $result['email'] = $supplier->email;
                 }
                 break;
@@ -287,7 +289,7 @@ class ShipmentManifestPdfBuilder
                         $company->zip_code,
                         $company->country?->name,
                     ]);
-                    $result['phone'] = $company->phone;
+                    $result['phone'] = $company->phone_number;
                     $result['email'] = $company->email;
                     $result['port_code'] = $company->port_code;
                 }

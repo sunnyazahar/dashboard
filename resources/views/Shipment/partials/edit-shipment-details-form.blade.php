@@ -180,7 +180,7 @@
             </select>
         </div>
         <div class="form-group-custom">
-            <label>Att</label>
+            <label>Contact person</label>
             <input type="text" name="consignee_att" class="form-control-sm-custom" value="{{ old('consignee_att', $shipment->consignee_att) }}">
         </div>
         <div class="form-group-custom">

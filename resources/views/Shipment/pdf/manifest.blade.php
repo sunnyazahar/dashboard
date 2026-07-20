@@ -126,6 +126,7 @@
         <tr><td class="field-label"></td><td>{{ $consigneeAddress }}</td></tr>
         <tr><td class="field-label">E-mail</td><td>{{ $consigneeEmail }}</td></tr>
         <tr><td class="field-label">Phone</td><td>{{ $consigneePhone }}</td></tr>
+        <tr><td class="field-label">Contact Person</td><td>{{ $consigneeContact ?: '—' }}</td></tr>
         <tr><td class="field-label">Port of departure</td><td>{{ $departurePort }}</td></tr>
         <tr><td class="field-label">Port of destination</td><td>{{ $destinationPort }}</td></tr>
         <tr><td class="field-label">Location</td><td>{{ $shipmentLocation }}</td></tr>
