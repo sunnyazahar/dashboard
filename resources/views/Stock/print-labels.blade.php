@@ -193,10 +193,9 @@
                 </div>
 
                 <div class="small-row">
-                    <span class="small-label"
-                        style="font-weight:bold; font-size:14px;">Transit Id</span>
+                    <span class="small-label">Transit Id</span>
                     <span class="small-value"
-                        style="font-weight:bold; font-size:14px;">{{ strtoupper($crr->transit_type ?: 'ETL') }} - {{ $crr->customs_doc_reference ?: ($crr->transit_id ?: '—') }}</span>
+                        style="font-weight:bold; font-size:12px;">{{ strtoupper($crr->transit_type ?: 'ETL') }} - {{ $crr->customs_doc_reference ?: ($crr->transit_id ?: '—') }}</span>
                 </div>
             </div>
         </div>
