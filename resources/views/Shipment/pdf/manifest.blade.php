@@ -15,6 +15,10 @@
         .company { font-size: 10px; font-weight: bold; }
         .muted { color: #555; }
         .header-right { text-align: right; font-size: 8px; }
+        .brand-logo { line-height: 1.05; margin-bottom: 6px; }
+        .brand-marine { font-size: 18px; font-weight: bold; color: #002D5B; }
+        .brand-caddie { font-size: 18px; font-weight: bold; color: #349DDA; }
+        .brand-tagline { display: block; font-size: 7px; color: #FF6B03; font-weight: bold; margin-top: 2px; }
         .section-title { font-size: 11px; font-weight: bold; margin: 14px 0 8px; }
         .field-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
         .field-table td { padding: 2px 0; vertical-align: top; }
@@ -38,13 +42,17 @@
         return '
         <table class="header-table">
             <tr>
-                <td style="width:70%;">
+                <td style="width:62%;">
                     <div class="doc-title">' . e($docTitle) . '</div>
                     <div class="doc-subtitle">' . e($titleLine) . '</div>
                     <div class="company">' . e($companyName) . '</div>
                     <div class="muted">' . e($companyAddress) . '</div>
                 </td>
-                <td class="header-right" style="width:30%;">
+                <td class="header-right" style="width:38%;">
+                    <div class="brand-logo">
+                        <span class="brand-marine">Marine</span><span class="brand-caddie">Caddie</span>
+                        <span class="brand-tagline">Smart Caddies, Smarter Logistics !</span>
+                    </div>
                     <div>' . e($pageNo) . ' / ' . e($pageTotal) . '</div>
                     <div>' . e($companyPhone) . ' ' . e($companyEmail) . '</div>
                     <div>Created on ' . e($createdAt) . '</div>
@@ -54,16 +62,16 @@
     };
 @endphp
 
-{{-- Page 1: Shipping instructions --}}
+{{-- Shipping instructions (single page) --}}
 <div class="page">
-    {!! $header('Shipping instructions', '1', '2') !!}
+    {!! $header('Shipping instructions', '1', '1') !!}
     <table class="field-table">
         <tr><td class="field-label">Shipped through</td><td>{{ $shippedThrough }}</td></tr>
         <tr><td class="field-label">Invoice to</td><td>{{ $invoiceTo }}</td></tr>
     </table>
-    <div class="section-title">Please prepare shipment to</div>
+    <div class="section-title" style="margin-top:10px;">Please prepare shipment to</div>
     <div style="font-weight:bold;">{{ $vesselLine }}</div>
-    <table class="field-table" style="margin-top:8px;">
+    <table class="field-table" style="margin-top:6px;">
         <tr><td class="field-label">C/O</td><td>{{ $consigneeName }}</td></tr>
         <tr><td class="field-label"></td><td>{{ $consigneeAddress }}</td></tr>
         <tr><td class="field-label">E-mail</td><td>{{ $consigneeEmail }}</td></tr>
@@ -77,18 +85,12 @@
         <tr><td class="field-label">Deadline arrival</td><td>{{ $deadlineArrival }}</td></tr>
         <tr><td class="field-label">Document handled by</td><td>{{ $documentHandledBy }}</td></tr>
     </table>
-    <div class="footer-ref">Combined PO document link<br>{{ $combinedPoReference }}</div>
-</div>
-
-{{-- Page 2: Shipping instructions (comments) --}}
-<div class="page">
-    {!! $header('Shipping instructions', '2', '2') !!}
-    <div class="section-title">Comments to hub</div>
+    <div class="section-title" style="margin-top:10px;">Comments to hub</div>
     <div class="comments">{{ $commentsHub ?: '—' }}</div>
     <div class="footer-ref">Combined PO document link<br>{{ $combinedPoReference }}</div>
 </div>
 
-{{-- Page 3: Manifest / Invoice --}}
+{{-- Manifest / Invoice --}}
 <div class="page">
     {!! $header('Manifest / Invoice', '1', '1') !!}
     <div class="vessel-heading">{{ $vesselLine }}</div>

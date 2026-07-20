@@ -15,6 +15,10 @@
         .company { font-size: 10px; font-weight: bold; }
         .muted { color: #555; }
         .header-right { text-align: right; font-size: 8px; }
+        .brand-logo { line-height: 1.05; margin-bottom: 6px; }
+        .brand-marine { font-size: 18px; font-weight: bold; color: #002D5B; }
+        .brand-caddie { font-size: 18px; font-weight: bold; color: #349DDA; }
+        .brand-tagline { display: block; font-size: 7px; color: #FF6B03; font-weight: bold; margin-top: 2px; }
         .section-title { font-size: 11px; font-weight: bold; margin: 14px 0 8px; }
         .expected-line { margin: 0 0 10px; font-size: 9px; }
         .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 8px; }
@@ -39,13 +43,17 @@
         return '
         <table class="header-table">
             <tr>
-                <td style="width:70%;">
+                <td style="width:62%;">
                     <div class="doc-title">Pre-alert</div>
                     <div class="doc-subtitle">' . e($headerSubtitle) . '</div>
                     <div class="company">' . e($companyName) . '</div>
                     <div class="muted">' . e($companyAddress) . '</div>
                 </td>
-                <td class="header-right" style="width:30%;">
+                <td class="header-right" style="width:38%;">
+                    <div class="brand-logo">
+                        <span class="brand-marine">Marine</span><span class="brand-caddie">Caddie</span>
+                        <span class="brand-tagline">Smart Caddies, Smarter Logistics !</span>
+                    </div>
                     <div>' . e($pageNo) . ' / ' . e($pageTotal) . '</div>
                     <div>' . e($companyPhone) . ' ' . e($companyEmail) . '</div>
                     <div>Created on ' . e($createdAt) . '</div>
