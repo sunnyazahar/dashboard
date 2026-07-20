@@ -160,7 +160,7 @@
                 <div class="field-label">Physical Location</div>
                 <div class="field-value" style="font-size: 12px;">{{ $crr->location ?: '—' }}</div>
             </div>
-            <div class="field-group">
+            <div class="field-group margin-top-5">
                 <div class="field-label">To</div>
                 <div class="field-value"> MV {{ $crr->vessel_name ?: '—' }}</div>
             </div>
