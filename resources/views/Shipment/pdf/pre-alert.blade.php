@@ -30,6 +30,13 @@
         .notify-title { font-size: 10px; font-weight: bold; margin: 12px 0 6px; }
         .vessel-heading { font-size: 10px; font-weight: bold; margin: 10px 0 6px; }
         .footer-ref { margin-top: 16px; font-size: 8px; font-weight: bold; }
+        .page-footer {
+            margin-top: 18px;
+            padding-top: 8px;
+            border-top: 0.5px solid #ddd;
+            font-size: 8px;
+            text-align: right;
+        }
         .summary-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 9px; }
         .summary-table td { padding: 3px 0; vertical-align: top; }
         .summary-label { width: 35%; font-weight: bold; }
@@ -39,7 +46,7 @@
 <body>
 
 @php
-    $header = function ($pageNo, $pageTotal) use ($headerSubtitle, $companyName, $companyAddress, $companyPhone, $companyEmail, $createdAt) {
+    $header = function () use ($headerSubtitle, $companyName, $companyAddress) {
         return '
         <table class="header-table">
             <tr>
@@ -54,9 +61,6 @@
                         <span class="brand-marine">Marine</span><span class="brand-caddie">Caddie</span>
                         <span class="brand-tagline">Smart Caddies, Smarter Logistics !</span>
                     </div>
-                    <div>' . e($pageNo) . ' / ' . e($pageTotal) . '</div>
-                    <div>' . e($companyPhone) . ' ' . e($companyEmail) . '</div>
-                    <div>Created on ' . e($createdAt) . '</div>
                 </td>
             </tr>
         </table>';
@@ -73,7 +77,7 @@
 @endphp
 
 <div class="page">
-    {!! $header('1', '2') !!}
+    {!! $header() !!}
 
     <div class="section-title">Freight details</div>
     <div class="expected-line">{{ $expectedLine }}</div>
@@ -155,10 +159,11 @@
             {{ $combinedPoReference }}
         @endif
     </div>
+    <div class="page-footer">1 / 2</div>
 </div>
 
 <div class="page">
-    {!! $header('2', '2') !!}
+    {!! $header() !!}
 
     <div class="notify-title">This is to notify incoming shipment to</div>
     <div class="vessel-heading">{{ $vesselLine }}</div>
@@ -214,6 +219,7 @@
             </tr>
         </tbody>
     </table>
+    <div class="page-footer">2 / 2</div>
 </div>
 
 </body>

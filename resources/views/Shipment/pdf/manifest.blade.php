@@ -30,6 +30,13 @@
         .totals-table td { padding: 2px 0; }
         .totals-label { width: 35%; font-weight: bold; }
         .footer-ref { margin-top: 16px; font-size: 8px; font-weight: bold; }
+        .page-footer {
+            margin-top: 18px;
+            padding-top: 8px;
+            border-top: 0.5px solid #ddd;
+            font-size: 8px;
+            text-align: right;
+        }
         .comments { white-space: pre-wrap; font-size: 8px; margin-top: 8px; }
         .vessel-heading { font-size: 10px; font-weight: bold; margin: 10px 0 6px; }
         .pending-eta { font-size: 8px; color: #666; margin: 6px 0 2px; }
@@ -38,7 +45,7 @@
 <body>
 
 @php
-    $header = function ($docTitle, $pageNo, $pageTotal) use ($titleLine, $companyName, $companyAddress, $companyPhone, $companyEmail, $createdAt) {
+    $header = function ($docTitle) use ($titleLine, $companyName, $companyAddress) {
         return '
         <table class="header-table">
             <tr>
@@ -53,18 +60,23 @@
                         <span class="brand-marine">Marine</span><span class="brand-caddie">Caddie</span>
                         <span class="brand-tagline">Smart Caddies, Smarter Logistics !</span>
                     </div>
-                    <div>' . e($pageNo) . ' / ' . e($pageTotal) . '</div>
-                    <div>' . e($companyPhone) . ' ' . e($companyEmail) . '</div>
-                    <div>Created on ' . e($createdAt) . '</div>
                 </td>
             </tr>
         </table>';
+    };
+
+    $footer = function ($pageNo, $pageTotal, $combinedPoReference, $withPoLink = true) {
+        $po = $withPoLink
+            ? '<div class="footer-ref">Combined PO document link<br>' . e($combinedPoReference) . '</div>'
+            : '';
+
+        return $po . '<div class="page-footer">' . e($pageNo) . ' / ' . e($pageTotal) . '</div>';
     };
 @endphp
 
 {{-- Shipping instructions (single page) --}}
 <div class="page">
-    {!! $header('Shipping instructions', '1', '1') !!}
+    {!! $header('Shipping instructions') !!}
     <table class="field-table">
         <tr><td class="field-label">Shipped through</td><td>{{ $shippedThrough }}</td></tr>
         <tr><td class="field-label">Invoice to</td><td>{{ $invoiceTo }}</td></tr>
@@ -87,12 +99,12 @@
     </table>
     <div class="section-title" style="margin-top:10px;">Comments to hub</div>
     <div class="comments">{{ $commentsHub ?: '—' }}</div>
-    <div class="footer-ref">Combined PO document link<br>{{ $combinedPoReference }}</div>
+    {!! $footer('1', '4', $combinedPoReference) !!}
 </div>
 
 {{-- Manifest / Invoice --}}
 <div class="page">
-    {!! $header('Manifest / Invoice', '1', '1') !!}
+    {!! $header('Manifest / Invoice') !!}
     <div class="vessel-heading">{{ $vesselLine }}</div>
     <table class="data-table">
         <thead>
@@ -145,12 +157,12 @@
         <tr><td class="totals-label">Contact</td><td>{{ $consigneeContact }}, {{ $consigneeContactEmail }}, {{ $consigneeContactPhone }}</td></tr>
         <tr><td class="totals-label">Customer</td><td>{{ $customerName }}</td></tr>
     </table>
-    <div class="footer-ref">Combined PO document link<br>{{ $combinedPoReference }}</div>
+    {!! $footer('2', '4', $combinedPoReference) !!}
 </div>
 
-{{-- Page 4-5: Packing list --}}
+{{-- Packing list --}}
 <div class="page">
-    {!! $header('Packing list', '1', '2') !!}
+    {!! $header('Packing list') !!}
     <div class="vessel-heading">{{ $manifestRows->first()['vessel'] ?? $vesselLine }}</div>
     <table class="data-table">
         <thead>
@@ -196,11 +208,11 @@
         <tr><td class="field-label">Destination</td><td>{{ $destinationPort }}</td></tr>
         <tr><td class="field-label">Deadline date</td><td>{{ $deadlineArrival }}</td></tr>
     </table>
-    <div class="footer-ref">Combined PO document link {{ $combinedPoReference }}</div>
+    {!! $footer('3', '4', $combinedPoReference) !!}
 </div>
 
 <div class="page">
-    {!! $header('Packing list', '2', '2') !!}
+    {!! $header('Packing list') !!}
     <table class="totals-table">
         <tr><td class="totals-label">Total in consignment</td><td>{{ $totals['packages'] }} pcs</td></tr>
         <tr><td class="totals-label">Total weight</td><td>{{ $totals['weight'] }} kg</td></tr>
@@ -209,6 +221,7 @@
         <tr><td class="totals-label">Total CBM</td><td>{{ number_format($totals['cbm'], 2) }} m³</td></tr>
         <tr><td class="totals-label">Total CBFT</td><td>{{ number_format($totals['cbft'], 2) }} ft³</td></tr>
     </table>
+    {!! $footer('4', '4', $combinedPoReference, false) !!}
 </div>
 
 </body>
