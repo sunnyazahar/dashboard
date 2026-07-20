@@ -157,8 +157,12 @@
             </div>
 
             <div class="field-group">
-                <div class="field-label">Consignee</div>
+                <div class="field-label">Hub / Agent</div>
                 <div class="field-value" style="font-size: 12px;">{{ $consignee }}</div>
+            </div>
+            <div class="field-group">
+                <div class="field-label">Physical Location</div>
+                <div class="field-value" style="font-size: 12px;">{{ $crr->location ?: '—' }}</div>
             </div>
             <div class="field-group">
                 <div class="field-label">Supplier</div>
@@ -166,11 +170,6 @@
             </div>
 
             <div class="small-field-group">
-                <div class="small-row">
-                    <span class="small-label">Physical Location</span>
-                    <span class="small-value">{{ $crr->location ?: '—' }}</span>
-                </div>
-
                 <div class="small-row">
                     <span class="small-label">Pos</span>
                     <span class="small-value">{{ $pkg->warehouse_location ?: ($crr->location ?: '—') }}</span>
