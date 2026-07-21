@@ -6,14 +6,19 @@
     <style>
         @page { size: A4; margin: 12mm 10mm; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #222; line-height: 1.4; margin: 0; }
-        .page {
-            position: relative;
-            min-height: 273mm;
-            padding-bottom: 42px;
-            box-sizing: border-box;
-            page-break-after: always;
+        .page-break { page-break-before: always; }
+        .page-shell {
+            width: 100%;
+            height: 262mm;
+            border-collapse: collapse;
         }
-        .page:last-child { page-break-after: auto; }
+        .page-shell td { padding: 0; }
+        .page-content { vertical-align: top; }
+        .page-footer-cell {
+            vertical-align: bottom;
+            height: 1px;
+            padding-top: 8px;
+        }
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         .header-table td { vertical-align: top; }
         .doc-title { font-size: 17px; font-weight: bold; margin: 0 0 4px; }
@@ -36,12 +41,6 @@
         .totals-table td { padding: 3px 0; }
         .totals-label { width: 38%; font-weight: bold; }
         .footer-ref { margin-top: 14px; font-size: 10px; font-weight: bold; }
-        .page-footer-wrap {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-        }
         .page-footer {
             margin: 0;
             padding: 0;
@@ -62,7 +61,7 @@
         .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
         .pending-eta { font-size: 10px; color: #666; margin: 6px 0 2px; }
         .onboard-receipt {
-            margin-top: 0;
+            margin-top: 24px;
             width: 100%;
         }
         .onboard-receipt-labels {
@@ -89,15 +88,6 @@
             font-size: 14px;
             color: #222;
             font-weight: bold;
-        }
-        .page-manifest-invoice {
-            padding-bottom: 130px;
-        }
-        .page-manifest-invoice .onboard-receipt-wrap {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 42px;
         }
     </style>
 </head>
@@ -126,7 +116,6 @@
 
     $footer = function ($pageNo, $pageTotal) use ($createdAt) {
         return '
-        <div class="page-footer-wrap">
             <table class="page-footer">
                 <tr>
                     <td class="page-footer-left">
@@ -140,172 +129,187 @@
                         Created on ' . e($createdAt) . '
                     </td>
                 </tr>
-            </table>
-        </div>';
+            </table>';
     };
 @endphp
 
 {{-- Shipping instructions (single page) --}}
-<div class="page">
-    {!! $header('Shipping instructions') !!}
-    <table class="field-table">
-        <tr><td class="field-label">Shipped through</td><td>{{ $shippedThrough }}</td></tr>
-        <tr><td class="field-label">Invoice to</td><td>{{ $invoiceTo }}</td></tr>
-    </table>
-    <div class="section-title" style="margin-top:10px;">Please prepare shipment to</div>
-    <div style="font-weight:bold;">{{ $vesselLine }}</div>
-    <table class="field-table" style="margin-top:6px;">
-        <tr><td class="field-label">C/O</td><td>{{ $consigneeName }}</td></tr>
-        <tr><td class="field-label"></td><td>{{ $consigneeAddress }}</td></tr>
-        <tr><td class="field-label">E-mail</td><td>{{ $consigneeEmail }}</td></tr>
-        <tr><td class="field-label">Phone</td><td>{{ $consigneePhone }}</td></tr>
-        <tr><td class="field-label">Contact Person</td><td>{{ $consigneeContact ?: '—' }}</td></tr>
-        <tr><td class="field-label">Port of departure</td><td>{{ $departurePort }}</td></tr>
-        <tr><td class="field-label">Port of destination</td><td>{{ $destinationPort }}</td></tr>
-        <tr><td class="field-label">Location</td><td>{{ $shipmentLocation }}</td></tr>
-        <tr><td class="field-label">Service</td><td>{{ $serviceLabel }}</td></tr>
-        <tr><td class="field-label">Additional service</td><td>{{ $additionalServiceLabel }}</td></tr>
-        <tr><td class="field-label">PCS / Repacked as / Weight</td><td>{{ $pcsSummary }}</td></tr>
-        <tr><td class="field-label">Deadline arrival</td><td>{{ $deadlineArrival }}</td></tr>
-        <tr><td class="field-label">Document handled by</td><td>{{ $documentHandledBy }}</td></tr>
-    </table>
-    <div class="section-title" style="margin-top:10px;">Comments to hub</div>
-    <div class="comments">{{ $commentsHub ?: '—' }}</div>
-    {!! $footer('1', '3') !!}
-</div>
+<table class="page-shell">
+    <tr>
+        <td class="page-content">
+            {!! $header('Shipping instructions') !!}
+            <table class="field-table">
+                <tr><td class="field-label">Shipped through</td><td>{{ $shippedThrough }}</td></tr>
+                <tr><td class="field-label">Invoice to</td><td>{{ $invoiceTo }}</td></tr>
+            </table>
+            <div class="section-title" style="margin-top:10px;">Please prepare shipment to</div>
+            <div style="font-weight:bold;">{{ $vesselLine }}</div>
+            <table class="field-table" style="margin-top:6px;">
+                <tr><td class="field-label">C/O</td><td>{{ $consigneeName }}</td></tr>
+                <tr><td class="field-label"></td><td>{{ $consigneeAddress }}</td></tr>
+                <tr><td class="field-label">E-mail</td><td>{{ $consigneeEmail }}</td></tr>
+                <tr><td class="field-label">Phone</td><td>{{ $consigneePhone }}</td></tr>
+                <tr><td class="field-label">Contact Person</td><td>{{ $consigneeContact ?: '—' }}</td></tr>
+                <tr><td class="field-label">Port of departure</td><td>{{ $departurePort }}</td></tr>
+                <tr><td class="field-label">Port of destination</td><td>{{ $destinationPort }}</td></tr>
+                <tr><td class="field-label">Location</td><td>{{ $shipmentLocation }}</td></tr>
+                <tr><td class="field-label">Service</td><td>{{ $serviceLabel }}</td></tr>
+                <tr><td class="field-label">Additional service</td><td>{{ $additionalServiceLabel }}</td></tr>
+                <tr><td class="field-label">PCS / Repacked as / Weight</td><td>{{ $pcsSummary }}</td></tr>
+                <tr><td class="field-label">Deadline arrival</td><td>{{ $deadlineArrival }}</td></tr>
+                <tr><td class="field-label">Document handled by</td><td>{{ $documentHandledBy }}</td></tr>
+            </table>
+            <div class="section-title" style="margin-top:10px;">Comments to hub</div>
+            <div class="comments">{{ $commentsHub ?: '—' }}</div>
+        </td>
+    </tr>
+    <tr>
+        <td class="page-footer-cell">{!! $footer('1', '3') !!}</td>
+    </tr>
+</table>
 
 {{-- Manifest / Invoice --}}
-<div class="page{{ ($serviceLabel ?? '') === 'On-board delivery' ? ' page-manifest-invoice' : '' }}">
-    {!! $header('Manifest / Invoice') !!}
-    <div class="vessel-heading">{{ $vesselLine }}</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Supplier</th>
-                <th>PO number</th>
-                <th>Items</th>
-                <th>Weight</th>
-                <th>CBM</th>
-                <th>Cust. value</th>
-                <th>Description</th>
-                <th>Stock no / Transit id</th>
-                <th>Location</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($manifestRows as $row)
-            <tr>
-                <td>{{ $row['supplier'] }}</td>
-                <td>{{ $row['po_number'] }}</td>
-                <td>{{ $row['items'] }}</td>
-                <td>{{ $row['weight'] }}</td>
-                <td>{{ number_format($row['cbm'], 2) }}</td>
-                <td>{{ $row['customs_value'] }} {{ $row['currency'] }}</td>
-                <td>{{ $row['description'] }}</td>
-                <td>{{ $row['stock_number'] }}@if($row['transit_id']) / {{ $row['transit_id'] }}@endif</td>
-                <td>{{ $row['location'] ?? '—' }}</td>
-            </tr>
-            @endforeach
-            <tr>
-                <td colspan="2"><strong>Total {{ $manifestRows->first()['vessel'] ?? $vesselLine }}</strong></td>
-                <td><strong>{{ $totals['packages'] }} pcs</strong></td>
-                <td><strong>{{ $totals['weight'] }} kg</strong></td>
-                <td><strong>{{ number_format($totals['cbm'], 2) }} CBM</strong></td>
-                <td><strong>{{ $totals['customs_value'] }} {{ $totals['currency'] }}</strong></td>
-                <td colspan="3"></td>
-            </tr>
-        </tbody>
-    </table>
-    <table class="totals-table">
-        <tr><td class="totals-label">Total in consignment</td><td>{{ $totals['packages'] }} pcs</td></tr>
-        <tr><td class="totals-label">Total weight</td><td>{{ $totals['weight'] }} kg</td></tr>
-        <tr><td class="totals-label">Estimated volume weight</td><td>{{ number_format($totals['volume_weight'], 2) }} kg</td></tr>
-        <tr><td class="totals-label">Total customs value</td><td>{{ $totals['customs_value'] }} {{ $totals['currency'] }}</td></tr>
-        <tr><td class="totals-label">Total CBM</td><td>{{ number_format($totals['cbm'], 2) }} m³</td></tr>
-        <tr><td class="totals-label">Total CBFT</td><td>{{ number_format($totals['cbft'], 2) }} ft³</td></tr>
-        <tr><td class="totals-label">Port of departure</td><td>{{ $departurePort }}</td></tr>
-        <tr><td class="totals-label">Shipper</td><td>{{ $shipperLine }}</td></tr>
-        <tr><td class="totals-label">Consignee</td><td>{{ $consigneeLine }}</td></tr>
-        <tr><td class="totals-label">Contact</td><td>{{ $consigneeContact }}, {{ $consigneeContactEmail }}, {{ $consigneeContactPhone }}</td></tr>
-        <tr><td class="totals-label">Customer</td><td>{{ $customerName }}</td></tr>
-    </table>
-    @if (($serviceLabel ?? '') === 'On-board delivery')
-        <div class="onboard-receipt-wrap">
-            <div class="onboard-receipt">
-                <table class="onboard-receipt-labels">
+<table class="page-shell page-break">
+    <tr>
+        <td class="page-content">
+            {!! $header('Manifest / Invoice') !!}
+            <div class="vessel-heading">{{ $vesselLine }}</div>
+            <table class="data-table">
+                <thead>
                     <tr>
-                        <td style="text-align:left;">Date received</td>
-                        <td style="text-align:center;">Stamp</td>
-                        <td></td>
+                        <th>Supplier</th>
+                        <th>PO number</th>
+                        <th>Items</th>
+                        <th>Weight</th>
+                        <th>CBM</th>
+                        <th>Cust. value</th>
+                        <th>Description</th>
+                        <th>Stock no / Transit id</th>
+                        <th>Location</th>
                     </tr>
-                </table>
-                <div class="onboard-receipt-space"></div>
-                <div class="onboard-receipt-line"></div>
-                <div class="onboard-receipt-signatory">{{ $onBoardSignatory }}</div>
-            </div>
-        </div>
-    @endif
-    {!! $footer('2', '3') !!}
-</div>
+                </thead>
+                <tbody>
+                    @foreach ($manifestRows as $row)
+                    <tr>
+                        <td>{{ $row['supplier'] }}</td>
+                        <td>{{ $row['po_number'] }}</td>
+                        <td>{{ $row['items'] }}</td>
+                        <td>{{ $row['weight'] }}</td>
+                        <td>{{ number_format($row['cbm'], 2) }}</td>
+                        <td>{{ $row['customs_value'] }} {{ $row['currency'] }}</td>
+                        <td>{{ $row['description'] }}</td>
+                        <td>{{ $row['stock_number'] }}@if($row['transit_id']) / {{ $row['transit_id'] }}@endif</td>
+                        <td>{{ $row['location'] ?? '—' }}</td>
+                    </tr>
+                    @endforeach
+                    <tr>
+                        <td colspan="2"><strong>Total {{ $manifestRows->first()['vessel'] ?? $vesselLine }}</strong></td>
+                        <td><strong>{{ $totals['packages'] }} pcs</strong></td>
+                        <td><strong>{{ $totals['weight'] }} kg</strong></td>
+                        <td><strong>{{ number_format($totals['cbm'], 2) }} CBM</strong></td>
+                        <td><strong>{{ $totals['customs_value'] }} {{ $totals['currency'] }}</strong></td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="totals-table">
+                <tr><td class="totals-label">Total in consignment</td><td>{{ $totals['packages'] }} pcs</td></tr>
+                <tr><td class="totals-label">Total weight</td><td>{{ $totals['weight'] }} kg</td></tr>
+                <tr><td class="totals-label">Estimated volume weight</td><td>{{ number_format($totals['volume_weight'], 2) }} kg</td></tr>
+                <tr><td class="totals-label">Total customs value</td><td>{{ $totals['customs_value'] }} {{ $totals['currency'] }}</td></tr>
+                <tr><td class="totals-label">Total CBM</td><td>{{ number_format($totals['cbm'], 2) }} m³</td></tr>
+                <tr><td class="totals-label">Total CBFT</td><td>{{ number_format($totals['cbft'], 2) }} ft³</td></tr>
+                <tr><td class="totals-label">Port of departure</td><td>{{ $departurePort }}</td></tr>
+                <tr><td class="totals-label">Shipper</td><td>{{ $shipperLine }}</td></tr>
+                <tr><td class="totals-label">Consignee</td><td>{{ $consigneeLine }}</td></tr>
+                <tr><td class="totals-label">Contact</td><td>{{ $consigneeContact }}, {{ $consigneeContactEmail }}, {{ $consigneeContactPhone }}</td></tr>
+                <tr><td class="totals-label">Customer</td><td>{{ $customerName }}</td></tr>
+            </table>
+            @if (($serviceLabel ?? '') === 'On-board delivery')
+                <div class="onboard-receipt">
+                    <table class="onboard-receipt-labels">
+                        <tr>
+                            <td style="text-align:left;">Date received</td>
+                            <td style="text-align:center;">Stamp</td>
+                            <td></td>
+                        </tr>
+                    </table>
+                    <div class="onboard-receipt-space"></div>
+                    <div class="onboard-receipt-line"></div>
+                    <div class="onboard-receipt-signatory">{{ $onBoardSignatory }}</div>
+                </div>
+            @endif
+        </td>
+    </tr>
+    <tr>
+        <td class="page-footer-cell">{!! $footer('2', '3') !!}</td>
+    </tr>
+</table>
 
 {{-- Packing list (single page) --}}
-<div class="page">
-    {!! $header('Packing list') !!}
-    <div class="vessel-heading">{{ $manifestRows->first()['vessel'] ?? $vesselLine }}</div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Stock no</th>
-                <th>Location Position</th>
-                <th>Supplier</th>
-                <th>PO number</th>
-                <th>Items</th>
-                <th>Weight</th>
-                <th>Dimensions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($packingRows as $index => $row)
-                @if ($row['pending_eta'] && ($index === 0 || ($packingRows[$index - 1]['stock_number'] ?? null) !== $row['stock_number']))
-                <tr>
-                    <td colspan="7" class="pending-eta" style="font-weight: bold;">In Transit &nbsp;&nbsp;  Transit ID: &nbsp;&nbsp; {{ $row['transit_id'] ?? '' }} &nbsp;&nbsp; ETA: &nbsp;&nbsp; {{ $row['pending_eta'] }}</td>
-                </tr>
-                @endif
-                <tr>
-                    <td>{{ $row['stock_number'] }}<br>{{ $row['label_code'] }}</td>
-                    <td>{{ $row['position'] }}</td>
-                    <td>{{ $row['supplier'] }}</td>
-                    <td>{{ $row['po_number'] }}</td>
-                    <td>{{ $row['item_label'] }}</td>
-                    <td>{{ $row['weight_label'] }}</td>
-                    <td>{{ $row['dimensions'] }}</td>
-                </tr>
-            @endforeach
-            <tr>
-                <td colspan="4"><strong>Total</strong></td>
-                <td><strong>{{ $totals['packages'] }} pcs</strong></td>
-                <td><strong>{{ $totals['weight'] }} kg</strong></td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-    <table class="field-table" style="margin-top:8px;">
-        <tr><td class="field-label">Shipper</td><td>{{ $shipperLine }}</td></tr>
-        <tr><td class="field-label">Consignee</td><td>{{ $consigneeLine }}</td></tr>
-        <tr><td class="field-label">Departure</td><td>{{ $departurePort }}</td></tr>
-        <tr><td class="field-label">Destination</td><td>{{ $destinationPort }}</td></tr>
-        <tr><td class="field-label">Deadline date</td><td>{{ $deadlineArrival }}</td></tr>
-    </table>
-    <table class="totals-table" style="margin-top:8px;">
-        <tr><td class="totals-label">Total in consignment</td><td>{{ $totals['packages'] }} pcs</td></tr>
-        <tr><td class="totals-label">Total weight</td><td>{{ $totals['weight'] }} kg</td></tr>
-        <tr><td class="totals-label">Estimated volume weight</td><td>{{ number_format($totals['volume_weight'], 2) }} kg</td></tr>
-        <tr><td class="totals-label">Total customs value</td><td>{{ $totals['customs_value'] }} {{ $totals['currency'] }}</td></tr>
-        <tr><td class="totals-label">Total CBM</td><td>{{ number_format($totals['cbm'], 2) }} m³</td></tr>
-        <tr><td class="totals-label">Total CBFT</td><td>{{ number_format($totals['cbft'], 2) }} ft³</td></tr>
-    </table>
-    {!! $footer('3', '3') !!}
-</div>
+<table class="page-shell page-break">
+    <tr>
+        <td class="page-content">
+            {!! $header('Packing list') !!}
+            <div class="vessel-heading">{{ $manifestRows->first()['vessel'] ?? $vesselLine }}</div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Stock no</th>
+                        <th>Location Position</th>
+                        <th>Supplier</th>
+                        <th>PO number</th>
+                        <th>Items</th>
+                        <th>Weight</th>
+                        <th>Dimensions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($packingRows as $index => $row)
+                        @if ($row['pending_eta'] && ($index === 0 || ($packingRows[$index - 1]['stock_number'] ?? null) !== $row['stock_number']))
+                        <tr>
+                            <td colspan="7" class="pending-eta" style="font-weight: bold;">In Transit &nbsp;&nbsp;  Transit ID: &nbsp;&nbsp; {{ $row['transit_id'] ?? '' }} &nbsp;&nbsp; ETA: &nbsp;&nbsp; {{ $row['pending_eta'] }}</td>
+                        </tr>
+                        @endif
+                        <tr>
+                            <td>{{ $row['stock_number'] }}<br>{{ $row['label_code'] }}</td>
+                            <td>{{ $row['position'] }}</td>
+                            <td>{{ $row['supplier'] }}</td>
+                            <td>{{ $row['po_number'] }}</td>
+                            <td>{{ $row['item_label'] }}</td>
+                            <td>{{ $row['weight_label'] }}</td>
+                            <td>{{ $row['dimensions'] }}</td>
+                        </tr>
+                    @endforeach
+                    <tr>
+                        <td colspan="4"><strong>Total</strong></td>
+                        <td><strong>{{ $totals['packages'] }} pcs</strong></td>
+                        <td><strong>{{ $totals['weight'] }} kg</strong></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="field-table" style="margin-top:8px;">
+                <tr><td class="field-label">Shipper</td><td>{{ $shipperLine }}</td></tr>
+                <tr><td class="field-label">Consignee</td><td>{{ $consigneeLine }}</td></tr>
+                <tr><td class="field-label">Departure</td><td>{{ $departurePort }}</td></tr>
+                <tr><td class="field-label">Destination</td><td>{{ $destinationPort }}</td></tr>
+                <tr><td class="field-label">Deadline date</td><td>{{ $deadlineArrival }}</td></tr>
+            </table>
+            <table class="totals-table" style="margin-top:8px;">
+                <tr><td class="totals-label">Total in consignment</td><td>{{ $totals['packages'] }} pcs</td></tr>
+                <tr><td class="totals-label">Total weight</td><td>{{ $totals['weight'] }} kg</td></tr>
+                <tr><td class="totals-label">Estimated volume weight</td><td>{{ number_format($totals['volume_weight'], 2) }} kg</td></tr>
+                <tr><td class="totals-label">Total customs value</td><td>{{ $totals['customs_value'] }} {{ $totals['currency'] }}</td></tr>
+                <tr><td class="totals-label">Total CBM</td><td>{{ number_format($totals['cbm'], 2) }} m³</td></tr>
+                <tr><td class="totals-label">Total CBFT</td><td>{{ number_format($totals['cbft'], 2) }} ft³</td></tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td class="page-footer-cell">{!! $footer('3', '3') !!}</td>
+    </tr>
+</table>
 
 </body>
 </html>
