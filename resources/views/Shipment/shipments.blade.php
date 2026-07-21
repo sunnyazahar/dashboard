@@ -353,6 +353,7 @@
             min-height: 0 !important;
             overflow-x: auto !important;
             overflow-y: auto !important;
+            margin-top: -10px !important;
         }
 
         .pagination-sticky-footer {
