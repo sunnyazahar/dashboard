@@ -48,12 +48,12 @@
             width: 33.33%;
         }
         .onboard-receipt-space {
-            height: 48px;
+            height: 55px;
         }
         .onboard-receipt-line {
             width: 50%;
             border-top: 1px dashed #9ca3af;
-            margin: 0 0 8px;
+            margin: 0 0 10px;
         }
         .onboard-receipt-signatory {
             font-size: 14px;
@@ -200,9 +200,9 @@
     @endif
 </div>
 
-{{-- Packing list (single page) --}}
+{{-- Packing List (single page) --}}
 <div class="page page-break">
-    {!! $header('Packing list') !!}
+    {!! $header('Packing List') !!}
     <div class="vessel-heading">{{ $manifestRows->first()['vessel'] ?? $vesselLine }}</div>
     <table class="field-table" style="margin-top:0; margin-bottom:8px;">
         <tr><td class="field-label">Shipper</td><td>{{ $shipperLine }}</td></tr>
