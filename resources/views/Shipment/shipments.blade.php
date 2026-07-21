@@ -597,7 +597,7 @@
                                                                     <input type="text" class="form-control filter-input" placeholder="type here">
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Service-reference-number" class="custom-col" style="flex: 0 0 215;">
+                                                            <div id="col-Service-reference-number" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Service reference</span>
                                                                     <input type="text" class="form-control filter-input" placeholder="type here">
