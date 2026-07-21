@@ -10,8 +10,8 @@
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         .header-table td { vertical-align: top; }
         .doc-title { font-size: 17px; font-weight: bold; margin: 0 0 4px; }
-        .doc-subtitle { font-size: 13px; font-weight: bold; margin: 0 0 8px; }
-        .company { font-size: 12px; font-weight: bold; }
+        .doc-subtitle { font-size: 12px; font-weight: bold; margin: 0 0 8px; }
+        .company { font-size: 12px; font-weight: bold; margin-top: 20px; }
         .muted { color: #555; font-size: 11px; }
         .header-right { text-align: right; font-size: 10px; }
         .brand-logo { line-height: 1.05; margin-bottom: 4px; }
@@ -135,11 +135,6 @@
         <div class="field-label">C/O</div>
         <div style="font-weight:bold;">{{ $consigneeName }}</div>
         <div class="address-block">{{ $consigneeAddressBlock }}</div>
-    </div>
-
-    <div class="field-block">
-        <div class="field-label">Client</div>
-        <div>{{ $customerName }}</div>
     </div>
 </div>
 
