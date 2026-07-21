@@ -166,6 +166,7 @@ class ShipmentManifestPdfBuilder
             'documentHandledBy' => $handledBy,
             'serviceLabel' => $shipment->service ?? '—',
             'additionalServiceLabel' => $shipment->additional_service ?: '—',
+            'isOnBoardDelivery' => ($shipment->service ?? '') === 'On-board delivery',
             'onBoardSignatory' => $this->formatOnBoardSignatory($primaryVessel),
             'pcsSummary' => $totalPackages . ' / ' . $totalPackages . ' / ' . $totalWeight . ' kg',
             'deadlineArrival' => $shipment->deadline_arrival?->format('d.m.y') ?? '—',
