@@ -78,7 +78,7 @@
             color: #ff5252;
             text-decoration: none;
             cursor: pointer;
-            margin-top: 25px;
+            margin-top: 3px;
             display: inline-block;
         }
         .card-header-actions .btn {
@@ -551,7 +551,7 @@
                                             <div class="card-block">
                                                 <div class="shipments-filters-fixed">
                                                 <div class="d-flex justify-content-between align-items-start pt-2">
-                                                    <div style="width: 80%;">
+                                                    <div style="width: 100%;">
                                                         <div class="row no-gutters filter-row">
                                                             <div class="mr-2" style="margin-top: 2px;">
                                                                 <select id="filter-multiselect" multiple="multiple">
@@ -571,7 +571,7 @@
                                                                     <option value="Status" selected>Status</option>
                                                                 </select>
                                                             </div>
-                                                            <div id="col-Customer" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Customer" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Customer</span>
                                                                     <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
@@ -581,7 +581,7 @@
                                                                     </select>
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Vessel" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Vessel" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Vessel</span>
                                                                     <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
@@ -597,7 +597,7 @@
                                                                     <input type="text" class="form-control filter-input" placeholder="type here">
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Service-reference-number" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Service-reference-number" class="custom-col" style="flex: 0 0 215;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Service reference</span>
                                                                     <input type="text" class="form-control filter-input" placeholder="type here">
@@ -609,11 +609,7 @@
                                                                     <input type="text" class="form-control filter-input" placeholder="type here">
                                                                 </div>
                                                             </div>
-                                                        </div>
-
-                                                        <!-- Row 2 -->
-                                                        <div class="row no-gutters filter-row">
-                                                            <div id="col-Departure-hub" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Departure-hub" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Departure port code</span>
                                                                     <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
@@ -623,19 +619,24 @@
                                                                     </select>
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Consignee" class="custom-col" style="flex: 0 0 250px;">
+                                                        </div>
+
+                                                        <!-- Row 2 -->
+                                                        <div class="row no-gutters filter-row">
+                                                            
+                                                            <div id="col-Consignee" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Consignee</span>
                                                                     <input type="text" class="form-control filter-input" placeholder="type here">
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Port-of-destination" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Port-of-destination" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Port of destination</span>
                                                                     <input type="text" class="form-control filter-input" placeholder="type here">
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Account-manager" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Account-manager" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Account manager</span>
                                                                     <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
@@ -645,7 +646,7 @@
                                                                     </select>
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Created-by" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Created-by" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Created by</span>
                                                                     <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
@@ -655,7 +656,7 @@
                                                                     </select>
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Office" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Office" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Office</span>
                                                                     <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
@@ -665,7 +666,7 @@
                                                                     </select>
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Creation-date" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Creation-date" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Creation date</span>
                                                                     <div class="input-group p-0 m-0" style="border: none;">
@@ -673,7 +674,7 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div id="col-Service" class="custom-col" style="flex: 0 0 250px;">
+                                                            <div id="col-Service" class="custom-col" style="flex: 0 0 215px;">
                                                                 <div class="filter-group">
                                                                     <span class="filter-label">Service</span>
                                                                     <select class="form-control filter-input searchable-filter-multiselect" multiple="multiple">
@@ -696,7 +697,7 @@
                                                             <a class="clear-filters">Clear filters</a>
                                                         </div>
                                                 </div>
-                                                <div class="text-right" style="width: 20%; padding-top: 18px;">
+                                                <div class="text-right" style="width: 15%; padding-top: 18px;">
                                                      <!-- <button class="btn btn-outline-teal"><i class="ti-download"></i> Export</button> -->
                                                      <a href="{{ route('create-shipment') }}" class="btn btn-teal ml-2">Create shipment</a>
                                                 </div>
