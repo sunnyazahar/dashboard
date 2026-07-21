@@ -2649,7 +2649,7 @@
             }
             $(this).select2({
                 placeholder: "Select",
-                allowClear: true,
+                allowClear: false,
                 width: '100%'
             });
         });
@@ -2669,7 +2669,7 @@
 
         $('.select2-country').select2({
             placeholder: 'Select country',
-            allowClear: true,
+            allowClear: false,
             width: '100%',
             templateResult: formatCountry,
             templateSelection: formatCountry
@@ -3327,7 +3327,7 @@
 
         $('#departure-select').select2({
             placeholder: 'Type departure',
-            allowClear: true,
+            allowClear: false,
             width: '100%',
             ajax: {
                 url: '/laravel/api/parties',
@@ -3346,7 +3346,7 @@
 
         $('#consignee-select').select2({
             placeholder: 'Type consignee',
-            allowClear: true,
+            allowClear: false,
             width: '100%',
             ajax: {
                 url: '/laravel/api/consignees',
@@ -3698,7 +3698,7 @@
                 </div>`;
             var $newItem = $(newItem);
             $('#irregularities-container').append($newItem);
-            $newItem.find('.select2').select2({ placeholder: '', allowClear: true, width: '100%' });
+            $newItem.find('.select2').select2({ placeholder: '', allowClear: false, width: '100%' });
             $newItem.find('.datepicker').datepicker({ dateFormat: 'dd.mm.yy', showOtherMonths: true, selectOtherMonths: true, changeMonth: true, changeYear: true, yearRange: 'c-10:c+10' });
         });
 
@@ -4448,7 +4448,7 @@
             $('#modal-add-selected').prop('disabled', false);
             $('.modal-select2').select2({
                 placeholder: 'Click here',
-                allowClear: true,
+                allowClear: false,
                 width: '100%',
                 dropdownParent: $('#stock-items-modal')
             });
