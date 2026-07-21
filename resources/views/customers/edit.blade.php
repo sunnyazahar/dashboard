@@ -972,7 +972,7 @@
             function initOfficeUserSelect(selector, placeholder) {
                 $(selector).select2({
                     placeholder: placeholder,
-                    allowClear: true,
+                    allowClear: false,
                     width: '100%',
                     minimumInputLength: 0,
                     ajax: {
@@ -1018,7 +1018,7 @@
 
             $('.select2-field').select2({
                 placeholder: 'Select an option',
-                allowClear: true,
+                allowClear: false,
                 width: '100%',
                 templateResult: formatCountry,
                 templateSelection: formatCountry
