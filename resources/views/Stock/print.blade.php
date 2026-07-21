@@ -9,7 +9,7 @@
     <style>
         @page {
             size: A4;
-            margin: 10mm;
+            margin: 10mm 10mm 28mm 10mm;
         }
 
         .landed-badge {
@@ -147,6 +147,15 @@
             word-wrap: break-word;
         }
 
+        table.data-table thead {
+            display: table-header-group;
+        }
+
+        table.data-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
         table.data-table th {
             text-align: left;
             font-weight: bold;
@@ -184,19 +193,27 @@
 
         .footer-table {
             position: fixed;
-            bottom: 0px;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100%;
-            font-size: 11px;
+            font-size: 8px;
             color: #000000;
-            /* border-top: 0.5px solid #ccc; */
-            padding-top: 5px;
-            padding-bottom: 5px;
-            background-color: white;
-            height: 20px;
+            padding: 0;
+            background-color: #fff;
+            line-height: 1.35;
         }
 
         .footer-td {
             vertical-align: top;
+            padding: 0;
+        }
+
+        .totals-block {
+            margin-top: 15px;
+            border-top: 1px solid #002d5b;
+            padding-top: 5px;
+            page-break-inside: avoid;
         }
 
         i {
@@ -350,7 +367,7 @@
     </table>
 
     @if($grouped->count() > 0)
-        <div style="margin-top: 15px; border-top: 1px solid #002d5b; padding-top: 5px;">
+        <div class="totals-block">
             <table class="data-table" border="0" style="width: 50%; font-size: 9px;">
                 <tr>
                     <td style="width: 250px; padding: 4px; ">Total No. of Packages</td>

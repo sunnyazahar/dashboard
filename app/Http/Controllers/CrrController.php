@@ -390,10 +390,11 @@ class CrrController extends Controller
 
         $pdf->render();
         $dompdf = $pdf->getDomPDF();
-        $font = $dompdf->getFontMetrics()->getFont('helvetica', 'normal');
+        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans');
+        // Keep page numbers inside the reserved footer band (A4 height ~842pt, bottom margin 28mm).
         $dompdf->getCanvas()->page_text(
             285,
-            820,
+            805,
             '{PAGE_NUM}/{PAGE_COUNT}',
             $font,
             8,
