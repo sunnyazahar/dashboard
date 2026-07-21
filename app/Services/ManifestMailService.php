@@ -14,6 +14,7 @@ class ManifestMailService
         private ShipmentPreAlertPdfBuilder $preAlertPdfBuilder,
         private CombinedPoPdfService $combinedPoPdfService,
         private EmlMessageBuilder $emlMessageBuilder,
+        private ShipmentPdfCompanyFooter $companyFooter,
     ) {}
 
     public function buildEml(Shipment $shipment, ?string $senderName = null, ?string $senderEmail = null, array $documentIds = []): string
@@ -218,9 +219,10 @@ class ManifestMailService
                 'mime' => 'application/pdf',
             ];
         } else {
-            $manifestPdf = Pdf::loadView('Shipment.pdf.manifest', $manifestData)
-                ->setPaper('a4', 'portrait')
-                ->output();
+            $manifestPdf = $this->companyFooter->output(
+                Pdf::loadView('Shipment.pdf.manifest', $manifestData)->setPaper('a4', 'portrait'),
+                (string) ($manifestData['createdAt'] ?? '')
+            );
 
             $attachments[] = [
                 'filename' => 'manifest-' . $shipment->shipment_number . '.pdf',

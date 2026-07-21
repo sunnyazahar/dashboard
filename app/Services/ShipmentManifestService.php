@@ -13,6 +13,7 @@ class ShipmentManifestService
 {
     public function __construct(
         private ShipmentManifestPdfBuilder $pdfBuilder,
+        private ShipmentPdfCompanyFooter $companyFooter,
     ) {}
 
     public function generate(Shipment $shipment): ?ShipmentManifest
@@ -85,15 +86,10 @@ class ShipmentManifestService
     private function buildPdfContent(Shipment $shipment): string
     {
         $data = $this->pdfBuilder->build($shipment);
-        $pdfContent = Pdf::loadView('Shipment.pdf.manifest', $data)
-            ->setPaper('a4', 'portrait')
-            ->output();
+        $pdf = Pdf::loadView('Shipment.pdf.manifest', $data)
+            ->setPaper('a4', 'portrait');
 
-        if (!is_string($pdfContent) || strlen($pdfContent) < 100) {
-            throw new RuntimeException('Manifest PDF could not be generated.');
-        }
-
-        return $pdfContent;
+        return $this->companyFooter->output($pdf, (string) ($data['createdAt'] ?? ''));
     }
 
     private function storePdf(string $relativePath, string $pdfContent): void

@@ -1085,7 +1085,7 @@ class ShipmentController extends Controller
         );
     }
 
-    public function combinedManifestDocuments($id, ShipmentManifestPdfBuilder $builder, ShipmentManifestService $manifestService)
+    public function combinedManifestDocuments($id, ShipmentManifestPdfBuilder $builder, ShipmentManifestService $manifestService, ShipmentPdfCompanyFooter $companyFooter)
     {
         $shipment = Shipment::with([
             'crrs.packages',
@@ -1111,10 +1111,15 @@ class ShipmentController extends Controller
         }
 
         $data = $builder->build($shipment);
+        $pdfContent = $companyFooter->output(
+            Pdf::loadView('Shipment.pdf.manifest', $data)->setPaper('a4', 'portrait'),
+            (string) ($data['createdAt'] ?? '')
+        );
 
-        return Pdf::loadView('Shipment.pdf.manifest', $data)
-            ->setPaper('a4', 'portrait')
-            ->stream('manifest-' . $shipment->shipment_number . '.pdf');
+        return response($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="manifest-' . $shipment->shipment_number . '.pdf"',
+        ]);
     }
 
     public function manifestMailLauncher($id, ManifestMailService $manifestMailService, CombinedPoPdfService $combinedPoPdfService)

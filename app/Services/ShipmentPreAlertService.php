@@ -13,6 +13,7 @@ class ShipmentPreAlertService
 {
     public function __construct(
         private ShipmentPreAlertPdfBuilder $pdfBuilder,
+        private ShipmentPdfCompanyFooter $companyFooter,
     ) {}
 
     public function generate(Shipment $shipment): ?ShipmentPreAlert
@@ -94,15 +95,10 @@ class ShipmentPreAlertService
     private function buildPdfContent(Shipment $shipment): string
     {
         $data = $this->pdfBuilder->build($shipment);
-        $pdfContent = Pdf::loadView('Shipment.pdf.pre-alert', $data)
-            ->setPaper('a4', 'portrait')
-            ->output();
+        $pdf = Pdf::loadView('Shipment.pdf.pre-alert', $data)
+            ->setPaper('a4', 'portrait');
 
-        if (!is_string($pdfContent) || strlen($pdfContent) < 100) {
-            throw new RuntimeException('Pre-alert PDF could not be generated.');
-        }
-
-        return $pdfContent;
+        return $this->companyFooter->output($pdf, (string) ($data['createdAt'] ?? ''));
     }
 
     private function storePdf(string $relativePath, string $pdfContent): void

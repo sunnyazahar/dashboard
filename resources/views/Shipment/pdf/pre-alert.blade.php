@@ -4,21 +4,9 @@
     <meta charset="UTF-8">
     <title>Pre-alert {{ $shipment->shipment_number }}</title>
     <style>
-        @page { size: A4; margin: 12mm 10mm; }
+        @page { size: A4; margin: 12mm 10mm 22mm 10mm; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #222; line-height: 1.4; margin: 0; }
         .page-break { page-break-before: always; }
-        .page-shell {
-            width: 100%;
-            height: 262mm;
-            border-collapse: collapse;
-        }
-        .page-shell td { padding: 0; }
-        .page-content { vertical-align: top; }
-        .page-footer-cell {
-            vertical-align: bottom;
-            height: 1px;
-            padding-top: 8px;
-        }
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         .header-table td { vertical-align: top; }
         .doc-title { font-size: 17px; font-weight: bold; margin: 0 0 4px; }
@@ -40,23 +28,6 @@
         .address-block { white-space: pre-wrap; font-size: 11px; margin-top: 4px; }
         .notify-title { font-size: 12px; font-weight: bold; margin: 12px 0 6px; }
         .vessel-heading { font-size: 12px; font-weight: bold; margin: 10px 0 6px; }
-        .footer-ref { margin-top: 14px; font-size: 10px; font-weight: bold; }
-        .page-footer {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 8px;
-            color: #222;
-            line-height: 1.35;
-        }
-        .page-footer td {
-            vertical-align: top;
-            padding: 0;
-        }
-        .page-footer-left { width: 38%; text-align: left; }
-        .page-footer-center { width: 24%; text-align: center; vertical-align: middle; }
-        .page-footer-right { width: 38%; text-align: right; }
         .summary-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
         .summary-table td { padding: 4px 0; vertical-align: top; }
         .summary-label { width: 38%; font-weight: bold; }
@@ -94,174 +65,142 @@
         'Hand Carry' => 'Contact',
         default => 'Flight',
     };
-
-    $footer = function ($pageNo, $pageTotal) use ($createdAt) {
-        return '
-            <table class="page-footer">
-                <tr>
-                    <td class="page-footer-left">
-                        MarineCaddie India Private Limited<br>
-                        Innov8 Aerocity, Asset-5A, Hospitality District<br>
-                        Near IGI Airport, Aerocity, New Delhi-110037.
-                    </td>
-                    <td class="page-footer-center">' . e($pageNo) . '/' . e($pageTotal) . '</td>
-                    <td class="page-footer-right">
-                        +919560773375 ops@marinecaddie.com<br>
-                        Created on ' . e($createdAt) . '
-                    </td>
-                </tr>
-            </table>';
-    };
 @endphp
 
-<table class="page-shell">
-    <tr>
-        <td class="page-content">
-            {!! $header() !!}
+<div class="page">
+    {!! $header() !!}
 
-            <div class="section-title">Freight details</div>
-            <div class="expected-line">{{ $expectedLine }}</div>
+    <div class="section-title">Freight details</div>
+    <div class="expected-line">{{ $expectedLine }}</div>
 
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Port of departure</th>
-                        <th>Port of destination</th>
-                        <th>Shippers reference</th>
-                        <th>AWB</th>
-                        <th>Owners reference</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ $departurePortSimple }}</td>
-                        <td>{{ $destinationPortSimple }}</td>
-                        <td>{{ $shippersReference }}</td>
-                        <td>{{ $awb }}</td>
-                        <td>{{ $ownersReference }}</td>
-                    </tr>
-                </tbody>
-            </table>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Port of departure</th>
+                <th>Port of destination</th>
+                <th>Shippers reference</th>
+                <th>AWB</th>
+                <th>Owners reference</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ $departurePortSimple }}</td>
+                <td>{{ $destinationPortSimple }}</td>
+                <td>{{ $shippersReference }}</td>
+                <td>{{ $awb }}</td>
+                <td>{{ $ownersReference }}</td>
+            </tr>
+        </tbody>
+    </table>
 
-            <table class="data-table" style="margin-top:10px;">
-                <thead>
-                    <tr>
-                        <th>Service</th>
-                        <th>Additional service</th>
-                        <th>Departure port</th>
-                        <th>{{ $flightColumnLabel }}</th>
-                        <th>Arrival date</th>
-                        <th>Arrival time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>{{ $serviceLabel }}</td>
-                        <td>{{ $additionalServiceLabel }}</td>
-                        <td>{{ $serviceDeparturePort }}</td>
-                        <td>{{ $flightNumber }}</td>
-                        <td>{{ $arrivalDate }}</td>
-                        <td>{{ $arrivalTime }}</td>
-                    </tr>
-                </tbody>
-            </table>
+    <table class="data-table" style="margin-top:10px;">
+        <thead>
+            <tr>
+                <th>Service</th>
+                <th>Additional service</th>
+                <th>Departure port</th>
+                <th>{{ $flightColumnLabel }}</th>
+                <th>Arrival date</th>
+                <th>Arrival time</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ $serviceLabel }}</td>
+                <td>{{ $additionalServiceLabel }}</td>
+                <td>{{ $serviceDeparturePort }}</td>
+                <td>{{ $flightNumber }}</td>
+                <td>{{ $arrivalDate }}</td>
+                <td>{{ $arrivalTime }}</td>
+            </tr>
+        </tbody>
+    </table>
 
-            <div class="field-block">
-                <div class="field-label">Account handled by</div>
-                <div>{{ $accountHandledBy }}</div>
-            </div>
+    <div class="field-block">
+        <div class="field-label">Account handled by</div>
+        <div>{{ $accountHandledBy }}</div>
+    </div>
 
-            <div class="field-block">
-                <div class="field-label">Issued by and shipped through</div>
-                <div style="font-weight:bold;">{{ $issuedByName }}</div>
-                <div class="address-block">{{ $issuedByAddress }}</div>
-            </div>
+    <div class="field-block">
+        <div class="field-label">Issued by and shipped through</div>
+        <div style="font-weight:bold;">{{ $issuedByName }}</div>
+        <div class="address-block">{{ $issuedByAddress }}</div>
+    </div>
 
-            <div class="notify-title">This is to notify incoming shipment to</div>
-            <div class="vessel-heading">{{ $vesselLine }}</div>
+    <div class="notify-title">This is to notify incoming shipment to</div>
+    <div class="vessel-heading">{{ $vesselLine }}</div>
 
-            <div class="field-block">
-                <div class="field-label">C/O</div>
-                <div style="font-weight:bold;">{{ $consigneeName }}</div>
-                <div class="address-block">{{ $consigneeAddressBlock }}</div>
-            </div>
+    <div class="field-block">
+        <div class="field-label">C/O</div>
+        <div style="font-weight:bold;">{{ $consigneeName }}</div>
+        <div class="address-block">{{ $consigneeAddressBlock }}</div>
+    </div>
 
-            <div class="field-block">
-                <div class="field-label">Client</div>
-                <div>{{ $customerName }}</div>
-            </div>
-        </td>
-    </tr>
-    <tr>
-        <td class="page-footer-cell">{!! $footer(1, 2) !!}</td>
-    </tr>
-</table>
+    <div class="field-block">
+        <div class="field-label">Client</div>
+        <div>{{ $customerName }}</div>
+    </div>
+</div>
 
-<table class="page-shell page-break">
-    <tr>
-        <td class="page-content">
-            {!! $header() !!}
+<div class="page page-break">
+    {!! $header() !!}
 
-            <div class="notify-title">This is to notify incoming shipment to</div>
-            <div class="vessel-heading">{{ $vesselLine }}</div>
+    <div class="notify-title">This is to notify incoming shipment to</div>
+    <div class="vessel-heading">{{ $vesselLine }}</div>
 
-            <div class="field-block">
-                <div class="field-label">C/O</div>
-                <div style="font-weight:bold;">{{ $consigneeName }}</div>
-            </div>
+    <div class="field-block">
+        <div class="field-label">C/O</div>
+        <div style="font-weight:bold;">{{ $consigneeName }}</div>
+    </div>
 
-            <table class="summary-table">
-                <tr><td class="summary-label">AWB</td><td>{{ $awb }}</td></tr>
-                <tr><td class="summary-label">Total pieces in consignment</td><td>{{ $totalPiecesLabel }}</td></tr>
-                <tr><td class="summary-label">Packed as</td><td>{{ $packedAsLabel }}</td></tr>
-                <tr><td class="summary-label">Customs value</td><td>{{ $customsValueLabel }}</td></tr>
-            </table>
+    <table class="summary-table">
+        <tr><td class="summary-label">AWB</td><td>{{ $awb }}</td></tr>
+        <tr><td class="summary-label">Total pieces in consignment</td><td>{{ $totalPiecesLabel }}</td></tr>
+        <tr><td class="summary-label">Packed as</td><td>{{ $packedAsLabel }}</td></tr>
+        <tr><td class="summary-label">Customs value</td><td>{{ $customsValueLabel }}</td></tr>
+    </table>
 
-            <div class="vessel-heading">{{ $vesselLine }}</div>
+    <div class="vessel-heading">{{ $vesselLine }}</div>
 
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Supplier</th>
-                        <th>PO number</th>
-                        <th>Items</th>
-                        <th>Weight</th>
-                        <th>CBM</th>
-                        <th>Cust. value</th>
-                        <th>Description</th>
-                        <th>Stock no</th>
-                        <th>Location</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($preAlertRows as $row)
-                    <tr>
-                        <td>{{ $row['supplier'] }}</td>
-                        <td>{{ $row['po_number'] }}</td>
-                        <td>{{ $row['items'] }}</td>
-                        <td>{{ $row['weight'] }}</td>
-                        <td>{{ number_format($row['cbm'], 2) }}</td>
-                        <td>{{ $row['customs_value'] }}</td>
-                        <td class="description-cell">{{ $row['description'] }}</td>
-                        <td>{{ $row['stock_number'] }}</td>
-                        <td>{{ $row['location'] ?? '—' }}</td>
-                    </tr>
-                    @endforeach
-                    <tr>
-                        <td colspan="2"><strong>Total {{ $primaryVessel }}</strong></td>
-                        <td><strong>{{ $totalPiecesLabel }}</strong></td>
-                        <td><strong>{{ $totals['weight'] ?? 0 }} kg</strong></td>
-                        <td><strong>{{ number_format((float) ($totals['cbm'] ?? 0), 2) }} CBM</strong></td>
-                        <td colspan="4"><strong>{{ $customsValueLabel }}</strong></td>
-                    </tr>
-                </tbody>
-            </table>
-        </td>
-    </tr>
-    <tr>
-        <td class="page-footer-cell">{!! $footer(2, 2) !!}</td>
-    </tr>
-</table>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Supplier</th>
+                <th>PO number</th>
+                <th>Items</th>
+                <th>Weight</th>
+                <th>CBM</th>
+                <th>Cust. value</th>
+                <th>Description</th>
+                <th>Stock no</th>
+                <th>Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($preAlertRows as $row)
+            <tr>
+                <td>{{ $row['supplier'] }}</td>
+                <td>{{ $row['po_number'] }}</td>
+                <td>{{ $row['items'] }}</td>
+                <td>{{ $row['weight'] }}</td>
+                <td>{{ number_format($row['cbm'], 2) }}</td>
+                <td>{{ $row['customs_value'] }}</td>
+                <td class="description-cell">{{ $row['description'] }}</td>
+                <td>{{ $row['stock_number'] }}</td>
+                <td>{{ $row['location'] ?? '—' }}</td>
+            </tr>
+            @endforeach
+            <tr>
+                <td colspan="2"><strong>Total {{ $primaryVessel }}</strong></td>
+                <td><strong>{{ $totalPiecesLabel }}</strong></td>
+                <td><strong>{{ $totals['weight'] ?? 0 }} kg</strong></td>
+                <td><strong>{{ number_format((float) ($totals['cbm'] ?? 0), 2) }} CBM</strong></td>
+                <td colspan="4"><strong>{{ $customsValueLabel }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 </body>
 </html>
