@@ -8,9 +8,12 @@
         border-radius: 4px;
         font-size: 11px !important;
         font-weight: 600 !important;
-        line-height: 1.2;
+        line-height: 10px;
         text-align: center;
         white-space: nowrap;
+    }
+    label {
+        margin-bottom:0px !important;
     }
 
     .stock-status-new {
