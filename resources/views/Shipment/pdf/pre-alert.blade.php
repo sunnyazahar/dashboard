@@ -48,8 +48,8 @@
                     <div class="muted">' . e($companyAddress) . '</div>
                 </td>
                 <td class="header-right" style="width:38%;">
-                <span style="font-size: 22px; font-weight: bold; color:#002D5B; font-family: 'Inter', sans-serif;">Marine</span><span
-                        style="font-size: 22px; font-weight: bold; color:#349DDA; font-family: 'Inter', sans-serif;">Caddie<br><i>Smart
+                <span style="font-size: 22px; font-weight: bold; color:#002D5B; font-family: Inter, sans-serif;">Marine</span><span
+                        style="font-size: 22px; font-weight: bold; color:#349DDA; font-family: Inter, sans-serif;">Caddie<br><i>Smart
                             Caddies, Smarter Logistics
                             !</i></span>
                 </td>
