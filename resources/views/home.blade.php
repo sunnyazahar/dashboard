@@ -45,7 +45,7 @@
                                 <div class="page-body">
                                     <div class="dashboard-heading">
                                         <div>
-                                            <h3>Operations Dashboard</h3>
+                                            <h3>Shipment Dashboard</h3>
                                             <p>{{ $dashboard['isScoped'] ? 'Showing operations assigned to you.' : 'Global operational overview.' }}</p>
                                         </div>
                                         <form method="GET" action="{{ route('dashboard') }}" class="period-selector">
