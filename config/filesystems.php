@@ -38,6 +38,15 @@ return [
             'report' => false,
         ],
 
+        // Private business documents — never symlink into public/
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

@@ -272,9 +272,9 @@ class CustomerController extends Controller
             $logoPath = $customer->logo;
             if ($request->hasFile('logo')) {
                 if ($logoPath) {
-                    \Storage::disk('public')->delete($logoPath);
+                    \App\Support\PrivateDisk::delete($logoPath);
                 }
-                $logoPath = $request->file('logo')->store('logos', 'public');
+                $logoPath = $request->file('logo')->store('logos', 'private');
             }
 
             // 1. Update Customer
@@ -401,7 +401,7 @@ class CustomerController extends Controller
                     $doc = CustomerDocument::find(trim($docId));
                     if ($doc && $doc->customer_id == $customer->id) {
                         $fileName = $doc->file_name;
-                        \Storage::disk('public')->delete($doc->file_path);
+                        \App\Support\PrivateDisk::delete($doc->file_path);
                         $doc->delete();
                         $changeLogService->log($customer, 'SOP document removed', $fileName, 'sop_document');
                     }
@@ -411,7 +411,7 @@ class CustomerController extends Controller
             // 8. Handle SOP Document Uploads
             if ($request->hasFile('sop_documents')) {
                 foreach ($request->file('sop_documents') as $file) {
-                    $path = $file->store('sop_documents', 'public');
+                    $path = $file->store('sop_documents', 'private');
                     CustomerDocument::create([
                         'customer_id' => $customer->id,
                         'file_name'   => $file->getClientOriginalName(),
@@ -598,7 +598,7 @@ class CustomerController extends Controller
         }
 
         $file = $request->file('file');
-        $path = $file->store('sop_documents', 'public');
+        $path = $file->store('sop_documents', 'private');
 
         $doc = CustomerDocument::create([
             'customer_id' => $customer->id,
@@ -617,8 +617,45 @@ class CustomerController extends Controller
         return response()->json([
             'id'        => $doc->id,
             'file_name' => $doc->file_name,
-            'file_url'  => asset('storage/' . $doc->file_path),
+            'file_url'  => $doc->fileUrl(),
         ]);
+    }
+
+    /**
+     * Stream a private customer SOP document (auth required).
+     */
+    public function showDocument($customerId, $docId)
+    {
+        $doc = CustomerDocument::where('customer_id', $customerId)->findOrFail($docId);
+        $path = \App\Support\PrivateDisk::path($doc->file_path);
+
+        if (! is_file($path)) {
+            abort(404);
+        }
+
+        return response()->file($path, [
+            'Content-Disposition' => 'inline; filename="' . $doc->file_name . '"',
+        ]);
+    }
+
+    /**
+     * Stream a private customer logo (auth required).
+     */
+    public function showLogo($id)
+    {
+        $customer = Customer::findOrFail($id);
+
+        if (! $customer->logo) {
+            abort(404);
+        }
+
+        $path = \App\Support\PrivateDisk::path($customer->logo);
+
+        if (! is_file($path)) {
+            abort(404);
+        }
+
+        return response()->file($path);
     }
 
     /**
@@ -630,7 +667,7 @@ class CustomerController extends Controller
         $customer = Customer::find($doc->customer_id);
         $fileName = $doc->file_name;
 
-        \Storage::disk('public')->delete($doc->file_path);
+        \App\Support\PrivateDisk::delete($doc->file_path);
         $doc->delete();
 
         if ($customer) {

@@ -270,7 +270,7 @@ class ShipmentTransitStockDuplicationService
 
     private function duplicateDocument(CrrDocument $document, int $duplicateCrrId): void
     {
-        $disk = Storage::disk('public');
+        $disk = \App\Support\PrivateDisk::disk();
         $newPath = $document->file_path;
 
         if ($document->file_path && $disk->exists($document->file_path)) {

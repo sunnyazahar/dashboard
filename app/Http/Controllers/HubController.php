@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Hub;
+use App\Models\HubDocument;
+use App\Models\HubPricingDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -228,7 +230,7 @@ class HubController extends Controller
         
         $originalName = $file->getClientOriginalName();
         $fileName = time() . '_' . $originalName;
-        $filePath = $file->storeAs('hubs/' . $id . '/' . $type, $fileName, 'public');
+        $filePath = $file->storeAs('hubs/' . $id . '/' . $type, $fileName, 'private');
 
         if ($type === 'pricing') {
             $document = $hub->pricingDocuments()->create([
@@ -249,8 +251,28 @@ class HubController extends Controller
             'document' => [
                 'id' => $document->id,
                 'name' => $document->file_name,
+                'url' => $document->fileUrl(),
                 'uploaded_at' => $document->created_at->format('d.m.Y H:i'),
             ]
+        ]);
+    }
+
+    public function showDocument($type, $docId)
+    {
+        if ($type === 'pricing') {
+            $document = HubPricingDocument::findOrFail($docId);
+        } else {
+            $document = HubDocument::findOrFail($docId);
+        }
+
+        $path = \App\Support\PrivateDisk::path($document->file_path);
+
+        if (! is_file($path)) {
+            abort(404);
+        }
+
+        return response()->file($path, [
+            'Content-Disposition' => 'inline; filename="' . $document->file_name . '"',
         ]);
     }
 
@@ -265,8 +287,8 @@ class HubController extends Controller
         }
         
         // Delete physical file
-        if (\Storage::disk('public')->exists($document->file_path)) {
-            \Storage::disk('public')->delete($document->file_path);
+        if (\App\Support\PrivateDisk::exists($document->file_path)) {
+            \App\Support\PrivateDisk::delete($document->file_path);
         }
 
         $document->delete();

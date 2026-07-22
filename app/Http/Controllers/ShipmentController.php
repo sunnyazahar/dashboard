@@ -1042,7 +1042,7 @@ class ShipmentController extends Controller
     {
         $manifest = ShipmentManifest::where('shipment_id', $shipmentId)->findOrFail($manifestId);
 
-        Storage::disk('public')->delete($manifest->file_path);
+        \App\Support\PrivateDisk::delete($manifest->file_path);
         $manifest->delete();
 
         return response()->json(['success' => true]);
@@ -1069,7 +1069,7 @@ class ShipmentController extends Controller
     {
         $preAlert = ShipmentPreAlert::where('shipment_id', $shipmentId)->findOrFail($preAlertId);
 
-        Storage::disk('public')->delete($preAlert->file_path);
+        \App\Support\PrivateDisk::delete($preAlert->file_path);
         $preAlert->delete();
 
         return response()->json(['success' => true]);
@@ -1101,7 +1101,7 @@ class ShipmentController extends Controller
 
         $latestManifest = $manifestService->latestForShipment($shipment);
         if ($latestManifest) {
-            $path = Storage::disk('public')->path($latestManifest->file_path);
+            $path = \App\Support\PrivateDisk::path($latestManifest->file_path);
             if (is_file($path)) {
                 return response()->file($path, [
                     'Content-Type' => 'application/pdf',
@@ -1445,7 +1445,7 @@ class ShipmentController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('shipment_documents', 'public');
+        $path = $file->store('shipment_documents', 'private');
 
         $document = ShipmentDocument::create([
             'shipment_id' => $shipment->id,
@@ -1471,7 +1471,7 @@ class ShipmentController extends Controller
             $document = ShipmentDocument::findOrFail($docId);
             $shipment = $document->shipment;
             $fileName = $document->file_name;
-            Storage::disk('public')->delete($document->file_path);
+            \App\Support\PrivateDisk::delete($document->file_path);
             $document->delete();
 
             if ($shipment) {
@@ -1484,6 +1484,20 @@ class ShipmentController extends Controller
 
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+
+    public function showDocument($shipmentId, $docId)
+    {
+        $document = ShipmentDocument::where('shipment_id', $shipmentId)->findOrFail($docId);
+        $path = \App\Support\PrivateDisk::path($document->file_path);
+
+        if (! is_file($path)) {
+            abort(404);
+        }
+
+        return response()->file($path, [
+            'Content-Disposition' => 'inline; filename="' . $document->file_name . '"',
+        ]);
     }
 
     public function updateDocumentType(Request $request, $docId, ShipmentChangeLogService $changeLogService)

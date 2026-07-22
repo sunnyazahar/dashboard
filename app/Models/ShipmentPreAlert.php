@@ -22,7 +22,7 @@ class ShipmentPreAlert extends Model
 
     public function fileUrl(): string
     {
-        return asset('storage/' . $this->file_path);
+        return route('shipments.pre-alerts.show', [$this->shipment_id, $this->id], false);
     }
 
     public function displayLabel(): string

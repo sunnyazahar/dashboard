@@ -626,7 +626,7 @@
                                                  <div class="form-section-title">Company's logo</div>
                                                  <div class="logo-placeholder" id="logo_drop_zone" style="cursor: pointer; position: relative;">
                                                      @if($customer->logo)
-                                                         <img src="{{ asset('storage/' . $customer->logo) }}" id="logo_preview" style="max-width: 100%; max-height: 80px; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;">
+                                                         <img src="{{ route('customers.logo.show', $customer->id) }}" id="logo_preview" style="max-width: 100%; max-height: 80px; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto;">
                                                      @else
                                                          <img src="" id="logo_preview" style="max-width: 100%; max-height: 80px; margin-bottom: 8px; display: none; margin-left: auto; margin-right: auto;">
                                                      @endif
@@ -761,7 +761,7 @@
                                                      @foreach($customer->documents as $doc)
                                                          <div class="file-item">
                                                              <i class="ti-file"></i>
-                                                             <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" style="color: #01a9ac; text-decoration: none;">{{ $doc->file_name }}</a>
+                                                             <a href="{{ $doc->fileUrl() }}" target="_blank" style="color: #01a9ac; text-decoration: none;">{{ $doc->file_name }}</a>
                                                              <span class="remove-file" data-id="{{ $doc->id }}"><i class="ti-trash"></i></span>
                                                          </div>
                                                      @endforeach

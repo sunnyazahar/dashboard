@@ -399,10 +399,10 @@ class PreAlertMailService
         $attachments = [];
 
         $latestPreAlert = $shipment->preAlerts->sortByDesc('version')->first();
-        if ($latestPreAlert && is_file(Storage::disk('public')->path($latestPreAlert->file_path))) {
+        if ($latestPreAlert && is_file(\App\Support\PrivateDisk::path($latestPreAlert->file_path))) {
             $attachments[] = [
                 'filename' => 'pre-alert-' . $shipment->shipment_number . '-' . $latestPreAlert->version . '.pdf',
-                'content' => (string) file_get_contents(Storage::disk('public')->path($latestPreAlert->file_path)),
+                'content' => (string) file_get_contents(\App\Support\PrivateDisk::path($latestPreAlert->file_path)),
                 'mime' => 'application/pdf',
             ];
         }
@@ -426,7 +426,7 @@ class PreAlertMailService
                 continue;
             }
 
-            $path = Storage::disk('public')->path($document->file_path);
+            $path = \App\Support\PrivateDisk::path($document->file_path);
             if (!is_file($path)) {
                 continue;
             }

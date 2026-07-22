@@ -212,10 +212,10 @@ class ManifestMailService
         $attachments = [];
 
         $latestManifest = $shipment->manifests->sortByDesc('version')->first();
-        if ($latestManifest && is_file(Storage::disk('public')->path($latestManifest->file_path))) {
+        if ($latestManifest && is_file(\App\Support\PrivateDisk::path($latestManifest->file_path))) {
             $attachments[] = [
                 'filename' => $latestManifest->file_name . '-' . $shipment->shipment_number . '.pdf',
-                'content' => (string) file_get_contents(Storage::disk('public')->path($latestManifest->file_path)),
+                'content' => (string) file_get_contents(\App\Support\PrivateDisk::path($latestManifest->file_path)),
                 'mime' => 'application/pdf',
             ];
         } else {
@@ -259,7 +259,7 @@ class ManifestMailService
                 continue;
             }
 
-            $path = Storage::disk('public')->path($document->file_path);
+            $path = \App\Support\PrivateDisk::path($document->file_path);
             if (!is_file($path)) {
                 continue;
             }

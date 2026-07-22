@@ -919,7 +919,7 @@
                                                         @foreach($agent->documents->where('section', 'sop') as $document)
                                                             <div class="document-item" style="margin-top: 10px;">
                                                                 <div class="doc-info">
-                                                                    <span class="doc-name">{{ $document->filename }}</span>
+                                                                    <span class="doc-name"><a href="{{ $document->fileUrl() }}" target="_blank" style="color: inherit; text-decoration: none;">{{ $document->filename }}</a></span>
                                                                     <span class="doc-meta">Uploaded
                                                                         {{ $document->created_at->format('d.m.Y H:i') }}</span>
                                                                 </div>
@@ -994,7 +994,7 @@
                                                         @foreach($agent->documents->where('section', 'pricing') as $document)
                                                             <div class="document-item" style="margin-top: 10px;">
                                                                 <div class="doc-info">
-                                                                    <span class="doc-name">{{ $document->filename }}</span>
+                                                                    <span class="doc-name"><a href="{{ $document->fileUrl() }}" target="_blank" style="color: inherit; text-decoration: none;">{{ $document->filename }}</a></span>
                                                                     <span class="doc-meta">Uploaded
                                                                         {{ $document->created_at->format('d.m.Y H:i') }}</span>
                                                                 </div>

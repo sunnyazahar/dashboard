@@ -22,7 +22,7 @@ class ShipmentManifest extends Model
 
     public function fileUrl(): string
     {
-        return asset('storage/' . $this->file_path);
+        return route('shipments.manifests.show', [$this->shipment_id, $this->id], false);
     }
 
     public function displayLabel(): string

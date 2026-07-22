@@ -14,4 +14,9 @@ class CrrDocument extends Model
     {
         return $this->belongsTo(Crr::class);
     }
+
+    public function fileUrl(): string
+    {
+        return route('stocks.documents.show', [$this->crr_id, $this->id], false);
+    }
 }

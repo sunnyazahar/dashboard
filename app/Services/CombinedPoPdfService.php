@@ -51,7 +51,7 @@ class CombinedPoPdfService
     {
         return $this->documentsForShipment($shipment)
             ->pluck('file_path')
-            ->map(fn (string $filePath) => Storage::disk('public')->path($filePath))
+            ->map(fn (string $filePath) => \App\Support\PrivateDisk::path($filePath))
             ->filter(fn (string $path) => is_file($path) && is_readable($path))
             ->values()
             ->all();
@@ -99,7 +99,7 @@ class CombinedPoPdfService
         $attachments = [];
 
         foreach ($this->documentsForShipment($shipment) as $document) {
-            $path = Storage::disk('public')->path($document->file_path);
+            $path = \App\Support\PrivateDisk::path($document->file_path);
             if (!is_file($path) || !is_readable($path)) {
                 continue;
             }

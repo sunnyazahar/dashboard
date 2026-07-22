@@ -62,7 +62,7 @@ class ShipmentManifestService
             'shipment.creator'
         );
 
-        $path = Storage::disk('public')->path($manifest->file_path);
+        $path = \App\Support\PrivateDisk::path($manifest->file_path);
 
         if (is_file($path) && filesize($path) > 100) {
             return $path;
@@ -94,7 +94,7 @@ class ShipmentManifestService
 
     private function storePdf(string $relativePath, string $pdfContent): void
     {
-        $disk = Storage::disk('public');
+        $disk = \App\Support\PrivateDisk::disk();
         $directory = dirname($relativePath);
         $disk->makeDirectory($directory);
         $this->ensureDirectoryWritable($disk->path($directory));
@@ -125,7 +125,7 @@ class ShipmentManifestService
 
     private function ensureDirectoryWritable(string $directory): void
     {
-        $storageRoot = Storage::disk('public')->path('');
+        $storageRoot = \App\Support\PrivateDisk::path('');
         $current = $directory;
 
         while ($current !== dirname($current) && str_starts_with($current, $storageRoot)) {

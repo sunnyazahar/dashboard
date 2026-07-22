@@ -14,4 +14,9 @@ class CustomerDocument extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function fileUrl(): string
+    {
+        return route('customers.documents.show', [$this->customer_id, $this->id], false);
+    }
 }

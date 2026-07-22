@@ -182,7 +182,7 @@ class AgentController extends Controller
         if ($request->hasFile('sop_documents')) {
             foreach ($request->file('sop_documents') as $file) {
                 $filename = $file->getClientOriginalName();
-                $path = $file->store('agent_documents', 'public');
+                $path = $file->store('agent_documents', 'private');
                 $agent->documents()->create([
                     'section' => 'sop',
                     'filename' => $filename,
@@ -195,7 +195,7 @@ class AgentController extends Controller
         if ($request->hasFile('pricing_documents')) {
             foreach ($request->file('pricing_documents') as $file) {
                 $filename = $file->getClientOriginalName();
-                $path = $file->store('agent_documents', 'public');
+                $path = $file->store('agent_documents', 'private');
                 $agent->documents()->create([
                     'section' => 'pricing',
                     'filename' => $filename,
@@ -251,12 +251,28 @@ class AgentController extends Controller
         $document = \App\Models\AgentDocument::findOrFail($id);
         
         // Delete file from storage
-        \Illuminate\Support\Facades\Storage::disk('public')->delete($document->file_path);
+        \App\Support\PrivateDisk::delete($document->file_path);
         
         // Delete record from DB
         $document->delete();
 
         return back()->with('success', 'Document deleted successfully.');
+    }
+
+    public function showDocument($agentId, $docId)
+    {
+        $document = \App\Models\AgentDocument::where('agent_id', $agentId)->findOrFail($docId);
+        $path = \App\Support\PrivateDisk::path($document->file_path);
+
+        if (! is_file($path)) {
+            abort(404);
+        }
+
+        $filename = $document->filename ?: basename($document->file_path);
+
+        return response()->file($path, [
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
     }
 
     public function storeContact(Request $request, $agent_id)

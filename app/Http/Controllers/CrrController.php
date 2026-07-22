@@ -584,7 +584,13 @@ class CrrController extends Controller
         }
 
         $file = $request->file('file');
-        $path = $file->store('crr_documents', 'public');
+        $path = $file->store('crr_documents', 'private');
+
+        if (! is_string($path) || $path === '' || $path === '0') {
+            return response()->json([
+                'error' => 'Could not store the file. Check that storage/app/private is writable by the web server.',
+            ], 500);
+        }
 
         $doc = CrrDocument::create([
             'crr_id'    => $crr->id,
@@ -598,8 +604,29 @@ class CrrController extends Controller
         return response()->json([
             'id'        => $doc->id,
             'file_name' => $doc->file_name,
-            'file_url'  => asset('storage/' . $doc->file_path),
+            'file_url'  => $doc->fileUrl(),
             'date'      => $doc->created_at->format('d.m.Y'),
+        ]);
+    }
+
+    /**
+     * Stream a private CRR document (auth required).
+     */
+    public function showDocument($crrId, $docId)
+    {
+        $doc = CrrDocument::where('crr_id', $crrId)->findOrFail($docId);
+        $path = \App\Support\PrivateDisk::path((string) $doc->file_path);
+
+        if (! is_file($path) || ! is_readable($path)) {
+            abort(404, 'Document file not found.');
+        }
+
+        $mime = mime_content_type($path) ?: 'application/octet-stream';
+        $filename = str_replace(['"', "\r", "\n"], '', (string) $doc->file_name) ?: basename($path);
+
+        return response()->file($path, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
     }
 
@@ -612,7 +639,7 @@ class CrrController extends Controller
             $doc = CrrDocument::findOrFail($docId);
             $crr = $doc->crr;
             $fileName = $doc->file_name;
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file_path);
+            \App\Support\PrivateDisk::delete($doc->file_path);
             $doc->delete();
 
             if ($crr) {

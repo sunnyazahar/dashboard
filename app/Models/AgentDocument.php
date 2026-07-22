@@ -17,4 +17,9 @@ class AgentDocument extends Model
     {
         return $this->belongsTo(Agent::class);
     }
+
+    public function fileUrl(): string
+    {
+        return route('agents.documents.show', [$this->agent_id, $this->id], false);
+    }
 }

@@ -950,7 +950,7 @@
                                                     @foreach($hub->documents as $doc)
                                                         <div class="file-list-item" id="doc_item_{{ $doc->id }}">
                                                             <div class="file-info">
-                                                                <span class="file-name">{{ $doc->file_name }}</span>
+                                                                <span class="file-name"><a href="{{ $doc->fileUrl() }}" target="_blank" style="color: inherit; text-decoration: none;">{{ $doc->file_name }}</a></span>
                                                                 <span class="file-meta">Uploaded {{ $doc->created_at->format('d.m.Y H:i') }}</span>
                                                             </div>
                                                             <div class="btn-delete-file delete-doc" data-id="{{ $doc->id }}"><i class="ti-trash"></i></div>
@@ -1041,7 +1041,7 @@
                                                    @foreach($hub->pricingDocuments as $doc)
                                                        <div class="file-list-item" id="pricing_doc_item_{{ $doc->id }}">
                                                            <div class="file-info">
-                                                               <span class="file-name">{{ $doc->file_name }}</span>
+                                                               <span class="file-name"><a href="{{ $doc->fileUrl() }}" target="_blank" style="color: inherit; text-decoration: none;">{{ $doc->file_name }}</a></span>
                                                                <span class="file-meta">Uploaded {{ $doc->created_at->format('d.m.Y H:i') }}</span>
                                                            </div>
                                                            <div class="btn-delete-file delete-pricing-doc" data-id="{{ $doc->id }}"><i class="ti-trash"></i></div>
@@ -1490,7 +1490,7 @@
                             var html = `
                                 <div class="file-list-item" id="${type}_doc_item_${doc.id}">
                                     <div class="file-info">
-                                        <span class="file-name">${doc.name}</span>
+                                        <span class="file-name"><a href="${doc.url || '#'}" target="_blank" style="color: inherit; text-decoration: none;">${doc.name}</a></span>
                                         <span class="file-meta">Uploaded ${doc.uploaded_at}</span>
                                     </div>
                                     <div class="btn-delete-file delete-doc" data-id="${doc.id}" data-type="${type}"><i class="ti-trash"></i></div>

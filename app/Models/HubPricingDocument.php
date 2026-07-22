@@ -14,4 +14,9 @@ class HubPricingDocument extends Model
     {
         return $this->belongsTo(Hub::class);
     }
+
+    public function fileUrl(): string
+    {
+        return route('hub.documents.show', ['pricing', $this->id], false);
+    }
 }

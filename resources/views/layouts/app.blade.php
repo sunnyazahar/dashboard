@@ -98,6 +98,35 @@
             @yield('content')
         </main>
     </div>
+
+    @if(app()->environment('production') && ! config('app.debug'))
+        <script>
+            // Soft deterrent only — not real security. Skipped when APP_DEBUG=true.
+            document.addEventListener('contextmenu', function (e) {
+                e.preventDefault();
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (
+                    e.key === 'F12' ||
+                    (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+                    (e.ctrlKey && e.key.toUpperCase() === 'U') ||
+                    (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(e.key.toUpperCase()))
+                ) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            document.addEventListener('copy', function (e) {
+                e.preventDefault();
+            });
+
+            document.addEventListener('cut', function (e) {
+                e.preventDefault();
+            });
+        </script>
+    @endif
 </body>
 
 </html>

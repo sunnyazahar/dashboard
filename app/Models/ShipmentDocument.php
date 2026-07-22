@@ -21,7 +21,7 @@ class ShipmentDocument extends Model
 
     public function fileUrl(): string
     {
-        return asset('storage/' . $this->file_path);
+        return route('shipments.documents.show', [$this->shipment_id, $this->id], false);
     }
 
     public static function fileTypeOptions(): array

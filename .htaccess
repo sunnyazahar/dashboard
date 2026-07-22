@@ -1,6 +1,12 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Block hidden files/dirs (.env, .git, etc.), except .well-known
+    RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L]
+
+    # Block sensitive file extensions at project root / misconfigured docroot
+    RewriteRule (?i)\.(env|sql|log|bak|old|ini|dist|yml|yaml|config|php~|phps)$ - [F,L]
+
     # Route root requests directly to app front controller.
     RewriteRule ^$ index.php [L]
     RewriteRule ^\.$ index.php [L]
@@ -16,3 +22,24 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Deny direct download of sensitive filenames when docroot is the project
+<FilesMatch "(?i)^(\.env|\.git|composer\.(json|lock)|artisan|\.htaccess|\.htpasswd)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<FilesMatch "(?i)\.(env|sql|log|bak|old|ini|dist|yml|yaml|config|php~|phps)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

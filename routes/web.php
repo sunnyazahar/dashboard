@@ -61,6 +61,8 @@ Route::get('/customers/vessels/{vessel}/edit', [App\Http\Controllers\CustomerCon
 Route::put('/customers/vessels/{vessel}', [App\Http\Controllers\CustomerController::class, 'updateVessel'])->name('customers.vessels.update');
 
 Route::post('/customers/{id}/documents', [App\Http\Controllers\CustomerController::class, 'uploadDocument'])->name('customers.documents.upload');
+Route::get('/customers/{customerId}/documents/{docId}', [App\Http\Controllers\CustomerController::class, 'showDocument'])->name('customers.documents.show');
+Route::get('/customers/{id}/logo', [App\Http\Controllers\CustomerController::class, 'showLogo'])->name('customers.logo.show');
 Route::delete('/customers/documents/{docId}', [App\Http\Controllers\CustomerController::class, 'deleteDocument'])->name('customers.documents.delete');
 
 Route::get('/shipments', [App\Http\Controllers\ShipmentController::class, 'index'])->name('shipments');
@@ -84,6 +86,7 @@ Route::post('/shipments/{id}/pre-alert-mail/prepare', [App\Http\Controllers\Ship
 Route::get('/shipments/{id}/pre-alert-mail/open', [App\Http\Controllers\ShipmentController::class, 'preAlertMailOpen'])->name('shipments.pre-alert-mail.open');
 Route::get('/shipments/{id}/pre-alert-mail', [App\Http\Controllers\ShipmentController::class, 'preAlertMail'])->name('shipments.pre-alert-mail');
 Route::post('/shipments/{id}/documents', [App\Http\Controllers\ShipmentController::class, 'uploadDocument'])->name('shipments.documents.upload');
+Route::get('/shipments/{shipmentId}/documents/{docId}', [App\Http\Controllers\ShipmentController::class, 'showDocument'])->name('shipments.documents.show');
 Route::delete('/shipments/documents/{docId}', [App\Http\Controllers\ShipmentController::class, 'deleteDocument'])->name('shipments.documents.delete');
 Route::patch('/shipments/documents/{docId}/type', [App\Http\Controllers\ShipmentController::class, 'updateDocumentType'])->name('shipments.documents.update-type');
 Route::put('/shipments/{id}', [App\Http\Controllers\ShipmentController::class, 'update'])->name('shipments.update');
@@ -568,6 +571,7 @@ Route::get('/stocks/print-crr/{id}', [App\Http\Controllers\CrrController::class,
 Route::get('/stocks/print-labels/{id}', [App\Http\Controllers\CrrController::class, 'showPrintLabels'])->name('stocks.print-labels');
 Route::get('/stocks/addPackages/{id}', [App\Http\Controllers\CrrController::class, 'addPackages'])->name('stocks.addPackages');
 Route::post('/stocks/{id}/documents', [App\Http\Controllers\CrrController::class, 'uploadDocument'])->name('stocks.documents.upload');
+Route::get('/stocks/{crrId}/documents/{docId}', [App\Http\Controllers\CrrController::class, 'showDocument'])->name('stocks.documents.show');
 Route::delete('/stocks/documents/{docId}', [App\Http\Controllers\CrrController::class, 'deleteDocument'])->name('stocks.documents.delete');
 Route::post('/stocks/{id}/status', [App\Http\Controllers\CrrController::class, 'updateStatus'])->name('stocks.crr.update-status');
 Route::post('/stocks/{id}/flags', [App\Http\Controllers\CrrController::class, 'updateFlags'])->name('stocks.crr.update-flags');
@@ -594,6 +598,7 @@ Route::put('/hubs/{id}', [App\Http\Controllers\HubController::class, 'update'])-
 Route::patch('/hubs/{id}/status', [App\Http\Controllers\HubController::class, 'updateStatus'])->name('hub.status.update');
 Route::delete('/hubs/{id}', [App\Http\Controllers\HubController::class, 'destroy'])->name('hub.destroy');
 Route::post('/hubs/{id}/documents', [App\Http\Controllers\HubController::class, 'uploadDocument'])->name('hub.documents.upload');
+Route::get('/hubs/documents/{type}/{docId}', [App\Http\Controllers\HubController::class, 'showDocument'])->name('hub.documents.show');
 Route::delete('/hubs/documents/{docId}', [App\Http\Controllers\HubController::class, 'deleteDocument'])->name('hub.documents.delete');
 
 Route::get('/hubs/{hub}/contacts/create', [App\Http\Controllers\HubController::class, 'createContact'])->name('hub.contacts.create');
@@ -665,6 +670,7 @@ Route::put('/Agents/update/{id}', [App\Http\Controllers\AgentController::class, 
 Route::patch('/Agents/{id}/status', [App\Http\Controllers\AgentController::class, 'updateStatus'])->name('agents.status.update');
 Route::delete('/Agents/{id}', [App\Http\Controllers\AgentController::class, 'destroy'])->name('agents.destroy');
 Route::delete('/Agents/documents/{id}', [App\Http\Controllers\AgentController::class, 'deleteDocument'])->name('agents.documents.delete');
+Route::get('/Agents/{agentId}/documents/{docId}', [App\Http\Controllers\AgentController::class, 'showDocument'])->name('agents.documents.show');
 
 Route::get('/Agents/{id}/contacts/create', function ($id) {
     return view('Agents.contacts.create', ['agent_id' => $id]);
