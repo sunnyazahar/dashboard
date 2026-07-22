@@ -20,13 +20,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Keep generated links aligned with APP_URL (includes /public when
-        // the host document root is the project folder, not public/).
-        URL::forceRootUrl(rtrim((string) config('app.url'), '/'));
+        $appUrl = rtrim((string) config('app.url'), '/');
+        URL::forceRootUrl($appUrl);
 
-        $assetUrl = config('app.asset_url') ?: env('ASSET_URL');
-        if (is_string($assetUrl) && $assetUrl !== '') {
-            URL::useAssetOrigin(rtrim($assetUrl, '/'));
+        // Static theme assets live in public/files. On hosts where the
+        // document root is the project folder, those URLs need /public.
+        $assetUrl = config('app.asset_url') ?: env('ASSET_URL') ?: $appUrl;
+        $assetUrl = rtrim((string) $assetUrl, '/');
+
+        if ($assetUrl !== '' && ! str_ends_with(strtolower($assetUrl), '/public')) {
+            $assetUrl .= '/public';
         }
+
+        config(['app.asset_url' => $assetUrl]);
+        URL::useAssetOrigin($assetUrl);
     }
 }
