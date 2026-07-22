@@ -20,7 +20,30 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Ensure generated links/redirects consistently include the /laravel prefix.
-        URL::forceRootUrl(rtrim((string) config('app.url'), '/'));
+        $root = $this->normalizePublicUrl((string) config('app.url'));
+        config(['app.url' => $root]);
+
+        $assetUrl = config('app.asset_url') ?: env('ASSET_URL');
+        if (is_string($assetUrl) && $assetUrl !== '') {
+            $assetUrl = $this->normalizePublicUrl($assetUrl);
+            config(['app.asset_url' => $assetUrl]);
+            URL::useAssetOrigin($assetUrl);
+        } else {
+            config(['app.asset_url' => null]);
+            URL::useAssetOrigin(null);
+        }
+
+        // Keep generated links/assets on the app root (never .../public).
+        URL::forceRootUrl($root);
+    }
+
+    /**
+     * Document root should be the public/ folder, so APP_URL must not end with /public.
+     */
+    private function normalizePublicUrl(string $url): string
+    {
+        $url = rtrim($url, '/');
+
+        return (string) preg_replace('#/public$#i', '', $url);
     }
 }
